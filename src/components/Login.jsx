@@ -8,7 +8,7 @@ export default function Login() {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
-    role: "broker", // default role
+    role: "broker",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,20 +30,24 @@ export default function Login() {
 
     try {
       const endpoint = roleLoginEndpoints[formData.role];
+      console.log("endpoint", endpoint)
       const response = await axios.post(endpoint, {
         username: formData.username,
         password: formData.password,
       });
+    //   console.log("")
+
+      console.log("response", response)
 
       localStorage.setItem("token", response.data.token || "");
       localStorage.setItem("role", formData.role);
 
       // Navigate based on role
-      if (formData.role === "broker") navigate("/brokers");
-      else if (formData.role === "client") navigate("/insuredclients");
-      else if (formData.role === "insurance") navigate("/companies");
+      if (formData.role === "broker") navigate("/brokers-dashboard");
+      else if (formData.role === "client") navigate("/clients-dashboard");
+      else if (formData.role === "company") navigate("/company-dashboard");
     } catch (err) {
-      setError("Login failed. Please check your credentials.");
+      setError("Login failed. Please check your credentials.", err);
     } finally {
       setLoading(false);
     }
@@ -129,13 +133,13 @@ export default function Login() {
           Need help with your account? <a href="#" className="text-blue-600 hover:underline">Contact support</a>
         </p>
 
-        <div className="mt-8 text-sm">
+        {/* <div className="mt-8 text-sm">
           <ul className="list-disc list-inside space-y-2 text-blue-600">
             <li><Link to="/brokers" className="underline hover:text-blue-800">Brokers</Link></li>
             <li><Link to="/insuredclients" className="underline hover:text-blue-800">Insured Clients</Link></li>
             <li><Link to="/companies" className="underline hover:text-blue-800">Insurance Companies</Link></li>
           </ul>
-        </div>
+        </div> */}
       </div>
     </div>
   );
