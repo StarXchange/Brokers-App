@@ -330,7 +330,7 @@ const CreateNewCertificate = ({ viewMode = false }) => {
               disabled={loading}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-400"
             >
-              {loading ? 'Creating...' : 'Create Certificate'}
+              {loading ? 'Submitting...' : 'Submit'}
             </button>
           )}
         </div>
