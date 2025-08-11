@@ -7,9 +7,9 @@ const BrokerCertificates = () => {
   // Mock data matching your screenshot
   const mockCertificates = [
     {
-      id: 'PRESTIGE2018/70002566',
+      id: 'PRESTIGE/20/8/70002566',
       brokerId: 'intteck',
-      certNo: 'PRESTIGE2018/70002566',
+      certNo: 'PRESTIGE/2018/70002566',
       policyNo: 'SAN/MOC/00471/2018/HQ',
       transDate: '25 Jul 2018',
       rate: '0.8%',

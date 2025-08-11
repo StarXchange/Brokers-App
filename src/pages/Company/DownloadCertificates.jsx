@@ -1,14 +1,18 @@
-// src/pages/DownloadCertificates.jsx
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
-const DownloadCertificates = () => {
+const DownloadCertificates = ({ userType = 'company', userId = 'STACO-MARINE' }) => {
   const [showCalendar1, setShowCalendar1] = useState(false);
   const [showCalendar2, setShowCalendar2] = useState(false);
   const [date1, setDate1] = useState(null);
   const [date2, setDate2] = useState(null);
+
+  // Determine back link based on user type
+  const backLink = userType === 'broker'
+    ? '/brokers-dashboard/certificates'
+    : '/company-dashboard/certificates';
 
   const formatDate = (date) => {
     return date ? date.toLocaleDateString() : '';
@@ -24,7 +28,7 @@ const DownloadCertificates = () => {
           <h3 className="text-lg font-semibold mb-2 text-gray-700">CERTIFICATES</h3>
           <ul className="space-y-2">
             <li className="p-2 bg-gray-50 rounded border border-gray-200">
-              STACO-MARINE
+              {userId} {/* Dynamic ID based on props */}
             </li>
           </ul>
         </div>
@@ -85,7 +89,7 @@ const DownloadCertificates = () => {
         {/* Action Buttons */}
         <div className="flex justify-between items-center pt-4 border-t border-gray-200">
           <Link 
-            to="/company-dashboard/certificates" 
+            to={backLink}  //Dynamic back link
             className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
           >
             Go Back

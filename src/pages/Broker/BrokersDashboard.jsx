@@ -18,7 +18,7 @@ const BrokersDashboard = () => {
             </li>
             <li>
               <Link 
-                to="credit-note" 
+                to="credit-notes" 
                 className="block font-semibold text-lg p-2 hover:bg-blue-50 rounded"
               >
                 Credit Note
@@ -26,7 +26,7 @@ const BrokersDashboard = () => {
             </li>
             <li>
               <Link 
-                to="client" 
+                to="/brokers-dashboard/client-management" 
                 className="block font-semibold text-lg p-2 hover:bg-blue-50 rounded"
               >
                 Client
@@ -42,10 +42,18 @@ const BrokersDashboard = () => {
             </li>
             <li>
               <Link 
-                to="view-document" 
+                to="view-documents" 
                 className="block font-semibold text-lg p-2 hover:bg-blue-50 rounded"
               >
                 View Document
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="view-profile" 
+                className="block font-semibold text-lg p-2 hover:bg-blue-50 rounded"
+              >
+                View Profile
               </Link>
             </li>
             <li>
@@ -58,7 +66,7 @@ const BrokersDashboard = () => {
             </li>
             <li>
               <Link 
-                to="/logout" 
+                to="/brokers" 
                 className="block font-semibold text-lg p-2 text-red-600 hover:bg-red-50 rounded"
               >
                 Logout
