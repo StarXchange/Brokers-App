@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+
 const ChangePassword = ({ userType = 'company', userId = 'STACO-MARINE' }) => {
   const { updatePassword } = useAuth();
   const navigate = useNavigate();
@@ -47,8 +48,19 @@ const ChangePassword = ({ userType = 'company', userId = 'STACO-MARINE' }) => {
         userId
       });
       
-      // On success, navigate back
-      navigate(userType === 'broker' ? '/brokers-dashboard' : '/company-dashboard/certificates');
+      // On success, navigate back based on user type
+      let redirectPath;
+      switch(userType) {
+        case 'broker':
+          redirectPath = '/brokers-dashboard';
+          break;
+        case 'client':
+          redirectPath = '/client-dashboard';
+          break;
+        default: // company
+          redirectPath = '/company-dashboard/certificates';
+      }
+      navigate(redirectPath);
       
     } catch (err) {
       setError(err.message || 'Failed to update password');
@@ -57,10 +69,43 @@ const ChangePassword = ({ userType = 'company', userId = 'STACO-MARINE' }) => {
     }
   };
 
+  const getDashboardPath = () => {
+    switch(userType) {
+      case 'broker':
+        return '/brokers-dashboard';
+      case 'client':
+        return '/client-dashboard';
+      default: // company
+        return '/company-dashboard/certificates';
+    }
+  };
+
+  const getUserLabel = () => {
+    switch(userType) {
+      case 'broker':
+        return 'Broker';
+      case 'client':
+        return 'Client';
+      default:
+        return 'My';
+    }
+  };
+
+  const getIdLabel = () => {
+    switch(userType) {
+      case 'broker':
+        return 'Broker Id';
+      case 'client':
+        return 'Client Id';
+      default:
+        return 'Company Id';
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       <h2 className="text-xl font-bold mb-6 text-gray-800">
-        {userType === 'broker' ? 'Broker' : 'My'} Login Password
+        {getUserLabel()} Login Password
       </h2>
       
       <div className="mb-6">
@@ -76,7 +121,7 @@ const ChangePassword = ({ userType = 'company', userId = 'STACO-MARINE' }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-medium mb-2">
-                {userType === 'broker' ? 'Broker Id' : 'Company Id'}
+                {getIdLabel()}
               </label>
               <div className="p-2 bg-gray-100 rounded border border-gray-300">
                 {userId}
@@ -136,7 +181,7 @@ const ChangePassword = ({ userType = 'company', userId = 'STACO-MARINE' }) => {
           <div className="border-t border-gray-200 pt-4 mt-6">
             <div className="flex justify-between">
               <Link 
-                to={userType === 'broker' ? '/brokers-dashboard' : '/company-dashboard/certificates'}
+                to={getDashboardPath()}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
               >
                 Go Back
