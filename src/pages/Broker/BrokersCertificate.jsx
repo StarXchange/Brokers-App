@@ -1,48 +1,48 @@
 // src/pages/brokers/BrokerCertificates.jsx
-import { useState } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom'; 
+import { useState } from "react";
+import axios from "axios";
+import { Link } from "react-router-dom";
 
 const BrokerCertificates = () => {
   // Mock data matching your screenshot
   const mockCertificates = [
     {
-      id: 'PRESTIGE/20/8/70002566',
-      brokerId: 'intteck',
-      certNo: 'PRESTIGE/2018/70002566',
-      policyNo: 'SAN/MOC/00471/2018/HQ',
-      transDate: '25 Jul 2018',
-      rate: '0.8%',
-      insuredValue: '₦1,000,000',
-      grossPremium: '₦8,000',
-      status: 'Download'
+      id: "PRESTIGE/20/8/70002566",
+      brokerId: "intteck",
+      certNo: "PRESTIGE/2018/70002566",
+      policyNo: "SAN/MOC/00471/2018/HQ",
+      transDate: "25 Jul 2018",
+      rate: "0.8%",
+      insuredValue: "₦1,000,000",
+      grossPremium: "₦8,000",
+      status: "Download",
     },
     {
-      id: 'ADP/16/6/000077',
-      brokerId: 'INTTECK',
-      certNo: 'ADP/16/6/000077',
-      policyNo: 'POLN/16/6/000077',
-      transDate: '19 Jun 2016',
-      rate: '0.89%',
-      insuredValue: '₦888,888',
-      grossPremium: '₦7,911',
-      status: 'Download'
+      id: "ADP/16/6/000077",
+      brokerId: "INTTECK",
+      certNo: "ADP/16/6/000077",
+      policyNo: "POLN/16/6/000077",
+      transDate: "19 Jun 2016",
+      rate: "0.89%",
+      insuredValue: "₦888,888",
+      grossPremium: "₦7,911",
+      status: "Download",
     },
     {
-      id: 'CRN/16/6/000061',
-      brokerId: 'INTTECK',
-      certNo: 'CRN/16/6/000061',
-      policyNo: 'POLN/16/6/000061',
-      transDate: '08 Jun 2016',
-      rate: '0.89%',
-      insuredValue: '₦500,000',
-      grossPremium: '₦4,450',
-      status: 'Download'
-    }
+      id: "CRN/16/6/000061",
+      brokerId: "INTTECK",
+      certNo: "CRN/16/6/000061",
+      policyNo: "POLN/16/6/000061",
+      transDate: "08 Jun 2016",
+      rate: "0.89%",
+      insuredValue: "₦500,000",
+      grossPremium: "₦4,450",
+      status: "Download",
+    },
   ];
 
   const [certificates, setCertificates] = useState(mockCertificates);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -77,11 +77,12 @@ const BrokerCertificates = () => {
       setLoading(false);
     }
     */
-    
+
     // Mock search implementation
-    const filtered = mockCertificates.filter(cert => 
-      cert.certNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cert.policyNo.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = mockCertificates.filter(
+      (cert) =>
+        cert.certNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cert.policyNo.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setCertificates(filtered);
   };
@@ -116,13 +117,13 @@ const BrokerCertificates = () => {
             Search
           </button>
           <div className="flex justify-end">
-  <Link 
-to="/brokers-dashboard/certificates/create-certificate/new" 
-    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-  >
-    Create new Certificate
-  </Link>
-</div>
+            <Link
+              to="/brokers-dashboard/certificates/create"
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Create new Certificate
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -131,16 +132,36 @@ to="/brokers-dashboard/certificates/create-certificate/new"
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CertNo</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Broker Id</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cert No</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Policy No</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trans.Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Insured Value</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gross premium</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Print</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                CertNo
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Broker Id
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Cert No
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Policy No
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Trans.Date
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Rate
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Insured Value
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Gross premium
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Print
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -149,25 +170,44 @@ to="/brokers-dashboard/certificates/create-certificate/new"
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input type="checkbox" className="h-4 w-4" />
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{certificate.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{certificate.brokerId}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <Link to={`/brokers-dashboard/certificates/${certificate.id}`} className="text-blue-600 hover:underline">
+                  {certificate.id}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {certificate.brokerId}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <Link
+                    to={`/brokers-dashboard/certificates/${certificate.id}`}
+                    className="text-blue-600 hover:underline"
+                  >
                     {certificate.certNo}
                   </Link>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{certificate.policyNo}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{certificate.transDate}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{certificate.rate}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{certificate.insuredValue}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{certificate.grossPremium}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {certificate.policyNo}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {certificate.transDate}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {certificate.rate}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {certificate.insuredValue}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {certificate.grossPremium}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                     {certificate.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button className="text-blue-600 hover:text-blue-900">Print</button>
+                  <button className="text-blue-600 hover:text-blue-900">
+                    Print
+                  </button>
                 </td>
               </tr>
             ))}

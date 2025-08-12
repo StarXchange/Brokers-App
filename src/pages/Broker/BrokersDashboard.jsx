@@ -1,5 +1,5 @@
 // src/pages/brokers/BrokersDashboard.jsx
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link } from "react-router-dom";
 
 const BrokersDashboard = () => {
   return (
@@ -9,64 +9,64 @@ const BrokersDashboard = () => {
         <nav>
           <ul className="space-y-2">
             <li>
-              <Link 
-                to="/brokers-dashboard/certificates" 
+              <Link
+                to="/brokers-dashboard/certificates"
                 className="block font-semibold text-lg p-2 hover:bg-blue-50 rounded"
               >
                 Certificates
               </Link>
             </li>
             <li>
-              <Link 
-                to="credit-notes" 
+              <Link
+                to="credit-notes"
                 className="block font-semibold text-lg p-2 hover:bg-blue-50 rounded"
               >
                 Credit Note
               </Link>
             </li>
             <li>
-              <Link 
-                to="/brokers-dashboard/client-management" 
+              <Link
+                to="/brokers-dashboard/client-management"
                 className="block font-semibold text-lg p-2 hover:bg-blue-50 rounded"
               >
                 Client
               </Link>
             </li>
             <li>
-              <Link 
-                to="download-certificates" 
+              <Link
+                to="download-certificates"
                 className="block font-semibold text-lg p-2 hover:bg-blue-50 rounded"
               >
                 Download Certificates
               </Link>
             </li>
             <li>
-              <Link 
-                to="view-documents" 
+              <Link
+                to="view-documents"
                 className="block font-semibold text-lg p-2 hover:bg-blue-50 rounded"
               >
                 View Document
               </Link>
             </li>
             <li>
-              <Link 
-                to="view-profile" 
+              <Link
+                to="view-profile"
                 className="block font-semibold text-lg p-2 hover:bg-blue-50 rounded"
               >
                 View Profile
               </Link>
             </li>
             <li>
-              <Link 
-                to="change-password" 
+              <Link
+                to="change-password"
                 className="block font-semibold text-lg p-2 hover:bg-blue-50 rounded"
               >
                 Change Password
               </Link>
             </li>
             <li>
-              <Link 
-                to="/brokers" 
+              <Link
+                to="/brokers"
                 className="block font-semibold text-lg p-2 text-red-600 hover:bg-red-50 rounded"
               >
                 Logout
@@ -81,7 +81,6 @@ const BrokersDashboard = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Your Marine Certificates</h1>
-            
           </div>
           <Outlet />
         </div>

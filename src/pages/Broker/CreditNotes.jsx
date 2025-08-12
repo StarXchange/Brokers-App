@@ -103,7 +103,7 @@ const CreditNotes = () => {
               <tr key={note.dncNo}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link 
-                    to="/brokers-dashboard/certificates/create-certificate/new"
+                    to="/brokers-dashboard/certificates/create"
                     className="text-blue-600 hover:underline"
                   >
                     {note.dncNo}
