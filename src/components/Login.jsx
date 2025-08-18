@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
@@ -8,7 +8,7 @@ export default function Login({ userType }) {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
-    role: "",
+    role: userType || "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
