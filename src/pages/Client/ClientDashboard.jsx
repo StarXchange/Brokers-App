@@ -1,18 +1,101 @@
-// src/pages/brokers/BrokersDashboard.jsx
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
 
-const BrokersDashboard = () => {
+const ClientDashboard = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  // State for proposals data
+  const [proposals, setProposals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedProposal, setSelectedProposal] = useState(null);
+  const [showDelete, setShowDelete] = useState(false);
   // Mobile responsive state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
+
+  /* 
+  BACKEND IMPLEMENTATION (COMMENTED FOR FRONTEND STRUCTURE)
+  
+  useEffect(() => {
+    const fetchProposals = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/client/proposals');
+        if (!response.ok) throw new Error('Failed to fetch proposals');
+        const data = await response.json();
+        setProposals(data);
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching proposals:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProposals();
+  }, []);
+  */
+
+  // Mock data for frontend display
+  useEffect(() => {
+    setProposals([
+      {
+        id: 1,
+        entryDate: "22 Aug 15",
+        lastName: "Other Names",
+        firstName: "intteck",
+        address: "233 ikorodu road",
+        mobile: "08023140962",
+        regNumber: "LAG 987 67",
+        amount: "5000.0000",
+      },
+      {
+        id: 2,
+        entryDate: "22 Aug 15",
+        lastName: "Other Names",
+        firstName: "intteck",
+        address: "233 ikorodu road",
+        mobile: "08023140962",
+        regNumber: "LAG 987 GH",
+        amount: "5000.0000",
+      },
+    ]);
+    setLoading(false);
+  }, []);
+
+  const handleRowClick = (proposal) => {
+    setSelectedProposal(proposal.id === selectedProposal ? null : proposal.id);
+    setShowDelete(proposal.id === selectedProposal ? false : true);
+  };
+
+  /* 
+  BACKEND IMPLEMENTATION FOR DELETE
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/proposals/${selectedProposal}`, { 
+        method: 'DELETE' 
+      });
+      if (!response.ok) throw new Error('Failed to delete proposal');
+      setProposals(proposals.filter(p => p.id !== selectedProposal));
+      setSelectedProposal(null);
+      setShowDelete(false);
+    } catch (err) {
+      console.error('Error deleting proposal:', err);
+      setError(err.message);
+    }
+  };
+  */
+
+  const handleAddProposal = () => {
+    navigate("add-proposal");
+  };
 
   // Check if current path is active
   const isActivePath = (path) => {
-    if (path === "certificates") {
+    if (path === "business-proposals") {
       return (
-        location.pathname === "/brokers-dashboard" ||
-        location.pathname === "/brokers-dashboard/certificates"
+        location.pathname === "/client-dashboard" ||
+        location.pathname === "/client-dashboard/business-proposals"
       );
     }
     return location.pathname.includes(path);
@@ -22,6 +105,35 @@ const BrokersDashboard = () => {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  if (loading)
+    return (
+      <div className="p-8 text-center text-gray-600">Loading proposals...</div>
+    );
+
+  if (error)
+    return (
+      <div className="p-4 sm:p-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 sm:px-6 py-4 rounded-lg">
+          <div className="flex items-center">
+            <svg
+              className="w-5 h-5 mr-3 flex-shrink-0"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span>
+              <strong>Error:</strong> {error}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -76,7 +188,7 @@ const BrokersDashboard = () => {
                 Global Insurance
               </h1>
               <p className="text-white text-opacity-80 text-md font-normal">
-                Broker Portal
+                Client Portal
               </p>
             </div>
           </div>
@@ -120,9 +232,9 @@ const BrokersDashboard = () => {
             </button>
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-blue-700 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium">B</span>
+                <span className="text-sm font-medium">C</span>
               </div>
-              <span className="text-sm hidden sm:block">Broker</span>
+              <span className="text-sm hidden sm:block">Client</span>
             </div>
           </div>
         </div>
@@ -146,16 +258,16 @@ const BrokersDashboard = () => {
           <div className="p-4 pt-8 h-full overflow-y-auto">
             <nav className="space-y-1">
               <Link
-                to="/brokers-dashboard/certificates"
+                to="/client-dashboard"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActivePath("certificates")
+                  isActivePath("business-proposals")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                     : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                 }`}
               >
                 <div
                   className={`p-1 rounded-md ${
-                    isActivePath("certificates")
+                    isActivePath("business-proposals")
                       ? "bg-blue-100"
                       : "group-hover:bg-blue-50"
                   }`}
@@ -174,20 +286,20 @@ const BrokersDashboard = () => {
                     />
                   </svg>
                 </div>
-                <span>Certificates</span>
+                <span>Business Proposals</span>
               </Link>
 
               <Link
-                to="credit-notes"
+                to="/client-dashboard/policies"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActivePath("credit-notes")
+                  isActivePath("policies")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                     : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                 }`}
               >
                 <div
                   className={`p-1 rounded-md ${
-                    isActivePath("credit-notes")
+                    isActivePath("policies")
                       ? "bg-blue-100"
                       : "group-hover:bg-blue-50"
                   }`}
@@ -202,56 +314,24 @@ const BrokersDashboard = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
                     />
                   </svg>
                 </div>
-                <span>Credit Note</span>
+                <span>Policies</span>
               </Link>
 
               <Link
-                to="/brokers-dashboard/client-management"
+                to="/client-dashboard/client-certificate"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActivePath("client-management")
+                  isActivePath("client-certificate")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                     : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                 }`}
               >
                 <div
                   className={`p-1 rounded-md ${
-                    isActivePath("client-management")
-                      ? "bg-blue-100"
-                      : "group-hover:bg-blue-50"
-                  }`}
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                    />
-                  </svg>
-                </div>
-                <span>Client</span>
-              </Link>
-
-              <Link
-                to="download-certificates"
-                className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActivePath("download-certificates")
-                    ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
-                }`}
-              >
-                <div
-                  className={`p-1 rounded-md ${
-                    isActivePath("download-certificates")
+                    isActivePath("client-certificate")
                       ? "bg-blue-100"
                       : "group-hover:bg-blue-50"
                   }`}
@@ -270,81 +350,11 @@ const BrokersDashboard = () => {
                     />
                   </svg>
                 </div>
-                <span>Download Certificates</span>
+                <span>Certificates</span>
               </Link>
 
               <Link
-                to="view-documents"
-                className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActivePath("view-documents")
-                    ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
-                }`}
-              >
-                <div
-                  className={`p-1 rounded-md ${
-                    isActivePath("view-documents")
-                      ? "bg-blue-100"
-                      : "group-hover:bg-blue-50"
-                  }`}
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
-                </div>
-                <span>View Document</span>
-              </Link>
-
-              <Link
-                to="view-profile"
-                className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActivePath("view-profile")
-                    ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
-                }`}
-              >
-                <div
-                  className={`p-1 rounded-md ${
-                    isActivePath("view-profile")
-                      ? "bg-blue-100"
-                      : "group-hover:bg-blue-50"
-                  }`}
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                </div>
-                <span>View Profile</span>
-              </Link>
-
-              <Link
-                to="change-password"
+                to="/client-dashboard/change-password"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActivePath("change-password")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -377,7 +387,7 @@ const BrokersDashboard = () => {
 
               <div className="pt-6 mt-6 border-t border-gray-200">
                 <Link
-                  to="/brokers"
+                  to="/"
                   className="group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
                 >
                   <div className="p-1 rounded-md group-hover:bg-red-100">
@@ -408,10 +418,21 @@ const BrokersDashboard = () => {
             <div className="max-w-7xl mx-auto">
               <div className="flex justify-between items-center mb-6">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  Your Marine Certificates
+                  Client Dashboard
                 </h1>
               </div>
-              <Outlet />
+              <Outlet
+                context={{
+                  proposals,
+                  selectedProposal,
+                  showDelete,
+                  handleRowClick,
+                  handleAddProposal,
+                  setProposals,
+                  setSelectedProposal,
+                  setShowDelete,
+                }}
+              />
             </div>
           </div>
         </main>
@@ -420,4 +441,4 @@ const BrokersDashboard = () => {
   );
 };
 
-export default BrokersDashboard;
+export default ClientDashboard;

@@ -86,209 +86,388 @@ const ViewProfile = () => {
   };
 
   if (isLoading) {
-    return <div className="p-4">Loading profile...</div>;
+    return (
+      <div className="p-8 text-center">
+        <div className="animate-pulse text-gray-600">Loading profile...</div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-4 text-red-500">{error}</div>;
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
+          <div className="flex items-center">
+            <svg
+              className="w-5 h-5 mr-3"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span>
+              <strong>Error:</strong> {error}
+            </span>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow mx-auto max-w-3xl">
-      <h2 className="text-xl font-bold mb-6 text-gray-800">My Details</h2>
-      
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-4 text-gray-700">My Details View</h3>
-        
-        {isEditing ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-medium mb-2">
-                  Broker Id
-                </label>
-                <input
-                  type="text"
-                  name="brokerId"
-                  value={formData.brokerId || ''}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded"
-                  disabled
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-medium mb-2">
-                  Broker Name
-                </label>
-                <input
-                  type="text"
-                  name="brokerName"
-                  value={formData.brokerName || ''}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded"
-                  required
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-medium mb-2">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address || ''}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-medium mb-2">
-                  Mobile Phone
-                </label>
-                <input
-                  type="tel"
-                  name="mobilePhone"
-                  value={formData.mobilePhone || ''}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-medium mb-2">
-                  Contact Name
-                </label>
-                <input
-                  type="text"
-                  name="contactName"
-                  value={formData.contactName || ''}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-medium mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email || ''}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded"
-                  required
-                />
-              </div>
-              
-             <div className="mb-4">
-  <label className="block text-gray-700 text-sm font-medium mb-2">
-    Password
-  </label>
-  <div className="relative">
-    <input
-      type={showPassword ? "text" : "password"}
-      name="password"
-      value={formData.password || ''}
-      onChange={handleChange}
-      className="w-full p-2 border border-gray-300 rounded pr-10"
-      required
-    />
-    <button
-      type="button"
-      onClick={() => setShowPassword(!showPassword)}
-      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
-      aria-label={showPassword ? "Hide password" : "Show password"}
-    >
-      {showPassword ? (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-        </svg>
-      ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-          <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-        </svg>
-      )}
-    </button>
-  </div>
-</div>
-            </div>
-            
-            <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={() => setIsEditing(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Updating...' : 'UPDATE'}
-              </button>
-            </div>
-          </form>
-        ) : (
+    <div className="p-8">
+      {/* Header Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
           <div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <tbody className="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Broker Id</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{profile.brokerId}</td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Broker Name</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{profile.brokerName}</td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Address</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{profile.address}</td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Mobile Phone</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{profile.mobilePhone}</td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Contact Name</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{profile.contactName}</td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Email Address</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{profile.email}</td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Password</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">••••••••</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            
-            <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-              <Link 
-                to="/brokers-dashboard" 
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Profile Settings
+            </h1>
+            <p className="text-gray-600">
+              View and manage your profile information
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Link 
+              to="/brokers-dashboard" 
+              className="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                Go Back
-              </Link>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              Go Back
+            </Link>
+            {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                EDIT
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                Edit Profile
               </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Card */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+              <svg
+                className="w-6 h-6 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                My Profile Details
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                {isEditing ? "Edit your personal and contact information" : "View your profile information"}
+              </p>
             </div>
           </div>
-        )}
+        </div>
+
+        <div className="p-6">
+          {isEditing ? (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Broker ID
+                  </label>
+                  <input
+                    type="text"
+                    name="brokerId"
+                    value={formData.brokerId || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                    disabled
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Broker ID cannot be changed</p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Broker Name
+                  </label>
+                  <input
+                    type="text"
+                    name="brokerName"
+                    value={formData.brokerName || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Address
+                  </label>
+                  <textarea
+                    name="address"
+                    rows={3}
+                    value={formData.address || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Mobile Phone
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        />
+                      </svg>
+                    </div>
+                    <input
+                      type="tel"
+                      name="mobilePhone"
+                      value={formData.mobilePhone || ''}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact Name
+                  </label>
+                  <input
+                    type="text"
+                    name="contactName"
+                    value={formData.contactName || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                        />
+                      </svg>
+                    </div>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email || ''}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password || ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                          <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData(profile);
+                  }}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Updating...
+                    </>
+                  ) : (
+                    'UPDATE PROFILE'
+                  )}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-500">Broker ID</label>
+                  <p className="text-sm text-gray-900 font-medium">{profile.brokerId}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-500">Broker Name</label>
+                  <p className="text-sm text-gray-900">{profile.brokerName}</p>
+                </div>
+                
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-sm font-medium text-gray-500">Address</label>
+                  <p className="text-sm text-gray-900">{profile.address}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-500">Mobile Phone</label>
+                  <div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 text-gray-400 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                    <p className="text-sm text-gray-900">{profile.mobilePhone}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-500">Contact Name</label>
+                  <p className="text-sm text-gray-900">{profile.contactName}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-500">Email Address</label>
+                  <div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 text-gray-400 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                      />
+                    </svg>
+                    <p className="text-sm text-gray-900">{profile.email}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-500">Password</label>
+                  <p className="text-sm text-gray-900">••••••••</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
