@@ -1,6 +1,8 @@
 // src/pages/brokers/BrokersDashboard.jsx
+
 import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
+
 
 const BrokersDashboard = () => {
   // Mobile responsive state
@@ -209,6 +211,7 @@ const BrokersDashboard = () => {
                 <span>Credit Note</span>
               </Link>
 
+
               <Link
                 to="/brokers-dashboard/client-management"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -216,6 +219,7 @@ const BrokersDashboard = () => {
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                     : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                 }`}
+
               >
                 <div
                   className={`p-1 rounded-md ${
@@ -248,6 +252,7 @@ const BrokersDashboard = () => {
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                     : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                 }`}
+
               >
                 <div
                   className={`p-1 rounded-md ${
@@ -273,6 +278,7 @@ const BrokersDashboard = () => {
                 <span>Download Certificates</span>
               </Link>
 
+
               <Link
                 to="view-documents"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -280,6 +286,7 @@ const BrokersDashboard = () => {
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                     : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                 }`}
+
               >
                 <div
                   className={`p-1 rounded-md ${

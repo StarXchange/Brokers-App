@@ -25,12 +25,14 @@ import BusinessProposals from "./pages/Client/BusinessProposals";
 import MakePayment from "./pages/Client/MakePayment";
 import ClientCertificate from "./pages/Client/ClientCertificate";
 
+
 const AppContent = () => {
   const location = useLocation();
   const hideNavAndFooter = 
     location.pathname.startsWith('/company-dashboard') ||
     location.pathname.startsWith('/brokers-dashboard') ||
     location.pathname.startsWith('/client-dashboard');
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -71,11 +73,13 @@ const AppContent = () => {
                 path="/brokers-dashboard/certificates/:brokerId/:year/:month/:certId" 
                 element={<CreateNewCertificate viewMode={true} userRole="broker"/>} 
               />
+
             </Route>
             
             <Route path="client-management" element={<ClientList />} />
             <Route path="client-management/add-client" element={<AddClient />} />
           </Route>
+
 
           {/* Client Dashboard */}
           <Route path="/client-dashboard" element={<ClientDashboard />}>

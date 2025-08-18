@@ -107,6 +107,7 @@ export default function AddProposal() {
       console.log('Proposal saved as draft (mock)', formData);
       setSaveLoading(false);
       navigate('/client-dashboard');
+
     }, 1000);
   };
 

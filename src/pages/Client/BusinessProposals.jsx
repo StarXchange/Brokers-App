@@ -69,9 +69,11 @@ const BusinessProposals = () => {
             <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
               CN
             </div>
+
           </div>
         </div>
       </div>
+
 
       {/* Proposals Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -359,6 +361,7 @@ const BusinessProposals = () => {
         </div>
       )}
     </div>
+
   );
 };
 

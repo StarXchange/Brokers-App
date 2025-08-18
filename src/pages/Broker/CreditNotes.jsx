@@ -118,6 +118,7 @@ const CreditNotes = () => {
   }
 
   return (
+
     <div className="p-8">
       {/* Header Section */}
       <div className="mb-8">
@@ -188,6 +189,7 @@ const CreditNotes = () => {
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Actions
                 </th>
+
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">

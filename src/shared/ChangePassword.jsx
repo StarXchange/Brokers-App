@@ -93,12 +93,14 @@ const ChangePassword = ({ userType = 'company', userId = 'STACO-MARINE' }) => {
     }
   };
 
+
   const togglePasswordVisibility = (field) => {
     setShowPasswords((prev) => ({
       ...prev,
       [field]: !prev[field],
     }));
   };
+
 
   const getDashboardPath = () => {
     switch(userType) {
@@ -130,10 +132,12 @@ const ChangePassword = ({ userType = 'company', userId = 'STACO-MARINE' }) => {
         return 'Client';
       default:
         return 'Company';
+
     }
   };
 
   return (
+
     <div className="p-8">
       {/* Header Section */}
       <div className="mb-8">
@@ -182,6 +186,7 @@ const ChangePassword = ({ userType = 'company', userId = 'STACO-MARINE' }) => {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Current {getIdLabel()} ID
+
               </label>
               <div className="text-lg font-semibold text-blue-900 flex items-center">
                 <svg
@@ -554,6 +559,7 @@ const ChangePassword = ({ userType = 'company', userId = 'STACO-MARINE' }) => {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+
               >
                 <path
                   strokeLinecap="round"

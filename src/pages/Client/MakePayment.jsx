@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -82,6 +84,7 @@ const MakePayment = () => {
   };
 
   return (
+
     <div className="p-8" style={{ minWidth: "1200px" }}>
       {/* Header Section */}
       <div className="mb-8">

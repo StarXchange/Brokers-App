@@ -152,30 +152,37 @@ const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
   const renderField = (label, name, type = 'text', options = null) => {
     if (viewMode) {
       return (
+
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">{label}</label>
           <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
             {formData[name] || 'N/A'}
           </div>
+
         </div>
       );
     }
 
     return (
+
       <div className="space-y-1">
         <label className="block text-sm font-medium text-gray-700">{label}</label>
+
         {type === 'select' ? (
           <select
             name={name}
             value={formData[name]}
             onChange={handleChange}
+
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+
           >
             {options?.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
         ) : type === 'checkbox' ? (
+
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -188,6 +195,7 @@ const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
           </div>
         ) : type === 'radio' ? (
           <div className="flex flex-wrap gap-4">
+
             {options?.map(option => (
               <label key={option.value} className="flex items-center space-x-2">
                 <input
@@ -198,7 +206,9 @@ const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
                   onChange={handleChange}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                 />
+
                 <span className="text-sm text-gray-700">{option.label}</span>
+
               </label>
             ))}
           </div>
@@ -207,9 +217,11 @@ const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
             name={name}
             value={formData[name]}
             onChange={handleChange}
+
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
             rows={4}
             placeholder={`Enter ${label.toLowerCase()}...`}
+
           />
         ) : (
           <input
@@ -220,6 +232,7 @@ const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
             required={!viewMode && name === 'insuredName'}
             placeholder={`Enter ${label.toLowerCase()}...`}
+
           />
         )}
       </div>
@@ -310,10 +323,12 @@ const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
               <span>
                 <strong>Error:</strong> {error}
               </span>
+
             </div>
           </div>
         </div>
       )}
+
 
       {/* Main Content */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">

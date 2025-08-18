@@ -43,6 +43,7 @@ const BrokerCertificates = () => {
 
   const [certificates, setCertificates] = useState(mockCertificates);
   const [selectedCerts, setSelectedCerts] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -209,7 +210,6 @@ const BrokerCertificates = () => {
           </div>
         </div>
       </div>
-
       {/* Certificates Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
