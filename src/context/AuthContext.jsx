@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
   const login = async ({ username, password, role }) => {
     try {
       const response = await axios.post(
-        "http://gibsbrokersapi.newgibsonline.com/api/Users/login",
+        "https://gibsbrokersapi.newgibsonline.com/api/Users/login",
         { username, password, role }
       );
 
@@ -62,7 +62,7 @@ export function AuthProvider({ children }) {
     try {
       // Make API call to update password
       await axios.post(
-        "http://gibsbrokersapi.newgibsonline.com/api/Users/update-password",
+        "https://gibsbrokersapi.newgibsonline.com/api/Users/update-password",
         { oldPassword, newPassword },
         {
           headers: {
