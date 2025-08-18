@@ -41,7 +41,7 @@ const AppContent = () => {
         <Routes>
           <Route index element={<GenericLoginPage userType="broker" />} />
           <Route path="/brokers" element={<GenericLoginPage userType="broker" />} />
-          <Route path="/insured-clients" element={<GenericLoginPage userType="insured-client" />} />
+          <Route path="/insured-clients" element={<GenericLoginPage userType="client" />} />
           <Route path="/company" element={<GenericLoginPage userType="company" />} />
 
           {/* Company Dashboard */}

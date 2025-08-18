@@ -297,7 +297,7 @@ const ClientDashboard = () => {
               </Link>
 
               <Link
-                to="/client-dashboard/policies"
+                to="/client-dashboard"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActivePath("policies")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
