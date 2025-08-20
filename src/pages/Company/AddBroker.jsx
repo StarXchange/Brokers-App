@@ -79,19 +79,21 @@ const AddBroker = () => {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               Broker Registration
             </h1>
-            <p className="text-gray-600">Enter a new Broker's Details here</p>
+            <p className="text-gray-600 text-sm sm:text-base">
+              Enter a new Broker's Details here
+            </p>
           </div>
           <Link
             to="/company-dashboard/agents-brokers"
-            className="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors w-full sm:w-auto"
           >
             <svg
               className="w-4 h-4 mr-2"
@@ -113,21 +115,21 @@ const AddBroker = () => {
 
       {/* Form Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             Broker Information
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">
             Complete all required fields to create a new broker account
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6">
           {/* Contact Information Section */}
-          <div className="mb-8">
-            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4 flex items-center">
               <svg
-                className="w-5 h-5 text-blue-600 mr-2"
+                className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600 mr-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -141,8 +143,8 @@ const AddBroker = () => {
               </svg>
               Contact Information
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Broker Name
@@ -152,7 +154,7 @@ const AddBroker = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     placeholder="Enter broker name"
                     required
                   />
@@ -167,7 +169,7 @@ const AddBroker = () => {
                     value={formData.address}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base resize-y"
                     placeholder="Enter full address"
                     required
                   />
@@ -182,7 +184,7 @@ const AddBroker = () => {
                     name="mobilePhone"
                     value={formData.mobilePhone}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     placeholder="e.g., 2348024242567"
                     required
                   />
@@ -197,7 +199,7 @@ const AddBroker = () => {
                     name="contactName"
                     value={formData.contactName}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     placeholder="Enter contact person name"
                     required
                   />
@@ -212,7 +214,7 @@ const AddBroker = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition-colors ${
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-3 border rounded-lg focus:ring-2 transition-colors text-sm sm:text-base ${
                       errors.email
                         ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                         : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
@@ -221,9 +223,9 @@ const AddBroker = () => {
                     required
                   />
                   {errors.email && (
-                    <p className="text-red-600 text-sm mt-2 flex items-center">
+                    <p className="text-red-600 text-xs sm:text-sm mt-2 flex items-center">
                       <svg
-                        className="w-4 h-4 mr-1"
+                        className="w-4 h-4 mr-1 flex-shrink-0"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -240,7 +242,7 @@ const AddBroker = () => {
               </div>
 
               {/* Broker Details Section */}
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Broker Status
@@ -249,7 +251,7 @@ const AddBroker = () => {
                     name="brokerStatus"
                     value={formData.brokerStatus}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   >
                     <option value="ENABLE">ENABLED</option>
                     <option value="DISABLE">DISABLED</option>
@@ -264,7 +266,7 @@ const AddBroker = () => {
                     name="identityType"
                     value={formData.identityType}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   >
                     <option value="DIRECT">DIRECT</option>
                     <option value="INDIRECT">INDIRECT</option>
@@ -280,7 +282,7 @@ const AddBroker = () => {
                     name="excess"
                     value={formData.excess}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     placeholder="Enter excess amount"
                   />
                 </div>
@@ -297,10 +299,10 @@ const AddBroker = () => {
                       onChange={handleChange}
                       step="0.01"
                       min="0"
-                      className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                       placeholder="0.00"
                     />
-                    <span className="absolute right-4 top-3.5 text-gray-500 text-sm font-medium">
+                    <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm font-medium">
                       %
                     </span>
                   </div>
@@ -318,10 +320,10 @@ const AddBroker = () => {
                       onChange={handleChange}
                       step="0.01"
                       min="0"
-                      className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                       placeholder="0.00"
                     />
-                    <span className="absolute right-4 top-3.5 text-gray-500 text-sm font-medium">
+                    <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm font-medium">
                       ₦
                     </span>
                   </div>
@@ -331,10 +333,10 @@ const AddBroker = () => {
           </div>
 
           {/* Password Section */}
-          <div className="mb-8">
-            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4 flex items-center">
               <svg
-                className="w-5 h-5 text-blue-600 mr-2"
+                className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600 mr-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -348,7 +350,7 @@ const AddBroker = () => {
               </svg>
               Security Information
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Password
@@ -358,7 +360,7 @@ const AddBroker = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition-colors ${
+                  className={`w-full px-3 sm:px-4 py-2 sm:py-3 border rounded-lg focus:ring-2 transition-colors text-sm sm:text-base ${
                     errors.password
                       ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                       : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
@@ -377,7 +379,7 @@ const AddBroker = () => {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition-colors ${
+                  className={`w-full px-3 sm:px-4 py-2 sm:py-3 border rounded-lg focus:ring-2 transition-colors text-sm sm:text-base ${
                     errors.password
                       ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                       : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
@@ -386,9 +388,9 @@ const AddBroker = () => {
                   required
                 />
                 {errors.password && (
-                  <p className="text-red-600 text-sm mt-2 flex items-center">
+                  <p className="text-red-600 text-xs sm:text-sm mt-2 flex items-center">
                     <svg
-                      className="w-4 h-4 mr-1"
+                      className="w-4 h-4 mr-1 flex-shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -406,10 +408,10 @@ const AddBroker = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 sm:pt-6 border-t border-gray-200 space-y-3 sm:space-y-0">
             <Link
               to="/company-dashboard/agents-brokers"
-              className="inline-flex items-center px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+              className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors text-sm sm:text-base order-2 sm:order-1"
             >
               <svg
                 className="w-4 h-4 mr-2"
@@ -428,7 +430,7 @@ const AddBroker = () => {
             </Link>
             <button
               type="submit"
-              className="inline-flex items-center px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              className="inline-flex items-center justify-center px-6 sm:px-8 py-2 sm:py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm sm:text-base order-1 sm:order-2"
             >
               <svg
                 className="w-4 h-4 mr-2"

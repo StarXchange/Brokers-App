@@ -65,7 +65,7 @@ const CertificateDetails = () => {
 
   if (loading) {
     return (
-      <div className="p-8 text-center">
+      <div className="p-4 sm:p-8 text-center">
         <div className="animate-pulse text-gray-600">
           Loading certificate details...
         </div>
@@ -108,19 +108,21 @@ const CertificateDetails = () => {
   //   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               Certificate Details
             </h1>
-            <p className="text-gray-600">Certificate Detail here</p>
+            <p className="text-gray-600 text-sm sm:text-base">
+              Certificate Detail here
+            </p>
           </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
             <svg
-              className="w-4 h-4"
+              className="w-4 h-4 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -132,31 +134,33 @@ const CertificateDetails = () => {
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            <span>Certificate No: {certificate.certNo || "10002"}</span>
+            <span className="break-all">
+              Certificate No: {certificate.certNo || "10002"}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Certificate Form */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                 Certificate Information
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
                 {isEditing
                   ? "Edit certificate details"
                   : "View certificate details"}
               </p>
             </div>
             {!isEditing && (
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsEditing(true)}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <svg
                     className="w-4 h-4 mr-2"
@@ -176,7 +180,7 @@ const CertificateDetails = () => {
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="inline-flex items-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
+                  className="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-gray-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   <svg
                     className="w-4 h-4 mr-2"
@@ -191,15 +195,16 @@ const CertificateDetails = () => {
                       d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
                     />
                   </svg>
-                  Print Certificate
+                  <span className="hidden xs:inline">Print Certificate</span>
+                  <span className="xs:hidden">Print</span>
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Certificate No */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -211,11 +216,11 @@ const CertificateDetails = () => {
                   name="certNo"
                   value={certificate.certNo}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium break-all">
                   {certificate.certNo || "10002"}
                 </div>
               )}
@@ -232,18 +237,18 @@ const CertificateDetails = () => {
                   name="insuredName"
                   value={certificate.insuredName}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium break-all">
                   {certificate.insuredName || "MW_STACO"}
                 </div>
               )}
             </div>
 
             {/* Address */}
-            <div className="md:col-span-2">
+            <div className="lg:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Address
               </label>
@@ -253,11 +258,11 @@ const CertificateDetails = () => {
                   value={certificate.address}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 whitespace-pre-line">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 whitespace-pre-line">
                   {certificate.address || "219 HERBERT MULCAULEY\nMAY, YABA"}
                 </div>
               )}
@@ -274,13 +279,13 @@ const CertificateDetails = () => {
                   name="transDate"
                   value={certificate.transDate}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 flex items-center">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 flex items-center">
                   <svg
-                    className="w-4 h-4 text-gray-400 mr-2"
+                    className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -308,18 +313,18 @@ const CertificateDetails = () => {
                   name="policyNo"
                   value={certificate.policyNo}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium break-all">
                   {certificate.policyNo || "STC/2025/10002"}
                 </div>
               )}
             </div>
 
             {/* Per */}
-            <div className="md:col-span-2">
+            <div className="lg:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Per
               </label>
@@ -330,7 +335,7 @@ const CertificateDetails = () => {
                     name="approvalStatus"
                     value={certificate.approvalStatus}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="AW APPROVED"
                   />
                   <input
@@ -338,12 +343,12 @@ const CertificateDetails = () => {
                     name="specialConditions"
                     value={certificate.specialConditions}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="STEMPER(5) AS PER"
                   />
                 </div>
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
                   <div>{certificate.approvalStatus || "AW APPROVED"}</div>
                   <div className="mt-1">
                     {certificate.specialConditions || "STEMPER(5) AS PER"}
@@ -363,11 +368,11 @@ const CertificateDetails = () => {
                   name="origin"
                   value={certificate.origin}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
                   {certificate.origin || "SWEDEN"}
                 </div>
               )}
@@ -384,11 +389,11 @@ const CertificateDetails = () => {
                   name="destination"
                   value={certificate.destination}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
                   {certificate.destination || "LOS APAPA"}
                 </div>
               )}
@@ -405,11 +410,11 @@ const CertificateDetails = () => {
                   name="interest"
                   value={certificate.interest}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
                   {certificate.interest || "POP......"}
                 </div>
               )}
@@ -426,11 +431,11 @@ const CertificateDetails = () => {
                   name="lienClauses"
                   value={certificate.lienClauses}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
                   {certificate.lienClauses || "NTL"}
                 </div>
               )}
@@ -447,11 +452,11 @@ const CertificateDetails = () => {
                   name="excess"
                   value={certificate.excess}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
                   {certificate.excess || "5"}
                 </div>
               )}
@@ -469,16 +474,16 @@ const CertificateDetails = () => {
                     name="insuredValue"
                     value={certificate.insuredValue}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-12 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     step="0.0001"
                     required
                   />
-                  <span className="absolute right-4 top-3.5 text-gray-500 text-sm">
+                  <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm">
                     ₦
                   </span>
                 </div>
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-semibold text-green-600">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg font-semibold text-green-600 break-all">
                   ₦
                   {certificate.insuredValue
                     ? new Intl.NumberFormat("en-US", {
@@ -503,23 +508,23 @@ const CertificateDetails = () => {
                       name="rate"
                       value={certificate.rate}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-12 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       step="0.01"
                     />
-                    <span className="absolute right-4 top-3.5 text-gray-500 text-sm">
+                    <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm">
                       %
                     </span>
                   </div>
-                  <span className="text-sm text-gray-600 font-medium">
+                  <span className="text-xs sm:text-sm text-gray-600 font-medium flex-shrink-0">
                     Compute
                   </span>
                 </div>
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 flex items-center justify-between">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 flex items-center justify-between">
                   <span className="font-medium">
                     {certificate.rate || "0"}%
                   </span>
-                  <span className="text-sm text-blue-600 font-medium">
+                  <span className="text-xs sm:text-sm text-blue-600 font-medium">
                     Compute
                   </span>
                 </div>
@@ -538,16 +543,16 @@ const CertificateDetails = () => {
                     name="grossPremium"
                     value={certificate.grossPremium}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-12 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     step="0.0001"
                     required
                   />
-                  <span className="absolute right-4 top-3.5 text-gray-500 text-sm">
+                  <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm">
                     ₦
                   </span>
                 </div>
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-semibold text-green-600">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg font-semibold text-green-600 break-all">
                   ₦
                   {certificate.grossPremium
                     ? new Intl.NumberFormat("en-US", {
@@ -570,11 +575,11 @@ const CertificateDetails = () => {
                   name="clausesConditions"
                   value={certificate.clausesConditions}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
                   {certificate.clausesConditions || "TBA"}
                 </div>
               )}
@@ -582,13 +587,13 @@ const CertificateDetails = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-6 mt-8 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 pt-6 mt-6 sm:mt-8 border-t border-gray-200">
             {isEditing ? (
               <>
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="inline-flex items-center px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                  className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base text-gray-600 hover:text-gray-800 font-medium transition-colors order-2 sm:order-1"
                 >
                   <svg
                     className="w-4 h-4 mr-2"
@@ -607,7 +612,7 @@ const CertificateDetails = () => {
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center px-8 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+                  className="inline-flex items-center justify-center px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors order-1 sm:order-2"
                 >
                   <svg
                     className="w-4 h-4 mr-2"
@@ -628,7 +633,7 @@ const CertificateDetails = () => {
             ) : (
               <Link
                 to="/company-dashboard/certificates"
-                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
               >
                 <svg
                   className="w-4 h-4 mr-2"

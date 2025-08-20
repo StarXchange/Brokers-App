@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Link } from "react-router-dom";
 
 export default function ClientList() {
   const [clients, setClients] = useState([]);
@@ -28,24 +28,24 @@ export default function ClientList() {
   // Mock data - Remove when backend is connected
   useEffect(() => {
     const mockClients = [
-      { 
-        id: 1, 
-        name: 'Client One', 
-        email: 'client1@example.com',
-        phone: '+234 803 123 4567',
-        company: 'ABC Industries Ltd',
-        dateAdded: '15 Jan 2025',
-        status: 'ACTIVE'
+      {
+        id: 1,
+        name: "Client One",
+        email: "client1@example.com",
+        phone: "+234 803 123 4567",
+        company: "ABC Industries Ltd",
+        dateAdded: "15 Jan 2025",
+        status: "ACTIVE",
       },
-      { 
-        id: 2, 
-        name: 'Client Two', 
-        email: 'client2@example.com',
-        phone: '+234 805 987 6543',
-        company: 'XYZ Corporation',
-        dateAdded: '10 Jan 2025',
-        status: 'ACTIVE'
-      }
+      {
+        id: 2,
+        name: "Client Two",
+        email: "client2@example.com",
+        phone: "+234 805 987 6543",
+        company: "XYZ Corporation",
+        dateAdded: "10 Jan 2025",
+        status: "ACTIVE",
+      },
     ];
     setClients(mockClients);
     setLoading(false);
@@ -71,21 +71,23 @@ export default function ClientList() {
 
   // Mock delete - Remove when backend is connected
   const handleDelete = () => {
-    setClients(clients.filter(client => !selectedClients.includes(client.id)));
+    setClients(
+      clients.filter((client) => !selectedClients.includes(client.id))
+    );
     setSelectedClients([]);
   };
 
   const toggleClientSelection = (clientId) => {
-    setSelectedClients(prev => 
-      prev.includes(clientId) 
-        ? prev.filter(id => id !== clientId) 
+    setSelectedClients((prev) =>
+      prev.includes(clientId)
+        ? prev.filter((id) => id !== clientId)
         : [...prev, clientId]
     );
   };
 
   if (loading) {
     return (
-      <div className="p-8 text-center">
+      <div className="p-4 sm:p-8 text-center">
         <div className="animate-pulse text-gray-600">Loading clients...</div>
       </div>
     );
@@ -93,8 +95,8 @@ export default function ClientList() {
 
   if (error) {
     return (
-      <div className="p-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
+      <div className="p-4 sm:p-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 sm:px-6 py-4 rounded-lg">
           <div className="flex items-center">
             <svg
               className="w-5 h-5 mr-3"
@@ -123,21 +125,21 @@ export default function ClientList() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8 w-full overflow-x-hidden">
       {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+          <div className="text-center lg:text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               Client Management
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-sm sm:text-base">
               You Can Edit Or Delete A Client Here
             </p>
           </div>
           <Link
             to="/brokers-dashboard/client-management/add-client"
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             <svg
               className="w-4 h-4 mr-2"
@@ -157,9 +159,9 @@ export default function ClientList() {
         </div>
       </div>
 
-      {/* Clients Table */}
+      {/* Clients Table/Cards */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">
             Client Database
           </h2>
@@ -168,7 +170,141 @@ export default function ClientList() {
           </p>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Card View for small screens */}
+        <div className="block lg:hidden">
+          {clients.length > 0 ? (
+            clients.map((client) => (
+              <div
+                key={client.id}
+                className="border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mt-1"
+                      checked={selectedClients.includes(client.id)}
+                      onChange={() => toggleClientSelection(client.id)}
+                    />
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                        <span className="text-sm font-medium text-blue-700">
+                          {client.name.charAt(0)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-900 block">
+                          {client.name}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {client.company}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        client.status === "ACTIVE"
+                          ? "bg-green-100 text-green-800 border border-green-200"
+                          : "bg-gray-100 text-gray-800 border border-gray-200"
+                      }`}
+                    >
+                      {client.status}
+                    </span>
+                    <Link
+                      // to={`/company-dashboard/client-management/edit/${client.id}`}
+                      className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-sm"
+                    >
+                      Edit
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 text-sm">
+                  <div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                      />
+                    </svg>
+                    <span className="text-gray-600 break-all">
+                      {client.email}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                    <span className="text-gray-600">{client.phone}</span>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex items-center text-xs text-gray-500">
+                    <svg
+                      className="w-3 h-3 text-gray-400 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Added {client.dateAdded}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-6 text-center">
+              <div className="flex flex-col items-center">
+                <svg
+                  className="w-12 h-12 text-gray-300 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                <p className="text-sm text-gray-500">No clients found</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Add your first client to get started
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table View for large screens */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -182,7 +318,7 @@ export default function ClientList() {
                     }
                     onChange={(e) => {
                       if (e.target.checked) {
-                        setSelectedClients(clients.map(client => client.id));
+                        setSelectedClients(clients.map((client) => client.id));
                       } else {
                         setSelectedClients([]);
                       }
@@ -346,10 +482,10 @@ export default function ClientList() {
           </table>
         </div>
 
-        {/* Action Buttons Section */}
+        {/* Action Buttons Section - Mobile Responsive */}
         {selectedClients.length > 0 && (
-          <div className="px-6 py-4 bg-red-50 border-t border-red-200">
-            <div className="flex items-center justify-between">
+          <div className="px-4 sm:px-6 py-4 bg-red-50 border-t border-red-200">
+            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
               <div className="flex items-center space-x-2">
                 <svg
                   className="w-5 h-5 text-red-600"
@@ -365,12 +501,13 @@ export default function ClientList() {
                   />
                 </svg>
                 <span className="text-sm font-medium text-red-800">
-                  {selectedClients.length} client{selectedClients.length > 1 ? "s" : ""} selected
+                  {selectedClients.length} client
+                  {selectedClients.length > 1 ? "s" : ""} selected
                 </span>
               </div>
               <button
                 onClick={handleDelete}
-                className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               >
                 <svg
                   className="w-4 h-4 mr-2"
@@ -391,15 +528,15 @@ export default function ClientList() {
           </div>
         )}
 
-        {/* Footer with Add Client Button */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-600">
+        {/* Footer with Add Client Button - Mobile Responsive */}
+        <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-200">
+          <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+            <p className="text-sm text-gray-600 text-center sm:text-left">
               {clients.length} client{clients.length !== 1 ? "s" : ""} total
             </p>
             <Link
               to="/brokers-dashboard/client-management/add-client"
-              className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
               <svg
                 className="w-4 h-4 mr-2"

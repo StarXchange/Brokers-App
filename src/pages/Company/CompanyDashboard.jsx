@@ -17,11 +17,10 @@ const CompanyDashboard = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        /* REAL IMPLEMENTATION:
-        const response = await fetch('/api/certificates');
-        const data = await response.json();
-        setCertificates(data);
-        */
+        // REAL IMPLEMENTATION:
+        // const response = await fetch('/api/certificates');
+        // const data = await response.json();
+        // setCertificates(data);
 
         // Temporary mock (will be removed)
         setTimeout(() => {

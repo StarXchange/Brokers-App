@@ -1,33 +1,33 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function AddProposal() {
   const navigate = useNavigate();
-  const [insuredType, setInsuredType] = useState('Individual');
+  const [insuredType, setInsuredType] = useState("Individual");
   const [formData, setFormData] = useState({
     // Common fields
-    address: '',
-    email: '',
-    phoneMobile: '',
-    phoneNumber: '',
-    transactionDate: '',
-    classOfBusiness: '',
-    startDate: '',
-    endDate: '',
-    locationId: '',
-    premiumDue: '24000.00',
-    notePayment: '',
-    
+    address: "",
+    email: "",
+    phoneMobile: "",
+    phoneNumber: "",
+    transactionDate: "",
+    classOfBusiness: "",
+    startDate: "",
+    endDate: "",
+    locationId: "",
+    premiumDue: "24000.00",
+    notePayment: "",
+
     // Individual fields
-    lastname: '',
-    firstname: '',
-    occupation: '',
-    
+    lastname: "",
+    firstname: "",
+    occupation: "",
+
     // Corporate fields
-    companyName: '',
-    registrationNumber: '',
-    industry: ''
+    companyName: "",
+    registrationNumber: "",
+    industry: "",
   });
   const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -36,23 +36,23 @@ export default function AddProposal() {
     doc1: null,
     doc2: null,
     doc3: null,
-    doc4: null
+    doc4: null,
   });
   const [showPaymentSection] = useState(true);
-  const [paymentAmount] = useState('24,000.00');
+  const [paymentAmount] = useState("24,000.00");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (e, docName) => {
-    setScannedDocs(prev => ({ ...prev, [docName]: e.target.files[0] }));
+    setScannedDocs((prev) => ({ ...prev, [docName]: e.target.files[0] }));
   };
 
   const handleMakePayment = () => {
-    navigate('/client-dashboard/make-payment', {
-      state: { amount: paymentAmount }
+    navigate("/client-dashboard/make-payment", {
+      state: { amount: paymentAmount },
     });
   };
 
@@ -104,9 +104,9 @@ export default function AddProposal() {
   const handleSaveProposal = () => {
     setSaveLoading(true);
     setTimeout(() => {
-      console.log('Proposal saved as draft (mock)', formData);
+      console.log("Proposal saved as draft (mock)", formData);
       setSaveLoading(false);
-      navigate('/client-dashboard');
+      navigate("/client-dashboard");
     }, 1000);
   };
 
@@ -159,27 +159,27 @@ export default function AddProposal() {
     e.preventDefault();
     setLoading(true);
     setTimeout(() => {
-      console.log('Proposal submitted (mock)', { ...formData, scannedDocs });
+      console.log("Proposal submitted (mock)", { ...formData, scannedDocs });
       setLoading(false);
-      navigate('/client-dashboard');
+      navigate("/client-dashboard");
     }, 1500);
   };
 
   return (
-    <div className="p-8" style={{ minWidth: "1200px" }}>
+    <div className="p-4 sm:p-6 lg:p-8 min-w-0 w-full max-w-none lg:min-w-[1200px]">
       {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               Add/Edit A Proposal
             </h1>
-            <p className="text-gray-600">
+            <p className="text-sm sm:text-base text-gray-600">
               Submit a new business proposal or edit existing one
             </p>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3 text-sm text-gray-600">
+            <div className="hidden sm:flex items-center space-x-3 text-sm text-gray-600">
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -195,7 +195,7 @@ export default function AddProposal() {
               </svg>
               <span>Welcome back, Client</span>
             </div>
-            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
               CN
             </div>
           </div>
@@ -204,10 +204,10 @@ export default function AddProposal() {
 
       {/* Error Alert */}
       {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
-          <div className="flex items-center">
+        <div className="mb-4 sm:mb-6 bg-red-50 border border-red-200 text-red-700 px-4 sm:px-6 py-3 sm:py-4 rounded-lg">
+          <div className="flex items-start">
             <svg
-              className="w-5 h-5 mr-3"
+              className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -217,28 +217,28 @@ export default function AddProposal() {
                 clipRule="evenodd"
               />
             </svg>
-            <span className="font-medium">{error}</span>
+            <span className="font-medium text-sm sm:text-base">{error}</span>
           </div>
         </div>
       )}
 
       {/* Form Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">
             Proposal Information
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">
             Complete all required fields to submit your proposal
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6">
           {/* Insured Details Section */}
-          <div className="mb-8">
-            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-base font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
               <svg
-                className="w-5 h-5 text-blue-600 mr-2"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mr-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -250,25 +250,27 @@ export default function AddProposal() {
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 />
               </svg>
-              Insured Details
+              <span className="text-sm sm:text-base">Insured Details</span>
             </h3>
 
             {/* Insured Type Radio Buttons */}
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+            <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                 Insured Type
               </label>
-              <div className="flex items-center space-x-6">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6">
                 <label className="inline-flex items-center">
                   <input
                     type="radio"
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 focus:ring-2"
                     name="insuredType"
                     value="Corporate"
-                    checked={insuredType === 'Corporate'}
-                    onChange={() => setInsuredType('Corporate')}
+                    checked={insuredType === "Corporate"}
+                    onChange={() => setInsuredType("Corporate")}
                   />
-                  <span className="ml-2 text-sm font-medium text-gray-700">Corporate</span>
+                  <span className="ml-2 text-sm font-medium text-gray-700">
+                    Corporate
+                  </span>
                 </label>
                 <label className="inline-flex items-center">
                   <input
@@ -276,17 +278,19 @@ export default function AddProposal() {
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 focus:ring-2"
                     name="insuredType"
                     value="Individual"
-                    checked={insuredType === 'Individual'}
-                    onChange={() => setInsuredType('Individual')}
+                    checked={insuredType === "Individual"}
+                    onChange={() => setInsuredType("Individual")}
                   />
-                  <span className="ml-2 text-sm font-medium text-gray-700">Individual</span>
+                  <span className="ml-2 text-sm font-medium text-gray-700">
+                    Individual
+                  </span>
                 </label>
               </div>
             </div>
 
             {/* Dynamic Form Fields Based on Insured Type */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {insuredType === 'Individual' ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {insuredType === "Individual" ? (
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -297,7 +301,7 @@ export default function AddProposal() {
                       name="lastname"
                       value={formData.lastname}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                       placeholder="Enter last name"
                       required
                     />
@@ -311,7 +315,7 @@ export default function AddProposal() {
                       name="firstname"
                       value={formData.firstname}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                       placeholder="Enter first name"
                       required
                     />
@@ -325,7 +329,7 @@ export default function AddProposal() {
                       name="occupation"
                       value={formData.occupation}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                       placeholder="Enter occupation"
                       required
                     />
@@ -342,7 +346,7 @@ export default function AddProposal() {
                       name="companyName"
                       value={formData.companyName}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                       placeholder="Enter company name"
                       required
                     />
@@ -356,7 +360,7 @@ export default function AddProposal() {
                       name="registrationNumber"
                       value={formData.registrationNumber}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                       placeholder="Enter registration number"
                       required
                     />
@@ -370,7 +374,7 @@ export default function AddProposal() {
                       name="industry"
                       value={formData.industry}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                       placeholder="Enter industry"
                       required
                     />
@@ -379,7 +383,7 @@ export default function AddProposal() {
               )}
 
               {/* Common Fields */}
-              <div className="md:col-span-2">
+              <div className="lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Address
                 </label>
@@ -388,7 +392,7 @@ export default function AddProposal() {
                   value={formData.address}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   placeholder="Enter full address"
                   required
                 />
@@ -402,7 +406,7 @@ export default function AddProposal() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   placeholder="Enter email address"
                   required
                 />
@@ -416,7 +420,7 @@ export default function AddProposal() {
                   name="phoneMobile"
                   value={formData.phoneMobile}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   placeholder="Enter mobile phone"
                   required
                 />
@@ -430,7 +434,7 @@ export default function AddProposal() {
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   placeholder="Enter phone number"
                   required
                 />
@@ -439,10 +443,10 @@ export default function AddProposal() {
           </div>
 
           {/* Proposal Details Section */}
-          <div className="mb-8">
-            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-base font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
               <svg
-                className="w-5 h-5 text-blue-600 mr-2"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mr-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -454,9 +458,9 @@ export default function AddProposal() {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              Proposal Details
+              <span className="text-sm sm:text-base">Proposal Details</span>
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Transaction Date
@@ -466,7 +470,7 @@ export default function AddProposal() {
                   name="transactionDate"
                   value={formData.transactionDate}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   required
                 />
               </div>
@@ -478,7 +482,7 @@ export default function AddProposal() {
                   name="classOfBusiness"
                   value={formData.classOfBusiness}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   required
                 >
                   <option value="">--Select Class of business--</option>
@@ -496,7 +500,7 @@ export default function AddProposal() {
                   name="startDate"
                   value={formData.startDate}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   required
                 />
               </div>
@@ -509,11 +513,11 @@ export default function AddProposal() {
                   name="endDate"
                   value={formData.endDate}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   required
                 />
               </div>
-              <div>
+              <div className="lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Location ID
                 </label>
@@ -522,7 +526,7 @@ export default function AddProposal() {
                   name="locationId"
                   value={formData.locationId}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   placeholder="Enter location ID"
                   required
                 />
@@ -531,10 +535,10 @@ export default function AddProposal() {
           </div>
 
           {/* Scanned Documents Section */}
-          <div className="mb-8">
-            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-base font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
               <svg
-                className="w-5 h-5 text-blue-600 mr-2"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mr-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -546,10 +550,10 @@ export default function AddProposal() {
                   d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
                 />
               </svg>
-              Scanned Documents
+              <span className="text-sm sm:text-base">Scanned Documents</span>
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {['doc1', 'doc2', 'doc3', 'doc4'].map((doc, index) => (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {["doc1", "doc2", "doc3", "doc4"].map((doc, index) => (
                 <div key={doc}>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Scanned Document {index + 1}
@@ -557,15 +561,23 @@ export default function AddProposal() {
                   <input
                     type="file"
                     onChange={(e) => handleFileChange(e, doc)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-lg file:border-0 file:text-xs sm:file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 text-sm sm:text-base"
                     accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                   />
                   {scannedDocs[doc] && (
-                    <p className="mt-1 text-sm text-green-600 flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    <p className="mt-1 text-xs sm:text-sm text-green-600 flex items-center">
+                      <svg
+                        className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
-                      {scannedDocs[doc].name}
+                      <span className="truncate">{scannedDocs[doc].name}</span>
                     </p>
                   )}
                 </div>
@@ -574,10 +586,10 @@ export default function AddProposal() {
           </div>
 
           {/* Premium Due Section */}
-          <div className="mb-8">
-            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-base font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
               <svg
-                className="w-5 h-5 text-blue-600 mr-2"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mr-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -589,21 +601,25 @@ export default function AddProposal() {
                   d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
                 />
               </svg>
-              Premium Due
+              <span className="text-sm sm:text-base">Premium Due</span>
             </h3>
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-green-800">Total Premium Amount:</span>
-                <span className="text-lg font-bold text-green-600">₦{formData.premiumDue}</span>
+            <div className="p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <span className="text-sm font-medium text-green-800">
+                  Total Premium Amount:
+                </span>
+                <span className="text-lg sm:text-xl font-bold text-green-600">
+                  ₦{formData.premiumDue}
+                </span>
               </div>
             </div>
           </div>
 
           {/* Note Payment Section */}
-          <div className="mb-8">
-            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-base font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
               <svg
-                className="w-5 h-5 text-blue-600 mr-2"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mr-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -615,23 +631,23 @@ export default function AddProposal() {
                   d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                 />
               </svg>
-              Payment Notes
+              <span className="text-sm sm:text-base">Payment Notes</span>
             </h3>
             <textarea
               name="notePayment"
               value={formData.notePayment}
               onChange={handleChange}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
               placeholder="Enter any additional notes regarding payment..."
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 sm:pt-6 border-t border-gray-200 gap-4">
             <Link
               to="/client-dashboard/"
-              className="inline-flex items-center px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+              className="inline-flex items-center justify-center sm:justify-start px-4 sm:px-6 py-2 sm:py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors text-sm sm:text-base"
             >
               <svg
                 className="w-4 h-4 mr-2"
@@ -648,13 +664,13 @@ export default function AddProposal() {
               </svg>
               Go back
             </Link>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
               <button
                 type="button"
                 onClick={handleSaveProposal}
                 disabled={saveLoading}
-                className={`inline-flex items-center px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors ${
-                  saveLoading ? 'opacity-70 cursor-not-allowed' : ''
+                className={`inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors text-sm sm:text-base ${
+                  saveLoading ? "opacity-70 cursor-not-allowed" : ""
                 }`}
               >
                 <svg
@@ -670,13 +686,13 @@ export default function AddProposal() {
                     d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
                   />
                 </svg>
-                {saveLoading ? 'Saving...' : 'Save Draft'}
+                {saveLoading ? "Saving..." : "Save Draft"}
               </button>
               {showPaymentSection && (
                 <button
                   type="button"
                   onClick={handleMakePayment}
-                  className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+                  className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors text-sm sm:text-base"
                 >
                   <svg
                     className="w-4 h-4 mr-2"
@@ -694,6 +710,28 @@ export default function AddProposal() {
                   Make Payment
                 </button>
               )}
+              <button
+                type="submit"
+                disabled={loading}
+                className={`inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm sm:text-base ${
+                  loading ? "opacity-70 cursor-not-allowed" : ""
+                }`}
+              >
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                  />
+                </svg>
+                {loading ? "Submitting..." : "Submit Proposal"}
+              </button>
             </div>
           </div>
         </form>

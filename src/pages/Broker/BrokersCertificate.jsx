@@ -98,7 +98,7 @@ const BrokerCertificates = () => {
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-gray-600">
+      <div className="p-4 sm:p-8 text-center text-gray-600">
         Loading certificates...
       </div>
     );
@@ -106,7 +106,7 @@ const BrokerCertificates = () => {
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           <div className="flex items-center">
             <svg
@@ -130,26 +130,28 @@ const BrokerCertificates = () => {
   }
 
   return (
-    <div className="p-8" style={{ minWidth: "1200px" }}>
+    <div className="p-4 sm:p-6 lg:p-8 w-full overflow-x-hidden">
       {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Broker Portal
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+          <div className="text-center lg:text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+              Your Marine Certificates
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-sm sm:text-base">
               Manage your certificates and client operations
             </p>
           </div>
-          <div className="flex items-center space-x-3">
+
+          {/* Mobile-first responsive controls */}
+          <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-3">
             {/* Search Section */}
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
               <div className="relative">
                 <input
                   type="text"
                   placeholder="Enter certificate No."
-                  className="px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full sm:w-auto px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -169,7 +171,7 @@ const BrokerCertificates = () => {
               </div>
               <button
                 onClick={handleSearch}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
               >
                 <svg
                   className="w-4 h-4"
@@ -187,9 +189,10 @@ const BrokerCertificates = () => {
                 <span>Search</span>
               </button>
             </div>
+
             <Link
               to="/brokers-dashboard/certificates/create"
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 text-sm"
             >
               <svg
                 className="w-4 h-4"
@@ -204,15 +207,15 @@ const BrokerCertificates = () => {
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              <span>Create new Certificate</span>
+              <span className="whitespace-nowrap">Create new Certificate</span>
             </Link>
           </div>
         </div>
       </div>
 
       {/* Certificates Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">
             Your Certificates
           </h2>
@@ -221,8 +224,89 @@ const BrokerCertificates = () => {
           </p>
         </div>
 
-        {/* Table Container - This is where the horizontal scroll happens */}
-        <div className="w-full overflow-x-auto">
+        {/* Mobile Card View for small screens */}
+        <div className="block lg:hidden">
+          {certificates.map((certificate) => (
+            <div
+              key={certificate.id}
+              className="border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mt-1"
+                    checked={selectedCerts.includes(certificate.id)}
+                    onChange={() => toggleCertificateSelection(certificate.id)}
+                  />
+                  <div>
+                    <Link
+                      to={`/brokers-dashboard/certificates/${certificate.id}`}
+                      className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline block"
+                    >
+                      {certificate.certNo}
+                    </Link>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {certificate.brokerId}
+                    </p>
+                  </div>
+                </div>
+                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-200">
+                  {certificate.status}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-gray-500 text-xs">Policy No</p>
+                  <p className="font-medium text-gray-900 truncate">
+                    {certificate.policyNo}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs">Trans. Date</p>
+                  <p className="font-medium text-gray-600">
+                    {certificate.transDate}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs">Rate</p>
+                  <p className="font-medium text-gray-900">
+                    {certificate.rate}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs">Insured Value</p>
+                  <p className="font-semibold text-green-600">
+                    {certificate.insuredValue}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-500 text-xs">Gross Premium</p>
+                    <p className="font-semibold text-green-600">
+                      {certificate.grossPremium}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <button className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-sm">
+                      Print
+                    </button>
+                    <button className="text-gray-600 hover:text-gray-800 font-medium transition-colors text-sm">
+                      More
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View for large screens */}
+        <div className="hidden lg:block w-full overflow-x-auto">
           <table
             className="w-full divide-y divide-gray-200"
             style={{ minWidth: "1100px" }}
@@ -295,7 +379,9 @@ const BrokerCertificates = () => {
                       type="checkbox"
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                       checked={selectedCerts.includes(certificate.id)}
-                      onChange={() => toggleCertificateSelection(certificate.id)}
+                      onChange={() =>
+                        toggleCertificateSelection(certificate.id)
+                      }
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -363,10 +449,10 @@ const BrokerCertificates = () => {
           </table>
         </div>
 
-        {/* Selection Actions Section */}
+        {/* Selection Actions Section - Mobile Responsive */}
         {selectedCerts.length > 0 && (
-          <div className="px-6 py-4 bg-blue-50 border-t border-blue-200">
-            <div className="flex items-center justify-between">
+          <div className="px-4 sm:px-6 py-4 bg-blue-50 border-t border-blue-200">
+            <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
               <div className="flex items-center space-x-2">
                 <svg
                   className="w-5 h-5 text-blue-600"
@@ -386,8 +472,8 @@ const BrokerCertificates = () => {
                   {selectedCerts.length > 1 ? "s" : ""} selected
                 </span>
               </div>
-              <div className="flex items-center space-x-3">
-                <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                <button className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                   <svg
                     className="w-4 h-4 mr-2"
                     fill="none"
@@ -403,7 +489,7 @@ const BrokerCertificates = () => {
                   </svg>
                   DOWNLOAD SELECTED
                 </button>
-                <button className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                <button className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                   <svg
                     className="w-4 h-4 mr-2"
                     fill="none"

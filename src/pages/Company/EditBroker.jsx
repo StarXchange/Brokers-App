@@ -155,7 +155,7 @@ const EditBroker = () => {
 
   if (loading && !broker) {
     return (
-      <div className="p-8 text-center">
+      <div className="p-4 sm:p-6 lg:p-8 text-center">
         <div className="animate-pulse text-gray-600">
           Loading broker details...
         </div>
@@ -165,11 +165,11 @@ const EditBroker = () => {
 
   if (error) {
     return (
-      <div className="p-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 sm:px-6 py-4 rounded-lg">
           <div className="flex items-center">
             <svg
-              className="w-5 h-5 mr-3"
+              className="w-5 h-5 mr-3 flex-shrink-0"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -179,13 +179,13 @@ const EditBroker = () => {
                 clipRule="evenodd"
               />
             </svg>
-            <span>
+            <span className="break-words">
               <strong>Error:</strong> {error}
             </span>
           </div>
           <button
             onClick={() => navigate("/company-dashboard/agents-brokers")}
-            className="mt-3 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+            className="mt-3 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors text-sm sm:text-base"
           >
             Back to Brokers
           </button>
@@ -195,19 +195,21 @@ const EditBroker = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="mb-6 lg:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               Edit Broker
             </h1>
-            <p className="text-gray-600">Edit Broker's Details here</p>
+            <p className="text-gray-600 text-sm sm:text-base">
+              Edit Broker's Details here
+            </p>
           </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
             <svg
-              className="w-4 h-4"
+              className="w-4 h-4 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -219,30 +221,32 @@ const EditBroker = () => {
                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
               />
             </svg>
-            <span>Broker ID: {broker?.id || "Loading..."}</span>
+            <span className="font-medium">
+              Broker ID: {broker?.id || "Loading..."}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Form Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             Broker Information
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">
             Update broker details and settings
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-8">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+          <div className="space-y-6 lg:space-y-8">
             {/* Broker ID Display */}
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Broker ID
               </label>
-              <div className="text-lg font-semibold text-gray-900">
+              <div className="text-base sm:text-lg font-semibold text-gray-900 break-all">
                 {broker?.id || "N/A"}
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -252,9 +256,9 @@ const EditBroker = () => {
 
             {/* Contact Information */}
             <div>
-              <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4 flex items-center">
                 <svg
-                  className="w-5 h-5 text-blue-600 mr-2"
+                  className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600 mr-2 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -268,7 +272,7 @@ const EditBroker = () => {
                 </svg>
                 Contact Information
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label
                     htmlFor="name"
@@ -282,7 +286,7 @@ const EditBroker = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -300,12 +304,12 @@ const EditBroker = () => {
                     name="contactName"
                     value={formData.contactName}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     required
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="lg:col-span-2">
                   <label
                     htmlFor="address"
                     className="block text-sm font-medium text-gray-700 mb-2"
@@ -318,7 +322,7 @@ const EditBroker = () => {
                     value={formData.address}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base resize-y"
                     required
                   />
                 </div>
@@ -336,7 +340,7 @@ const EditBroker = () => {
                     name="mobile"
                     value={formData.mobile}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -354,7 +358,7 @@ const EditBroker = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -363,9 +367,9 @@ const EditBroker = () => {
 
             {/* Broker Settings */}
             <div>
-              <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4 flex items-center">
                 <svg
-                  className="w-5 h-5 text-blue-600 mr-2"
+                  className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600 mr-2 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -385,7 +389,7 @@ const EditBroker = () => {
                 </svg>
                 Broker Settings
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label
                     htmlFor="status"
@@ -398,7 +402,7 @@ const EditBroker = () => {
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                   >
                     <option value="ENABLED">ENABLED</option>
                     <option value="DISABLED">DISABLED</option>
@@ -420,11 +424,11 @@ const EditBroker = () => {
                       name="rate"
                       value={formData.rate}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                       placeholder="0.00"
                       required
                     />
-                    <span className="absolute right-4 top-3.5 text-gray-500 text-sm font-medium">
+                    <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm font-medium">
                       %
                     </span>
                   </div>
@@ -444,11 +448,11 @@ const EditBroker = () => {
                       name="transactionLimit"
                       value={formData.transactionLimit}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                       placeholder="0.0000"
                       required
                     />
-                    <span className="absolute right-4 top-3.5 text-gray-500 text-sm font-medium">
+                    <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm font-medium">
                       ₦
                     </span>
                   </div>
@@ -467,7 +471,7 @@ const EditBroker = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -476,11 +480,11 @@ const EditBroker = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-6 mt-8 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 pt-6 mt-6 sm:mt-8 border-t border-gray-200">
             <button
               type="button"
               onClick={() => navigate("/company-dashboard/agents-brokers")}
-              className="inline-flex items-center px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+              className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors text-sm sm:text-base order-2 sm:order-1"
             >
               <svg
                 className="w-4 h-4 mr-2"
@@ -499,7 +503,7 @@ const EditBroker = () => {
             </button>
             <button
               type="submit"
-              className="inline-flex items-center px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center px-6 sm:px-8 py-2 sm:py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base order-1 sm:order-2"
               disabled={loading}
             >
               {loading ? (
