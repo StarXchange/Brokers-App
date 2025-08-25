@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -18,6 +19,7 @@ export function AuthProvider({ children }) {
     if (storedToken) {
       setToken(storedToken);
     }
+
   }, []);
 
   const login = async ({ username, password, role }) => {
@@ -26,6 +28,7 @@ export function AuthProvider({ children }) {
         "https://gibsbrokersapi.newgibsonline.com/api/Users/login",
         { username, password, role }
       );
+
 
       const { token: authToken, user: userData } = response.data;
       
@@ -48,14 +51,20 @@ export function AuthProvider({ children }) {
         success: true,
         user: authenticatedUser // Return the complete user object with token
       };
-      setUser(mockUser);
-      return { success: true, user: mockUser };
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error("Login error:", error.response?.data || error.message);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Login failed" 
+      };
     }
   };
 
   const logout = () => {
+    // Clear all auth-related storage
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
     setUser(null);
     setToken(null);
     return { success: true };
@@ -75,9 +84,26 @@ export function AuthProvider({ children }) {
       );
       return { success: true };
     } catch (error) {
-      return { success: false, error: 'Password update failed' };
+      console.error("Password update error:", error.response?.data || error.message);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || 'Password update failed' 
+      };
     }
   };
+
+  // Initialize user from localStorage if exists
+  const initializeUser = () => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  };
+
+  // Call initialize when AuthProvider mounts
+  useState(() => {
+    initializeUser();
+  }, []);
 
   const value = {
     user,
