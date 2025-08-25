@@ -1,22 +1,27 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext'; // Adjust path as needed
+
+const API_BASE_URL = '/api';
 
 const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
+  const { user, token } = useAuth();
   const { brokerId, year, month, certId } = useParams();
   const navigate = useNavigate();
+  const today = new Date().toISOString().split('T')[0]; // "2024-01-15"
+  const insCompanyId ='00000000-0000-0000-0000-000000000001';
+  // // Add the isValidGuid function definition FIRST
+  const isValidGuid = (guid) => {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(guid);
+  };
 
-
-  console.log('Component props:', { viewMode, userRole });
-  console.log('URL params:', { brokerId, year, month, certId });
-
-
-
+  
   const [formData, setFormData] = useState({
     certificateNo: viewMode ? '' : 'AUTO',
     insuredName: '',
     address: '',
-    transactionDate: '12 Aug, 2025',
+    transactionDate:today,
     vesselName: 'AMY APPROVED STEAMER(S) AS PER',
     subject: '',
     typeOfCover: "ICC 'A'",
@@ -50,56 +55,86 @@ const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+const getToken = () => {
+  return localStorage.getItem('token')
+};
+
   const fetchCertificateData = async () => {
     setLoading(true);
     try {
-      const mockData = {
-        certificateNo: certId,
-        insuredName: `Insured ${certId}`,
-        address: '123 Main St',
-        transactionDate: `${year}/${month}/01`,
-        vesselName: 'AMY APPROVED STEAMER(S) AS PER',
-        subject: 'Marine Cargo',
-        typeOfCover: "ICC 'A'",
-        origin: 'Lagos',
-        email: `insured${certId}@example.com`,
-        mobilePhone: '08012345678',
-        policyNo: `POL-${certId}`,
-        conveyance: 'MV Ocean Star',
-        tinNo: `TIN-${certId}`,
-        destination: 'London',
-        packagingType: 'Containerized',
-        proformaInvNo: `INV-${certId}`,
-        containerized: true,
-        interestInsured: 'Full Value',
-        natureOfGoods: 'Electronics',
-        paymentType: 'Credit Note',
-        terms: 'CIF',
-        loading: '100%',
-        currencyType: 'USD',
-        sumInsured: '50000.00',
-        clausesType: 'Institute Cargo Clauses A',
-        rate: '0.75',
-        conditionsClauses: 'Standard clauses apply',
-        lendingTitle: 'Main Lender',
-        legendTitle: 'Certificate Legend',
-        date: '12 Aug, 2025',
-        lendingAddress: '456 Finance St, London'
-      };
-      setFormData(mockData);
+      const token = getToken();
+      if (!token) {
+        setError('Authentication required. Please login again.');
+        return;
+      }
+      const response = await axios.get(`${API_BASE_URL}/Certificates/${certId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
-      // Real API call would be:
-      // const endpoint = userRole === 'broker' 
-      //   ? `/api/brokers/certificates/${certId}`
-      //   : `/api/clients/certificates/${certId}`;
-      // const response = await axios.get(endpoint);
-      // setFormData(response.data);
+      // Map API response to form fields
+      const apiData = response.data;
+      setFormData({
+        certificateNo: apiData.certNo,
+        insuredName: apiData.insuredName,
+        address: apiData.field6 || '',
+        transactionDate: apiData.transDate,
+        vesselName: apiData.field1 || 'AMY APPROVED STEAMER(S) AS PER',
+        subject: apiData.field9 || '',
+        typeOfCover: apiData.perDesc || "ICC 'A'",
+        origin: apiData.fromDesc || '',
+        email: apiData.field4 || '',
+        mobilePhone: apiData.field5 || '',
+        policyNo: apiData.policyNo,
+        conveyance: apiData.field2 || '',
+        tinNo: apiData.field7 || '',
+        destination: apiData.toDesc || '',
+        packagingType: apiData.field7 || '',
+        proformaInvNo: apiData.formMno || '',
+        containerized: apiData.field8 === 'Yes',
+        interestInsured: apiData.interestDesc || '',
+        natureOfGoods: apiData.field3 || '',
+        paymentType: apiData.field10 || 'Credit Note',
+        terms: apiData.field9 || '',
+        loading: '100%',
+        currencyType: apiData.field10 || '',
+        sumInsured: apiData.insuredValue?.toString() || '0.0',
+        clausesType: apiData.field9 || '',
+        rate: apiData.rate?.toString() || '0.0',
+        conditionsClauses: apiData.remarks || '',
+        lendingTitle: apiData.field101 || '',
+        legendTitle: apiData.field102 || '',
+        date: apiData.transDate,
+        lendingAddress: apiData.field103 || ''
+      });
+    
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load certificate');
-    } finally {
-      setLoading(false);
+      if (err.response?.status === 401) {
+        setError('Session expired. Please login again.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('role');
+      } else if (err.response?.status === 409) {
+        // Handle conflict error specifically
+        setError('Conflict error: This may be due to duplicate data or invalid references. Please check your entries.');
+        console.error('Conflict details:', err.response?.data);
+      } else if (err.response?.status === 400) {
+        // Show validation errors
+        const validationErrors = err.response?.data?.errors;
+        if (validationErrors) {
+          const errorMessages = Object.entries(validationErrors)
+            .map(([field, errors]) => `${field}: ${errors.join(', ')}`)
+            .join('\n');
+          setError(`Validation errors:\n${errorMessages}`);
+        } else {
+          setError(err.response?.data?.title || 'Invalid request data');
+        }
+      } else {
+        setError(err.response?.data?.message || 'Failed to create certificate');
+      }
     }
-  };
+  }
 
   useEffect(() => {
     if (viewMode && certId) {
@@ -124,21 +159,112 @@ const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
     setError(null);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const token = getToken();
+      if (!token) {
+        setError('Authentication required. Please login again.');
+        setLoading(false);
+        return;
+      }
+
+       // Check if user object exists and has the required properties
+    if (!user) {
+      setError('User not authenticated. Please login again.');
+      setLoading(false);
+      return;
+    }
+
+        // Use actual user IDs instead of test IDs
+      const brokerId = user.brokerId;
+      const clientId = user.clientId;
+
+  // Check if IDs exist and are valid GUIDs
+    if (!brokerId || !clientId) {
+      setError('User account missing required information. Please contact administrator.');
+      setLoading(false);
+      return;
+    }
+
+    if (!isValidGuid(brokerId) || !isValidGuid(clientId)) {
+      setError('Invalid user IDs. Please contact administrator.');
+      setLoading(false);
+      return;
+    }
+
+      const apiPayload = {
+        certNo: formData.certificateNo === 'AUTO' ? '' : formData.certificateNo,
+        brokerId: brokerId, 
+        clientId: clientId, 
+        insCompanyId: user.insCompanyId || insCompanyId, // Valid GUID
+        insuredName: formData.insuredName,
+        transDate: today,
+        policyNo: formData.policyNo,
+        perDesc: formData.typeOfCover,
+        fromDesc: formData.origin,
+        toDesc: formData.destination,
+        interestDesc: formData.interestInsured,
+        rate: parseFloat(formData.rate) || 0,
+        insuredValue: parseFloat(formData.sumInsured) || 0,
+        grossPrenium: (parseFloat(formData.sumInsured) * (parseFloat(formData.rate)/100)) || 0,
+        formMno: formData.proformaInvNo,
+        submitDate: today,
+        remarks: formData.conditionsClauses,
+        field1: formData.vesselName,
+        field2: formData.conveyance,
+        field3: formData.natureOfGoods,
+        field4: formData.email,
+        field5: formData.mobilePhone,
+        field6: formData.address,
+        field7: formData.tinNo,
+        field8: formData.containerized ? 'Yes' : 'No',
+        field9: formData.terms,
+        field10: formData.currencyType,
+        field101: formData.lendingTitle,
+        field102: formData.legendTitle,
+        field103: formData.lendingAddress,
+        a1: 0,
+        a2: 0,
+        a3: 0,
+        a4: 0,
+        a5: 0,
+        tag: "certificate",
+        field104: "",
+        field105: "",
+        field106: "",
+        field107: "",
+        field108: "",
+        field109: ""
+      };
+
+      await axios.post(`${API_BASE_URL}/Certificates`, apiPayload, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+       console.log('Certificate created successfully:', response.data);
+
       const redirectPath = getCertificatesPath();
       navigate(redirectPath, {
         state: { success: 'Certificate created successfully!' }
       });
-      
-      // Real API call would be:
-      // const endpoint = userRole === 'broker'
-      //   ? '/api/brokers/certificates'
-      //   : '/api/clients/certificates';
-      // await axios.post(endpoint, formData);
-      // navigate(redirectPath, {...});
-      
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create certificate');
+     } catch (err) {
+      if (err.response?.status === 401) {
+        setError('Session expired. Please login again.');
+        // Clear invalid token and redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('role');
+        // navigate('/login');
+      } else if (err.response?.status === 400) {
+        setError(err.response?.data?.message || 'Invalid request data');
+      }  // Show detailed error message from server
+      const errorMessage = err.response?.data || 
+                          err.response?.data?.message || 
+                          err.message || 
+                          'Failed to create certificate';
+      console.error('Full error details:', err.response?.data);
+      setError(`Server error: ${JSON.stringify(errorMessage)}`);
     } finally {
       setLoading(false);
     }
@@ -420,35 +546,32 @@ const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
                   type="button"
                   className="px-4 py-1 bg-gray-200 rounded hover:bg-gray-300 text-gray-700 transition-colors"
                 >
-                  Calc
-                </button>
-              </div>
-
-              {renderField('Currency Types', 'currencyType', 'select', [
-                { value: '', label: 'Select' },
-                { value: 'NGN', label: 'NGN' },
-                { value: 'USD', label: 'USD' },
-                { value: 'EUR', label: 'EUR' },
-                { value: 'GBP', label: 'GBP' }
-              ])}
-
-              {renderField('Sum Insured', 'sumInsured', 'number')}
-
-              {renderField('Clauses Type', 'clausesType', 'select', [
-                { value: '', label: 'Select' },
-                { value: 'Standard', label: 'Standard' },
-                { value: 'Extended', label: 'Extended' },
-                { value: 'Special', label: 'Special' }
-              ])}
-
-              <div className="flex items-center">
-                <label className="w-48 font-medium text-gray-700">Rate:</label>
-                <span className="mr-4 text-gray-900">{formData.rate}</span>
-                <button
-                  type="button"
-                  className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                >
-                  Compute
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      Create Policy
+                    </>
+                  )}
                 </button>
               </div>
             </div>
