@@ -1,17 +1,21 @@
+
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   // State for proposals data
   const [proposals, setProposals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [showDelete, setShowDelete] = useState(false);
+
   // Mobile responsive state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
 
   /* 
   BACKEND IMPLEMENTATION (COMMENTED FOR FRONTEND STRUCTURE)
@@ -39,6 +43,7 @@ const ClientDashboard = () => {
   // Mock data for frontend display
   useEffect(() => {
     setProposals([
+
       {
         id: 1,
         entryDate: "22 Aug 15",
@@ -59,6 +64,7 @@ const ClientDashboard = () => {
         regNumber: "LAG 987 GH",
         amount: "5000.0000",
       },
+
     ]);
     setLoading(false);
   }, []);
@@ -87,6 +93,7 @@ const ClientDashboard = () => {
   */
 
   const handleAddProposal = () => {
+
     navigate("add-proposal");
   };
 
@@ -290,7 +297,7 @@ const ClientDashboard = () => {
               </Link>
 
               <Link
-                to="/client-dashboard/policies"
+                to="/client-dashboard"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActivePath("policies")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -436,9 +443,11 @@ const ClientDashboard = () => {
             </div>
           </div>
         </main>
+
       </div>
     </div>
   );
 };
+
 
 export default ClientDashboard;

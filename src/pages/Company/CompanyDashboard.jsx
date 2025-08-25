@@ -1,4 +1,3 @@
-// src/pages/CompanyDashboard.jsx
 import { useState, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 
@@ -7,77 +6,239 @@ const CompanyDashboard = () => {
   const [certificates, setCertificates] = useState([]);
   const [selectedCerts, setSelectedCerts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState(null);
   // Mobile responsive state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  // This will be replaced with real API call
-  useEffect(() => {
-    // Simulate API fetch
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // REAL IMPLEMENTATION:
-        // const response = await fetch('/api/certificates');
-        // const data = await response.json();
-        // setCertificates(data);
+  const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
 
-        // Temporary mock (will be removed)
-        setTimeout(() => {
-          setCertificates([
-            {
-              id: 1,
-              certNo: "10002",
-              brokerId: "MODUPE.STACO",
-              policyNo: "STC/2025/10002",
-              transDate: "16 Jan 2025",
-              rate: "0%",
-              insuredValue: "₦142,400,000",
-              grossPremium: "₦213,600",
-              status: "PENDING",
-            },
-            {
-              id: 2,
-              certNo: "11001",
-              brokerId: "MODUPE.STACO",
-              policyNo: "STC/2024/11001",
-              transDate: "18 Nov 2024",
-              rate: "0.15%",
-              insuredValue: "₦156,750,000",
-              grossPremium: "₦5",
-              status: "PENDING",
-            },
-          ]);
-          setIsLoading(false);
-        }, 1000);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setIsLoading(false);
+  // Fetch data from real API
+  const fetchCertificates = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("authToken") ||
+        sessionStorage.getItem("token");
+
+      const response = await fetch(`${API_BASE_URL}/Certificates`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
 
-    fetchData();
+      const data = await response.json();
+      // Transform API data to match expected format
+      const transformedData = data.map((cert) => ({
+        id: cert.certNo, // Using certNo as id since no explicit id field
+        certNo: cert.certNo,
+        brokerId: cert.brokerId,
+        clientId: cert.clientId,
+        insCompanyId: cert.insCompanyId,
+        insuredName: cert.insuredName,
+        policyNo: cert.policyNo,
+        transDate: new Date(cert.transDate).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
+        submitDate: cert.submitDate
+          ? new Date(cert.submitDate).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
+          : null,
+        rate: `${(cert.rate * 100).toFixed(2)}%`,
+        insuredValue: `₦${cert.insuredValue.toLocaleString()}`,
+        grossPremium: `₦${cert.grossPrenium.toLocaleString()}`,
+        status: cert.tag || "PENDING", // Using tag as status, fallback to PENDING
+        perDesc: cert.perDesc,
+        fromDesc: cert.fromDesc,
+        toDesc: cert.toDesc,
+        interestDesc: cert.interestDesc,
+        formMno: cert.formMno,
+        remarks: cert.remarks,
+        // Include all the additional fields in case they're needed
+        ...cert,
+      }));
+
+      setCertificates(transformedData);
+    } catch (error) {
+      console.error("Error fetching certificates:", error);
+      setError("Failed to load certificates. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCertificates();
   }, []);
 
-  // These will connect to real backend endpoints
-  const handleApprove = () => {
-    console.log("Approving certificates:", selectedCerts);
-    /* REAL IMPLEMENTATION:
-    await fetch('/api/certificates/approve', {
-      method: 'POST',
-      body: JSON.stringify({ ids: selectedCerts })
-    });
-    */
+  // Backend API calls for certificate operations
+  const handleApprove = async () => {
+    if (selectedCerts.length === 0) {
+      alert("Please select certificates to approve.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("authToken") ||
+        sessionStorage.getItem("token");
+
+      // You may need to adjust this endpoint based on your API structure
+      const response = await fetch(`${API_BASE_URL}/Certificate/approve`, {
+        method: "PUT", // or POST depending on your API
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          certificateNumbers: selectedCerts,
+          status: "APPROVED",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to approve certificates: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Approved certificates:", result);
+
+      // Refresh the certificates list
+      await fetchCertificates();
+      setSelectedCerts([]);
+
+      alert("Certificates approved successfully!");
+    } catch (error) {
+      console.error("Error approving certificates:", error);
+      setError("Failed to approve certificates. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleReject = () => {
-    console.log("Rejecting certificates:", selectedCerts);
-    // Similar API call
+  const handleReject = async () => {
+    if (selectedCerts.length === 0) {
+      alert("Please select certificates to reject.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("authToken") ||
+        sessionStorage.getItem("token");
+
+      const response = await fetch(`${API_BASE_URL}/Certificate/reject`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          certificateNumbers: selectedCerts,
+          status: "REJECTED",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to reject certificates: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Rejected certificates:", result);
+
+      // Refresh the certificates list
+      await fetchCertificates();
+      setSelectedCerts([]);
+
+      alert("Certificates rejected successfully!");
+    } catch (error) {
+      console.error("Error rejecting certificates:", error);
+      setError("Failed to reject certificates. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleDelete = () => {
-    console.log("Deleting certificates:", selectedCerts);
-    // Similar API call
+  const handleDelete = async () => {
+    if (selectedCerts.length === 0) {
+      alert("Please select certificates to delete.");
+      return;
+    }
+
+    if (
+      !confirm(
+        "Are you sure you want to delete the selected certificates? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("authToken") ||
+        sessionStorage.getItem("token");
+
+      // Delete each certificate individually or use bulk delete if available
+      const deletePromises = selectedCerts.map((certNo) =>
+        fetch(`${API_BASE_URL}/Certificate/${certNo}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        })
+      );
+
+      const responses = await Promise.all(deletePromises);
+
+      // Check if all deletions were successful
+      const failedDeletions = responses.filter((response) => !response.ok);
+
+      if (failedDeletions.length > 0) {
+        throw new Error(
+          `Failed to delete ${failedDeletions.length} certificate(s)`
+        );
+      }
+
+      console.log("Deleted certificates:", selectedCerts);
+
+      // Refresh the certificates list
+      await fetchCertificates();
+      setSelectedCerts([]);
+
+      alert("Certificates deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting certificates:", error);
+      setError("Failed to delete certificates. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const toggleCertificateSelection = (certId) => {
@@ -107,12 +268,43 @@ const CompanyDashboard = () => {
   if (isLoading)
     return (
       <div className="p-8 text-center text-gray-600">
-        Loading certificates...
+        <div className="flex items-center justify-center space-x-2">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <span>Loading certificates...</span>
+        </div>
       </div>
     );
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Error Alert */}
+      {error && (
+        <div className="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg shadow-lg">
+          <div className="flex items-start">
+            <svg
+              className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <div>
+              <span className="font-medium">{error}</span>
+              <button
+                onClick={() => setError(null)}
+                className="ml-4 text-red-600 hover:text-red-800"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header
         className="text-white px-4 sm:px-6 py-4 shadow-sm sticky top-0 z-50 w-full"
@@ -399,6 +591,10 @@ const CompanyDashboard = () => {
                 handleApprove,
                 handleReject,
                 handleDelete,
+                isProcessing,
+                error,
+                setError,
+                fetchCertificates,
               }}
             />
           </div>

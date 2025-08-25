@@ -1,52 +1,75 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import axios from "axios";
 
 const CertificateDetails = () => {
   const { certNo } = useParams();
-  const [certificate, setCertificate] = useState({
-    certNo: "",
-    insuredName: "",
-    address: "",
-    transDate: "",
-    policyNo: "",
-    approvalStatus: "",
-    specialConditions: "",
-    origin: "",
-    destination: "",
-    interest: "",
-    lienClauses: "",
-    excess: "",
-    insuredValue: "",
-    rate: "",
-    grossPremium: "",
-    clausesConditions: "",
-  });
+  const navigate = useNavigate();
+  const [certificate, setCertificate] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [_error, setError] = useState(null);
+  const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({});
+
+  const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
 
   useEffect(() => {
     const fetchCertificate = async () => {
       try {
         setLoading(true);
-        // GET request to fetch certificate
-        const response = await axios.get(`/api/certificates/${certNo}`);
-        setCertificate(response.data);
+        setError(null);
+
+        const token =
+          localStorage.getItem("token") ||
+          localStorage.getItem("authToken") ||
+          sessionStorage.getItem("token");
+
+        console.log("Fetching certificate:", certNo);
+        console.log("Token available:", token ? "Yes" : "No");
+
+        const response = await fetch(`${API_BASE_URL}/Certificates/${certNo}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        });
+
+        console.log("Response status:", response.status);
+        console.log("Response ok:", response.ok);
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Certificate not found");
+          }
+          const errorText = await response.text();
+          console.error("API Error Response:", errorText);
+          throw new Error(
+            `HTTP error! status: ${response.status} - ${errorText}`
+          );
+        }
+
+        const data = await response.json();
+        console.log("Certificate data received:", data);
+
+        setCertificate(data);
+        // Initialize form data for editing
+        setFormData(data);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch certificate");
         console.error("Error fetching certificate:", err);
+        setError(err.message || "Failed to fetch certificate");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCertificate();
+    if (certNo) {
+      fetchCertificate();
+    }
   }, [certNo]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setCertificate((prev) => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -55,57 +78,116 @@ const CertificateDetails = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setError(null);
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("authToken") ||
+        sessionStorage.getItem("token");
+
       // PUT request to update certificate
-      await axios.put(`/api/certificates/${certNo}`, certificate);
+      const response = await fetch(`${API_BASE_URL}/Certificates/${certNo}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to update certificate: ${response.status} - ${errorText}`
+        );
+      }
+
+      const updatedData = await response.json();
+      setCertificate(updatedData);
       setIsEditing(false);
+      alert("Certificate updated successfully!");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update certificate");
+      console.error("Error updating certificate:", err);
+      setError(err.message || "Failed to update certificate");
     }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const formatCurrency = (amount) => {
+    if (!amount) return "₦0.0000";
+    return `₦${new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
+    }).format(amount)}`;
   };
 
   if (loading) {
     return (
       <div className="p-4 sm:p-8 text-center">
-        <div className="animate-pulse text-gray-600">
-          Loading certificate details...
+        <div className="flex items-center justify-center space-x-2">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <span className="text-gray-600">Loading certificate details...</span>
         </div>
       </div>
     );
   }
 
-  {
-    /* do not delete this commented api calls, they are there so when backend is been implemented, this is the code section that will grab the certificaates details from the backend.... DO NOT DELETE*/
+  if (error) {
+    return (
+      <div className="p-4 sm:p-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="flex items-start">
+            <svg
+              className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <div>
+              <strong>Error:</strong> {error}
+            </div>
+          </div>
+          <div className="mt-4">
+            <button
+              onClick={() => navigate("/company-dashboard/certificates")}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+            >
+              Back to Certificates
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  //   if (error) {
-  //     return (
-  //       <div className="p-4">
-  //         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-  //           <strong>Error:</strong> {error}
-  //           <button
-  //             onClick={() => navigate('/company-dashboard/certificates')}
-  //             className="ml-4 bg-blue-500 text-white px-3 py-1 rounded"
-  //           >
-  //             Back to Certificates
-  //           </button>
-  //         </div>
-  //       </div>
-  //     );
-  //   }
-
-  //   if (!certificate.certNo) {
-  //     return (
-  //       <div className="p-4">
-  //         <div className="mb-4">Certificate not found</div>
-  //         <button
-  //           onClick={() => navigate('/company-dashboard/certificates')}
-  //           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-  //         >
-  //           Back to Certificates
-  //         </button>
-  //       </div>
-  //     );
-  //   }
+  if (!certificate) {
+    return (
+      <div className="p-4 sm:p-8">
+        <div className="text-center">
+          <div className="mb-4 text-gray-600">Certificate not found</div>
+          <button
+            onClick={() => navigate("/company-dashboard/certificates")}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            Back to Certificates
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -117,7 +199,7 @@ const CertificateDetails = () => {
               Certificate Details
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">
-              Certificate Detail here
+              View and manage certificate information
             </p>
           </div>
           <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
@@ -135,11 +217,39 @@ const CertificateDetails = () => {
               />
             </svg>
             <span className="break-all">
-              Certificate No: {certificate.certNo || "10002"}
+              Certificate No: {certificate.certNo}
             </span>
           </div>
         </div>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="flex items-start">
+            <svg
+              className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <div className="flex-1">
+              <span className="font-medium">{error}</span>
+              <button
+                onClick={() => setError(null)}
+                className="ml-4 text-red-600 hover:text-red-800"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Certificate Form */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -214,14 +324,14 @@ const CertificateDetails = () => {
                 <input
                   type="text"
                   name="certNo"
-                  value={certificate.certNo}
+                  value={formData.certNo || ""}
                   onChange={handleChange}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
                 <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium break-all">
-                  {certificate.certNo || "10002"}
+                  {certificate.certNo}
                 </div>
               )}
             </div>
@@ -235,35 +345,54 @@ const CertificateDetails = () => {
                 <input
                   type="text"
                   name="insuredName"
-                  value={certificate.insuredName}
+                  value={formData.insuredName || ""}
                   onChange={handleChange}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               ) : (
                 <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium break-all">
-                  {certificate.insuredName || "MW_STACO"}
+                  {certificate.insuredName}
                 </div>
               )}
             </div>
 
-            {/* Address */}
-            <div className="lg:col-span-2">
+            {/* Broker ID */}
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Address
+                Broker ID
               </label>
               {isEditing ? (
-                <textarea
-                  name="address"
-                  value={certificate.address}
+                <input
+                  type="text"
+                  name="brokerId"
+                  value={formData.brokerId || ""}
                   onChange={handleChange}
-                  rows={3}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
                 />
               ) : (
-                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 whitespace-pre-line">
-                  {certificate.address || "219 HERBERT MULCAULEY\nMAY, YABA"}
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                  {certificate.brokerId || "N/A"}
+                </div>
+              )}
+            </div>
+
+            {/* Client ID */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Client ID
+              </label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="clientId"
+                  value={formData.clientId || ""}
+                  onChange={handleChange}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                />
+              ) : (
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                  {certificate.clientId || "N/A"}
                 </div>
               )}
             </div>
@@ -275,12 +404,13 @@ const CertificateDetails = () => {
               </label>
               {isEditing ? (
                 <input
-                  type="date"
+                  type="datetime-local"
                   name="transDate"
-                  value={certificate.transDate}
+                  value={
+                    formData.transDate ? formData.transDate.slice(0, 16) : ""
+                  }
                   onChange={handleChange}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
                 />
               ) : (
                 <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 flex items-center">
@@ -297,7 +427,7 @@ const CertificateDetails = () => {
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                   </svg>
-                  {certificate.transDate || "1/16/2025"}
+                  {formatDate(certificate.transDate)}
                 </div>
               )}
             </div>
@@ -311,53 +441,38 @@ const CertificateDetails = () => {
                 <input
                   type="text"
                   name="policyNo"
-                  value={certificate.policyNo}
+                  value={formData.policyNo || ""}
                   onChange={handleChange}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
                 />
               ) : (
                 <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium break-all">
-                  {certificate.policyNo || "STC/2025/10002"}
+                  {certificate.policyNo || "N/A"}
                 </div>
               )}
             </div>
 
-            {/* Per */}
+            {/* Per Description */}
             <div className="lg:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Per
+                Per Description
               </label>
               {isEditing ? (
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    name="approvalStatus"
-                    value={certificate.approvalStatus}
-                    onChange={handleChange}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="AW APPROVED"
-                  />
-                  <input
-                    type="text"
-                    name="specialConditions"
-                    value={certificate.specialConditions}
-                    onChange={handleChange}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="STEMPER(5) AS PER"
-                  />
-                </div>
+                <textarea
+                  name="perDesc"
+                  value={formData.perDesc || ""}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                />
               ) : (
-                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                  <div>{certificate.approvalStatus || "AW APPROVED"}</div>
-                  <div className="mt-1">
-                    {certificate.specialConditions || "STEMPER(5) AS PER"}
-                  </div>
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 whitespace-pre-line">
+                  {certificate.perDesc || "N/A"}
                 </div>
               )}
             </div>
 
-            {/* From */}
+            {/* From Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 From
@@ -365,20 +480,19 @@ const CertificateDetails = () => {
               {isEditing ? (
                 <input
                   type="text"
-                  name="origin"
-                  value={certificate.origin}
+                  name="fromDesc"
+                  value={formData.fromDesc || ""}
                   onChange={handleChange}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
                 />
               ) : (
                 <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                  {certificate.origin || "SWEDEN"}
+                  {certificate.fromDesc || "N/A"}
                 </div>
               )}
             </div>
 
-            {/* To */}
+            {/* To Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 To
@@ -386,111 +500,34 @@ const CertificateDetails = () => {
               {isEditing ? (
                 <input
                   type="text"
-                  name="destination"
-                  value={certificate.destination}
+                  name="toDesc"
+                  value={formData.toDesc || ""}
                   onChange={handleChange}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
                 />
               ) : (
                 <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                  {certificate.destination || "LOS APAPA"}
+                  {certificate.toDesc || "N/A"}
                 </div>
               )}
             </div>
 
-            {/* Interest */}
-            <div>
+            {/* Interest Description */}
+            <div className="lg:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Interest
+                Interest Description
               </label>
               {isEditing ? (
-                <input
-                  type="text"
-                  name="interest"
-                  value={certificate.interest}
+                <textarea
+                  name="interestDesc"
+                  value={formData.interestDesc || ""}
                   onChange={handleChange}
+                  rows={2}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
                 />
               ) : (
-                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                  {certificate.interest || "POP......"}
-                </div>
-              )}
-            </div>
-
-            {/* Lien Clauses */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lien Clauses
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="lienClauses"
-                  value={certificate.lienClauses}
-                  onChange={handleChange}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
-                />
-              ) : (
-                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                  {certificate.lienClauses || "NTL"}
-                </div>
-              )}
-            </div>
-
-            {/* Excess */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Excess
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="excess"
-                  value={certificate.excess}
-                  onChange={handleChange}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
-                />
-              ) : (
-                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                  {certificate.excess || "5"}
-                </div>
-              )}
-            </div>
-
-            {/* Insured Value */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Insured Value
-              </label>
-              {isEditing ? (
-                <div className="relative">
-                  <input
-                    type="number"
-                    name="insuredValue"
-                    value={certificate.insuredValue}
-                    onChange={handleChange}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-12 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    step="0.0001"
-                    required
-                  />
-                  <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm">
-                    ₦
-                  </span>
-                </div>
-              ) : (
-                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg font-semibold text-green-600 break-all">
-                  ₦
-                  {certificate.insuredValue
-                    ? new Intl.NumberFormat("en-US", {
-                        minimumFractionDigits: 4,
-                        maximumFractionDigits: 4,
-                      }).format(certificate.insuredValue)
-                    : "142,400,000.0000"}
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 whitespace-pre-line">
+                  {certificate.interestDesc || "N/A"}
                 </div>
               )}
             </div>
@@ -501,32 +538,48 @@ const CertificateDetails = () => {
                 Rate
               </label>
               {isEditing ? (
-                <div className="flex items-center space-x-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="number"
-                      name="rate"
-                      value={certificate.rate}
-                      onChange={handleChange}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-12 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                      step="0.01"
-                    />
-                    <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm">
-                      %
-                    </span>
-                  </div>
-                  <span className="text-xs sm:text-sm text-gray-600 font-medium flex-shrink-0">
-                    Compute
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="rate"
+                    value={formData.rate || ""}
+                    onChange={handleChange}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-12 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    step="0.01"
+                    min="0"
+                    max="1"
+                  />
+                  <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm">
+                    %
                   </span>
                 </div>
               ) : (
-                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 flex items-center justify-between">
-                  <span className="font-medium">
-                    {certificate.rate || "0"}%
-                  </span>
-                  <span className="text-xs sm:text-sm text-blue-600 font-medium">
-                    Compute
-                  </span>
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium">
+                  {certificate.rate
+                    ? `${(certificate.rate * 100).toFixed(2)}%`
+                    : "0.00%"}
+                </div>
+              )}
+            </div>
+
+            {/* Insured Value */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Insured Value
+              </label>
+              {isEditing ? (
+                <input
+                  type="number"
+                  name="insuredValue"
+                  value={formData.insuredValue || ""}
+                  onChange={handleChange}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  step="0.01"
+                  min="0"
+                />
+              ) : (
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg font-semibold text-green-600 break-all">
+                  {formatCurrency(certificate.insuredValue)}
                 </div>
               )}
             </div>
@@ -537,50 +590,147 @@ const CertificateDetails = () => {
                 Gross Premium
               </label>
               {isEditing ? (
-                <div className="relative">
-                  <input
-                    type="number"
-                    name="grossPremium"
-                    value={certificate.grossPremium}
-                    onChange={handleChange}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-12 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    step="0.0001"
-                    required
-                  />
-                  <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm">
-                    ₦
-                  </span>
-                </div>
+                <input
+                  type="number"
+                  name="grossPrenium"
+                  value={formData.grossPrenium || ""}
+                  onChange={handleChange}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  step="0.01"
+                  min="0"
+                />
               ) : (
                 <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg font-semibold text-green-600 break-all">
-                  ₦
-                  {certificate.grossPremium
-                    ? new Intl.NumberFormat("en-US", {
-                        minimumFractionDigits: 4,
-                        maximumFractionDigits: 4,
-                      }).format(certificate.grossPremium)
-                    : "213,800.0000"}
+                  {formatCurrency(certificate.grossPrenium)}
                 </div>
               )}
             </div>
 
-            {/* Clauses Conditions */}
+            {/* Form Mno */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Clauses Conditions
+                Form Mno
               </label>
               {isEditing ? (
                 <input
                   type="text"
-                  name="clausesConditions"
-                  value={certificate.clausesConditions}
+                  name="formMno"
+                  value={formData.formMno || ""}
                   onChange={handleChange}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
                 />
               ) : (
                 <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                  {certificate.clausesConditions || "TBA"}
+                  {certificate.formMno || "N/A"}
+                </div>
+              )}
+            </div>
+
+            {/* Status/Tag */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              {isEditing ? (
+                <select
+                  name="tag"
+                  value={formData.tag || ""}
+                  onChange={handleChange}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                >
+                  <option value="">Select Status</option>
+                  <option value="PENDING">PENDING</option>
+                  <option value="APPROVED">APPROVED</option>
+                  <option value="REJECTED">REJECTED</option>
+                </select>
+              ) : (
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg">
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      certificate.tag === "APPROVED"
+                        ? "bg-green-100 text-green-800"
+                        : certificate.tag === "REJECTED"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {certificate.tag || "PENDING"}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Remarks */}
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Remarks
+              </label>
+              {isEditing ? (
+                <textarea
+                  name="remarks"
+                  value={formData.remarks || ""}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                />
+              ) : (
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 whitespace-pre-line">
+                  {certificate.remarks || "N/A"}
+                </div>
+              )}
+            </div>
+
+            {/* Submit Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Submit Date
+              </label>
+              {isEditing ? (
+                <input
+                  type="datetime-local"
+                  name="submitDate"
+                  value={
+                    formData.submitDate ? formData.submitDate.slice(0, 16) : ""
+                  }
+                  onChange={handleChange}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                />
+              ) : (
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900 flex items-center">
+                  <svg
+                    className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  {formatDate(certificate.submitDate)}
+                </div>
+              )}
+            </div>
+
+            {/* Insurance Company ID */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Insurance Company ID
+              </label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="insCompanyId"
+                  value={formData.insCompanyId || ""}
+                  onChange={handleChange}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                />
+              ) : (
+                <div className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                  {certificate.insCompanyId || "N/A"}
                 </div>
               )}
             </div>
@@ -592,7 +742,11 @@ const CertificateDetails = () => {
               <>
                 <button
                   type="button"
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData(certificate); // Reset form data
+                    setError(null); // Clear any errors
+                  }}
                   className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base text-gray-600 hover:text-gray-800 font-medium transition-colors order-2 sm:order-1"
                 >
                   <svg

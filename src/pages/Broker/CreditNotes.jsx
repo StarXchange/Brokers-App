@@ -119,7 +119,7 @@ const CreditNotes = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 w-full overflow-x-hidden">
+    <div className="p-8">
       {/* Header Section */}
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">

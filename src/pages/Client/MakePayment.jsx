@@ -82,7 +82,7 @@ const MakePayment = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 min-w-0 w-full max-w-none lg:min-w-[1200px]">
+    <div className="p-8" style={{ minWidth: "1200px" }}>
       {/* Header Section */}
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
