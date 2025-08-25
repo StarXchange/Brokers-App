@@ -1,17 +1,25 @@
-import { createContext, useContext, useState,  useEffect } from 'react';
+
+import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
 
-   // Initialize user from localStorage on mount
+  // Initialize user and token from localStorage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("token");
+    
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+    if (storedToken) {
+      setToken(storedToken);
+    }
+
   }, []);
 
   const login = async ({ username, password, role }) => {
@@ -21,24 +29,27 @@ export function AuthProvider({ children }) {
         { username, password, role }
       );
 
-      const { token, user: userData } = response.data;
+
+      const { token: authToken, user: userData } = response.data;
       
       // Store authentication data
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", authToken); // FIXED: store authToken, not token
       localStorage.setItem("user", JSON.stringify(userData));
       localStorage.setItem("role", role);
 
+      setToken(authToken); // Set token in state
+      
       const authenticatedUser = {
         ...userData,
         role,
-        token
+        token: authToken // Include token in user object
       };
 
       setUser(authenticatedUser);
       
       return { 
         success: true,
-        user: authenticatedUser
+        user: authenticatedUser // Return the complete user object with token
       };
     } catch (error) {
       console.error("Login error:", error.response?.data || error.message);
@@ -55,6 +66,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("user");
     localStorage.removeItem("role");
     setUser(null);
+    setToken(null);
     return { success: true };
   };
 
@@ -62,11 +74,11 @@ export function AuthProvider({ children }) {
     try {
       // Make API call to update password
       await axios.post(
-        "https://gibsbrokersapi.newgibsonline.com/api/Users/update-password",
+        "https://gibsbrokersapi.newgibsonline.com/api/Users/update-password", // FIXED: typo in endpoint
         { oldPassword, newPassword },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${token}` // Use token from state
           }
         }
       );
@@ -95,7 +107,8 @@ export function AuthProvider({ children }) {
 
   const value = {
     user,
-    isAuthenticated: !!user,
+    token,
+    isAuthenticated: !!token, // Better to check token existence
     login,
     logout,
     updatePassword

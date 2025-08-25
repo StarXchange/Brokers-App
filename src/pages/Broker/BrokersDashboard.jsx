@@ -1,30 +1,14 @@
 // src/pages/brokers/BrokersDashboard.jsx
 
-import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 
-
 const BrokersDashboard = () => {
-  // Mobile responsive state
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  // Check if current path is active
+  // Helper function to check if current path is active
   const isActivePath = (path) => {
-    if (path === "certificates") {
-      return (
-        location.pathname === "/brokers-dashboard" ||
-        location.pathname === "/brokers-dashboard/certificates"
-      );
-    }
     return location.pathname.includes(path);
   };
-
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location.pathname]);
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -149,237 +133,196 @@ const BrokersDashboard = () => {
             <nav className="space-y-1">
               <Link
                 to="/brokers-dashboard/certificates"
-                className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+
+                className={`flex items-center font-semibold text-lg p-2 rounded transition-colors ${
                   isActivePath("certificates")
-                    ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
+                    ? "bg-blue-100 text-blue-700"
+                    : "hover:bg-blue-50 text-gray-700"
                 }`}
               >
-                <div
-                  className={`p-1 rounded-md ${
-                    isActivePath("certificates")
-                      ? "bg-blue-100"
-                      : "group-hover:bg-blue-50"
-                  }`}
+                <svg
+                  className="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-                <span>Certificates</span>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span>Policy</span>
+
               </Link>
 
               <Link
-                to="credit-notes"
-                className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                to="/brokers-dashboard/credit-notes"
+                className={`flex items-center font-semibold text-lg p-2 rounded transition-colors ${
                   isActivePath("credit-notes")
-                    ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
+                    ? "bg-blue-100 text-blue-700"
+                    : "hover:bg-blue-50 text-gray-700"
                 }`}
               >
-                <div
-                  className={`p-1 rounded-md ${
-                    isActivePath("credit-notes")
-                      ? "bg-blue-100"
-                      : "group-hover:bg-blue-50"
-                  }`}
+                <svg
+                  className="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"
-                    />
-                  </svg>
-                </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 14l6-6m-5.5 3.5l2.5 2.5l6-6M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
                 <span>Credit Note</span>
               </Link>
-
-
+              
               <Link
                 to="/brokers-dashboard/client-management"
-                className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center font-semibold text-lg p-2 rounded transition-colors ${
                   isActivePath("client-management")
-                    ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
+                    ? "bg-blue-100 text-blue-700"
+                    : "hover:bg-blue-50 text-gray-700"
                 }`}
-
               >
-                <div
-                  className={`p-1 rounded-md ${
-                    isActivePath("client-management")
-                      ? "bg-blue-100"
-                      : "group-hover:bg-blue-50"
-                  }`}
+                <svg
+                  className="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                    />
-                  </svg>
-                </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+
                 <span>Client</span>
               </Link>
 
               <Link
-                to="download-certificates"
-                className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                to="/brokers-dashboard/download-certificates"
+                className={`flex items-center font-semibold text-lg p-2 rounded transition-colors ${
                   isActivePath("download-certificates")
-                    ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
+                    ? "bg-blue-100 text-blue-700"
+                    : "hover:bg-blue-50 text-gray-700"
                 }`}
-
               >
-                <div
-                  className={`p-1 rounded-md ${
-                    isActivePath("download-certificates")
-                      ? "bg-blue-100"
-                      : "group-hover:bg-blue-50"
-                  }`}
+                <svg
+                  className="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
                 <span>Download Certificates</span>
               </Link>
 
 
               <Link
-                to="view-documents"
-                className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                to="/brokers-dashboard/view-documents"
+                className={`flex items-center font-semibold text-lg p-2 rounded transition-colors ${
                   isActivePath("view-documents")
-                    ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
+                    ? "bg-blue-100 text-blue-700"
+                    : "hover:bg-blue-50 text-gray-700"
                 }`}
-
               >
-                <div
-                  className={`p-1 rounded-md ${
-                    isActivePath("view-documents")
-                      ? "bg-blue-100"
-                      : "group-hover:bg-blue-50"
-                  }`}
+                <svg
+                  className="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
-                </div>
-                <span>View Document</span>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span>View Documents</span>
               </Link>
 
               <Link
-                to="view-profile"
-                className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+
+                to="/brokers-dashboard/view-profile"
+                className={`flex items-center font-semibold text-lg p-2 rounded transition-colors ${
                   isActivePath("view-profile")
-                    ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
+                    ? "bg-blue-100 text-blue-700"
+                    : "hover:bg-blue-50 text-gray-700"
                 }`}
               >
-                <div
-                  className={`p-1 rounded-md ${
-                    isActivePath("view-profile")
-                      ? "bg-blue-100"
-                      : "group-hover:bg-blue-50"
-                  }`}
+                <svg
+                  className="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
                 <span>View Profile</span>
               </Link>
 
               <Link
-                to="change-password"
-                className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                to="/brokers-dashboard/change-password"
+                className={`flex items-center font-semibold text-lg p-2 rounded transition-colors ${
                   isActivePath("change-password")
-                    ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
+                    ? "bg-blue-100 text-blue-700"
+                    : "hover:bg-blue-50 text-gray-700"
                 }`}
               >
-                <div
-                  className={`p-1 rounded-md ${
-                    isActivePath("change-password")
-                      ? "bg-blue-100"
-                      : "group-hover:bg-blue-50"
-                  }`}
+                <svg
+                  className="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2m-2-2a2 2 0 00-2 2m2-2a2 2 0 012 2M9 7a2 2 0 012 2v0a2 2 0 01-2 2m0 0a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2z"
-                    />
-                  </svg>
-                </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                  />
+                </svg>
                 <span>Change Password</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/brokers"
+                className="flex items-center font-semibold text-lg p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+              >
+                <svg
+                  className="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                  />
+                </svg>
+                <span>Logout</span>
               </Link>
 
               <div className="pt-6 mt-6 border-t border-gray-200">
