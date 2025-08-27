@@ -12,40 +12,73 @@ const ViewProfile = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // Mock data structure
-  const mockProfile = {
-    brokerId: "intieck",
-    brokerName: "intiec123",
-    address: "fdsdfdf",
-    mobilePhone: "8043443445",
-    contactName: "6455",
-    email: "DDSSD@YAHOO.COM",
-    password: "1234",
-  };
-
-  // Simulate fetching profile data
+  // Fetch profile data from API
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setIsLoading(true);
-        // In a real app, you would call your API here:
-        // const response = await fetch('/api/broker/profile');
-        // const data = await response.json();
+        setError("");
 
-        // Using mock data for now
-        setTimeout(() => {
-          setProfile(mockProfile);
-          setFormData(mockProfile);
-          setIsLoading(false);
-        }, 500);
+        // Get user ID from auth context or user object
+        const userId = user?.userid || user?.id;
+
+        if (!userId) {
+          throw new Error("User ID not found");
+        }
+
+        const response = await fetch(
+          `https://gibsbrokersapi.newgibsonline.com/api/Users/${userId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              // Add authorization header if needed
+              ...(user?.token && { Authorization: `Bearer ${user.token}` }),
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch profile: ${response.status} ${response.statusText}`
+          );
+        }
+
+        const data = await response.json();
+
+        // Map API response to component state
+        const mappedProfile = {
+          userid: data.userid,
+          brokerId: data.idNumber || data.userid, // Use identification or fallback to userid
+          brokerName: data.username,
+          address: data.address,
+          mobilePhone: data.phone,
+          contactName: data.insuredName,
+          email: data.email,
+          password: data.password,
+          title: data.title,
+          location: data.location,
+          identification: data.identification,
+          occupation: data.occupation,
+          field01: data.field01,
+          field02: data.field02,
+          field03: data.field03,
+          field04: data.field04,
+          field05: data.field05,
+        };
+
+        setProfile(mappedProfile);
+        setFormData(mappedProfile);
+        setIsLoading(false);
       } catch (err) {
-        setError("Failed to load profile");
+        console.error("Error fetching profile:", err);
+        setError(err.message || "Failed to load profile");
         setIsLoading(false);
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -61,25 +94,88 @@ const ViewProfile = () => {
       setIsLoading(true);
       setError("");
 
-      // In a real app, you would call your API here:
-      // const response = await fetch('/api/broker/profile', {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${user.token}`
-      //   },
-      //   body: JSON.stringify(formData)
-      // });
+      const userId = user?.userid || user?.id;
 
-      // Mock API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
+
+      // Map form data back to API schema
+      const apiData = {
+        userid: formData.userid,
+        username: formData.brokerName,
+        password: formData.password,
+        title: formData.title || "",
+        insuredName: formData.contactName,
+        location: formData.location || "",
+        idNumber: formData.brokerId,
+        identification: formData.identification || "",
+        email: formData.email,
+        phone: formData.mobilePhone,
+        occupation: formData.occupation || "",
+        address: formData.address,
+        field01: formData.field01 || "",
+        field02: formData.field02 || "",
+        field03: formData.field03 || "",
+        field04: formData.field04 || "",
+        field05: formData.field05 || "",
+      };
+
+      const response = await fetch(
+        `https://gibsbrokersapi.newgibsonline.com/api/Users/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            // Add authorization header if needed
+            ...(user?.token && { Authorization: `Bearer ${user.token}` }),
+          },
+          body: JSON.stringify(apiData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to update profile: ${response.status} ${response.statusText}`
+        );
+      }
+
+      // If the response has content, parse it
+      let updatedData = apiData;
+      if (response.headers.get("content-type")?.includes("application/json")) {
+        const responseData = await response.json();
+        updatedData = responseData;
+      }
+
+      // Map the response back to component format
+      const mappedUpdatedProfile = {
+        userid: updatedData.userid,
+        brokerId: updatedData.idNumber || updatedData.userid,
+        brokerName: updatedData.username,
+        address: updatedData.address,
+        mobilePhone: updatedData.phone,
+        contactName: updatedData.insuredName,
+        email: updatedData.email,
+        password: updatedData.password,
+        title: updatedData.title,
+        location: updatedData.location,
+        identification: updatedData.identification,
+        occupation: updatedData.occupation,
+        field01: updatedData.field01,
+        field02: updatedData.field02,
+        field03: updatedData.field03,
+        field04: updatedData.field04,
+        field05: updatedData.field05,
+      };
 
       // Update local state with new data
-      setProfile(formData);
+      setProfile(mappedUpdatedProfile);
+      setFormData(mappedUpdatedProfile);
       setIsEditing(false);
       setIsLoading(false);
     } catch (err) {
-      setError("Failed to update profile");
+      console.error("Error updating profile:", err);
+      setError(err.message || "Failed to update profile");
       setIsLoading(false);
     }
   };
@@ -121,6 +217,14 @@ const ViewProfile = () => {
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 text-center">
+        <div className="text-gray-600">No profile data found</div>
       </div>
     );
   }
