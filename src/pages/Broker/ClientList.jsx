@@ -1,80 +1,137 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export default function ClientList() {
+  const { user } = useAuth();
   const [clients, setClients] = useState([]);
   const [selectedClients, setSelectedClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  /* 
-  BACKEND IMPLEMENTATION (GET CLIENTS)
+  // Fetch clients from API
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await axios.get('/api/clients');
-        setClients(response.data);
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(
+          `https://gibsbrokersapi.newgibsonline.com/api/InsuredClients/1234`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              // Add authorization header if needed
+              ...(user?.token && { Authorization: `Bearer ${user.token}` }),
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch clients: ${response.status} ${response.statusText}`
+          );
+        }
+
+        const data = await response.json();
+
+        // Handle both array response and single object response
+        const clientsData = Array.isArray(data) ? data : [data];
+
+        // Map API response to component format
+        const mappedClients = clientsData.map((client) => ({
+          id: client.insuredId,
+          insuredId: client.insuredId,
+          brokerId: client.brokerId,
+          name: client.insuredName,
+          email: client.email,
+          phone: client.mobilePhone,
+          company: client.contactPerson, // Using contactPerson as company name
+          dateAdded: formatDate(client.submitDate),
+          status: "ACTIVE", // Default status since it's not in the API
+          address: client.address,
+          password: client.password,
+          type: client.type,
+          a1: client.a1,
+          a2: client.a2,
+          rate: client.rate,
+          value: client.value,
+          tag: client.tag,
+          remarks: client.remarks,
+          field1: client.field1,
+          field2: client.field2,
+        }));
+
+        setClients(mappedClients);
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to fetch clients');
+        console.error("Error fetching clients:", err);
+        setError(err.message || "Failed to fetch clients");
       } finally {
         setLoading(false);
       }
     };
+
     fetchClients();
-  }, []);
-  */
+  }, [user]);
 
-  // Mock data - Remove when backend is connected
-  useEffect(() => {
-    const mockClients = [
-      {
-        id: 1,
-        name: "Client One",
-        email: "client1@example.com",
-        phone: "+234 803 123 4567",
-        company: "ABC Industries Ltd",
-        dateAdded: "15 Jan 2025",
-        status: "ACTIVE",
-      },
-      {
-        id: 2,
-        name: "Client Two",
-        email: "client2@example.com",
-        phone: "+234 805 987 6543",
-        company: "XYZ Corporation",
-        dateAdded: "10 Jan 2025",
-        status: "ACTIVE",
-      },
-    ];
-    setClients(mockClients);
-    setLoading(false);
-  }, []);
+  // Format date helper function
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    } catch (error) {
+      return "Invalid Date";
+    }
+  };
 
-  /* 
-  BACKEND IMPLEMENTATION (DELETE CLIENTS)
+  // Delete selected clients
   const handleDelete = async () => {
     try {
       setLoading(true);
-      await axios.delete('/api/clients', { 
-        data: { clientIds: selectedClients } 
+      setError(null);
+
+      // Delete each selected client
+      const deletePromises = selectedClients.map(async (clientId) => {
+        const response = await fetch(
+          `https://gibsbrokersapi.newgibsonline.com/api/InsuredClients/${clientId}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              // Add authorization header if needed
+              ...(user?.token && { Authorization: `Bearer ${user.token}` }),
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to delete client ${clientId}: ${response.status} ${response.statusText}`
+          );
+        }
+
+        return clientId;
       });
-      setClients(clients.filter(client => !selectedClients.includes(client.id)));
+
+      await Promise.all(deletePromises);
+
+      // Remove deleted clients from local state
+      setClients(
+        clients.filter((client) => !selectedClients.includes(client.id))
+      );
       setSelectedClients([]);
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      console.error("Error deleting clients:", err);
+      setError(err.message || "Failed to delete clients");
     } finally {
       setLoading(false);
     }
-  };
-  */
-
-  // Mock delete - Remove when backend is connected
-  const handleDelete = () => {
-    setClients(
-      clients.filter((client) => !selectedClients.includes(client.id))
-    );
-    setSelectedClients([]);
   };
 
   const toggleClientSelection = (clientId) => {
@@ -189,15 +246,15 @@ export default function ClientList() {
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                         <span className="text-sm font-medium text-blue-700">
-                          {client.name.charAt(0)}
+                          {client.name ? client.name.charAt(0) : "?"}
                         </span>
                       </div>
                       <div>
                         <span className="text-sm font-medium text-gray-900 block">
-                          {client.name}
+                          {client.name || "N/A"}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {client.company}
+                          {client.company || "N/A"}
                         </span>
                       </div>
                     </div>
@@ -213,7 +270,7 @@ export default function ClientList() {
                       {client.status}
                     </span>
                     <Link
-                      // to={`/company-dashboard/client-management/edit/${client.id}`}
+                      to={`/brokers-dashboard/client-management/edit/${client.id}`}
                       className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-sm"
                     >
                       Edit
@@ -237,7 +294,7 @@ export default function ClientList() {
                       />
                     </svg>
                     <span className="text-gray-600 break-all">
-                      {client.email}
+                      {client.email || "N/A"}
                     </span>
                   </div>
                   <div className="flex items-center">
@@ -254,7 +311,9 @@ export default function ClientList() {
                         d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                       />
                     </svg>
-                    <span className="text-gray-600">{client.phone}</span>
+                    <span className="text-gray-600">
+                      {client.phone || "N/A"}
+                    </span>
                   </div>
                 </div>
 
@@ -335,7 +394,7 @@ export default function ClientList() {
                   Phone Number
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Company
+                  Contact Person
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Date Added
@@ -367,11 +426,11 @@ export default function ClientList() {
                       <div className="flex items-center">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                           <span className="text-sm font-medium text-blue-700">
-                            {client.name.charAt(0)}
+                            {client.name ? client.name.charAt(0) : "?"}
                           </span>
                         </div>
                         <span className="text-sm font-medium text-gray-900">
-                          {client.name}
+                          {client.name || "N/A"}
                         </span>
                       </div>
                     </td>
@@ -390,7 +449,7 @@ export default function ClientList() {
                             d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
                           />
                         </svg>
-                        {client.email}
+                        {client.email || "N/A"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -408,11 +467,11 @@ export default function ClientList() {
                             d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                           />
                         </svg>
-                        {client.phone}
+                        {client.phone || "N/A"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {client.company}
+                      {client.company || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       <div className="flex items-center">
@@ -445,7 +504,7 @@ export default function ClientList() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <Link
-                        // to={`/company-dashboard/client-management/edit/${client.id}`}
+                        to={`/brokers-dashboard/client-management/edit/${client.id}`}
                         className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
                       >
                         Edit
@@ -507,22 +566,50 @@ export default function ClientList() {
               </div>
               <button
                 onClick={handleDelete}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                disabled={loading}
+                className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-                DELETE SELECTED ({selectedClients.length})
+                {loading ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                    DELETE SELECTED ({selectedClients.length})
+                  </>
+                )}
               </button>
             </div>
           </div>
