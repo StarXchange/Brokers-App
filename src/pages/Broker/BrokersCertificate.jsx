@@ -1,18 +1,18 @@
 // src/pages/brokers/BrokerCertificates.jsx
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const BrokerCertificates = () => {
-
   // Tab state
   const [activeTab, setActiveTab] = useState("investments");
   const [certificates, setCertificates] = useState([]);
   const [selectedCerts, setSelectedCerts] = useState([]);
-
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -45,22 +45,76 @@ const BrokerCertificates = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/Certificates`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      setCertificates(response.data);
+      
+      if (!token) {
+        setError('No authentication token found');
+        return;
+      }
+
+      // Try different endpoints - adjust based on your API
+      const endpoints = [
+        '/api/certificates',
+        '/api/Certificates',
+        '/api/broker/certificates',
+        '/api/certificates/all'
+      ];
+
+      let response;
+      let lastError;
+
+      for (const endpoint of endpoints) {
+        try {
+          response = await axios.get(endpoint, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          break; // Success, break out of loop
+        } catch (err) {
+          lastError = err;
+          continue; // Try next endpoint
+        }
+      }
+
+      if (!response) {
+        throw lastError || new Error('All endpoints failed');
+      }
+
+      console.log('API Response:', response.data);
+
+      // Handle different response structures
+      const certificatesData = 
+        response.data.data || 
+        response.data.certificates || 
+        response.data.items || 
+        response.data;
+
+      setCertificates(Array.isArray(certificatesData) ? certificatesData : []);
+
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch certificates');
+      console.error('Fetch error:', err);
+      if (err.response?.status === 401) {
+        setError('Authentication failed. Please login again.');
+        navigate('/login');
+      } else if (err.response?.status === 403) {
+        setError('You do not have permission to view certificates.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to fetch certificates');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCertificates();
-  }, []);
+    // Check if we need to refresh after certificate creation
+    const needsRefresh = location.state?.refresh;
+    if (needsRefresh) {
+      fetchCertificates();
+      // Clear the refresh flag
+      navigate(location.pathname, { replace: true, state: {} });
+    } else {
+      fetchCertificates();
+    }
+  }, [location, navigate]);
 
   // Handle tab change
   const handleTabChange = (tab) => {
@@ -73,13 +127,20 @@ const BrokerCertificates = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/Certificates?search=${searchTerm}`, {
+      const response = await axios.get(`/api/certificates?search=${searchTerm}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      setCertificates(response.data);
+      // Handle different response structures
+      const certificatesData = 
+        response.data.data || 
+        response.data.certificates || 
+        response.data.items || 
+        response.data;
+
+      setCertificates(Array.isArray(certificatesData) ? certificatesData : []);
     } catch (err) {
       setError(err.response?.data?.message || 'Search failed');
     } finally {
@@ -105,14 +166,6 @@ const BrokerCertificates = () => {
 
   const handlePrintSchedule = () => {
     console.log("Printing quotation schedule");
-  };
-
-  const toggleCertificateSelection = (certId) => {
-    setSelectedCerts((prev) =>
-      prev.includes(certId)
-        ? prev.filter((id) => id !== certId)
-        : [...prev, certId]
-    );
   };
 
   if (loading) {
@@ -143,13 +196,18 @@ const BrokerCertificates = () => {
             </svg>
             <span className="text-sm font-medium">{error}</span>
           </div>
+          <button
+            onClick={fetchCertificates}
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-
     <div className="p-8" style={{ minWidth: "1200px" }}>
       {/* Header Section */}
       <div className="mb-6">
@@ -246,7 +304,6 @@ const BrokerCertificates = () => {
             >
               <svg
                 className="w-4 h-4 mr-2"
-
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -259,24 +316,13 @@ const BrokerCertificates = () => {
                 />
               </svg>
               Create new Policy
-
+            </Link>
           </div>
         </div>
       </div>
+
       {/* Certificates Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Your Certificates
-          </h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Manage and track all your insurance certificates
-          </p>
-        </div>
-
-
-      {/* Certificates Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">
             Your Certificates
@@ -319,7 +365,6 @@ const BrokerCertificates = () => {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-
                   Actions
                 </th>
               </tr>
@@ -335,27 +380,25 @@ const BrokerCertificates = () => {
                       type="checkbox"
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                       checked={selectedCerts.includes(certificate.id)}
-
                       onChange={() => toggleCertificateSelection(certificate.id)}
-
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {certificate.id}
+                    {certificate.id || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {certificate.brokerId}
+                    {certificate.brokerId || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
                       to={`/brokers-dashboard/certificates/${certificate.id}`}
                       className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
                     >
-                      {certificate.certNo}
+                      {certificate.certNo || 'No Certificate Number'}
                     </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {certificate.policyNo}
+                    {certificate.policyNo || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     <div className="flex items-center">
@@ -372,12 +415,11 @@ const BrokerCertificates = () => {
                           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                         />
                       </svg>
-
                       {formatDate(certificate.transDate)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {certificate.rate}%
+                    {certificate.rate || 0}%
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
                     {formatCurrency(certificate.insuredValue)}
@@ -388,7 +430,6 @@ const BrokerCertificates = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-200">
                       Active
-
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -426,6 +467,14 @@ const BrokerCertificates = () => {
             <p className="mt-1 text-sm text-gray-500">
               Get started by creating a new certificate.
             </p>
+            <div className="mt-4">
+              <Link
+                to="/brokers-dashboard/certificates/create"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+              >
+                Create Certificate
+              </Link>
+            </div>
           </div>
         )}
 
@@ -455,7 +504,6 @@ const BrokerCertificates = () => {
 
               <div className="flex items-center space-x-3">
                 <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-
                   <svg
                     className="w-4 h-4 mr-2"
                     fill="none"
