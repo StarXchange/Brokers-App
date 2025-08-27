@@ -15,8 +15,6 @@ const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
   const isValidGuid = (guid) => {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(guid);
   };
-
-  
   const [formData, setFormData] = useState({
     certificateNo: viewMode ? '' : 'AUTO',
     insuredName: '',
@@ -273,7 +271,7 @@ const getToken = () => {
   const getCertificatesPath = () => {
     switch(userRole) {
       case 'broker': return '/brokers-dashboard/certificates';
-      case 'client': return '/client-dashboard/certificates';
+      case 'client': return '/client-dashboard/client-certificate';
       default: return '/';
     }
   };
@@ -281,37 +279,50 @@ const getToken = () => {
   const renderField = (label, name, type = 'text', options = null) => {
     if (viewMode) {
       return (
-        <div className="flex items-center mb-3">
-          <span className="w-48 font-medium text-gray-700">{label}:</span>
-          <span className="text-gray-900">{formData[name] || 'N/A'}</span>
+
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">{label}</label>
+          <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
+            {formData[name] || 'N/A'}
+          </div>
+
         </div>
       );
     }
 
     return (
-      <div className="flex items-center mb-3">
-        <label className="w-48 font-medium text-gray-700">{label}:</label>
+
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">{label}</label>
+
         {type === 'select' ? (
           <select
             name={name}
             value={formData[name]}
             onChange={handleChange}
-            className="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+
           >
             {options?.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
         ) : type === 'checkbox' ? (
-          <input
-            type="checkbox"
-            name={name}
-            checked={formData[name]}
-            onChange={handleChange}
-            className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name={name}
+              checked={formData[name]}
+              onChange={handleChange}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <span className="ml-2 text-sm text-gray-700">Yes</span>
+          </div>
         ) : type === 'radio' ? (
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap gap-4">
+
             {options?.map(option => (
               <label key={option.value} className="flex items-center space-x-2">
                 <input
@@ -322,7 +333,9 @@ const getToken = () => {
                   onChange={handleChange}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                 />
-                <span>{option.label}</span>
+
+                <span className="text-sm text-gray-700">{option.label}</span>
+
               </label>
             ))}
           </div>
@@ -331,8 +344,11 @@ const getToken = () => {
             name={name}
             value={formData[name]}
             onChange={handleChange}
-            className="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            rows={3}
+
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            rows={4}
+            placeholder={`Enter ${label.toLowerCase()}...`}
+
           />
         ) : (
           <input
@@ -340,8 +356,10 @@ const getToken = () => {
             name={name}
             value={formData[name]}
             onChange={handleChange}
-            className="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
             required={!viewMode && name === 'insuredName'}
+            placeholder={`Enter ${label.toLowerCase()}...`}
+
           />
         )}
       </div>
@@ -349,202 +367,382 @@ const getToken = () => {
   };
 
   if (loading) return (
-    <div className="flex justify-center items-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    <div className="p-8" style={{ minWidth: "1200px" }}>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading certificate...</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">
-        Marine Certificate {viewMode ? 'Details' : 'Setup'}
-      </h1>
-      
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
+    <div className="p-8" style={{ minWidth: "1200px" }}>
+      {/* Header Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Marine Certificate {viewMode ? 'Details' : 'Setup'}
+            </h1>
+            <p className="text-gray-600">
+              {viewMode ? 'View certificate information and details' : 'Create a new marine insurance certificate'}
+            </p>
+          </div>
+          {viewMode && (
+            <div className="flex items-center space-x-3">
+              <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                  />
+                </svg>
+                Print Certificate
+              </button>
+              <button className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                Download PDF
+              </button>
             </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
+            <div className="flex items-center">
+              <svg
+                className="w-5 h-5 mr-3"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span>
+                <strong>Error:</strong> {error}
+              </span>
+
             </div>
           </div>
         </div>
       )}
 
-      {viewMode ? (
-        <div className="space-y-6">
-          {/* Certificate Details Section */}
-          <div className="mb-8 bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Certificate Details</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">Certificate No:</span>
-                <span className="text-gray-900 font-semibold">{formData.certificateNo}</span>
+
+      {/* Main Content */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        {viewMode ? (
+          <div className="p-6">
+            {/* Certificate Details Section */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-gray-900">Certificate Details</h2>
+                <span className="inline-flex px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full border border-green-200">
+                  Active
+                </span>
               </div>
               
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">Insured Name:</span>
-                <span className="text-gray-900">{formData.insuredName}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">Certificate No</label>
+                  <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm font-semibold text-blue-900">
+                    {formData.certificateNo}
+                  </div>
+                </div>
+                
+                {renderField('Insured Name', 'insuredName')}
+                {renderField('Address', 'address')}
+                {renderField('Transaction Date', 'transactionDate')}
+                {renderField('Vessel Name', 'vesselName')}
+                {renderField('Type of Cover', 'typeOfCover')}
+                {renderField('Voyage From', 'voyageFrom')}
+                {renderField('Origin', 'origin')}
+                {renderField('Subject', 'subject')}
               </div>
-              
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">Address:</span>
-                <span className="text-gray-900">{formData.address}</span>
+            </div>
+
+            <div className="border-t border-gray-200 my-8"></div>
+
+            {/* Contact Information Section */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Contact Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {renderField('Email Address', 'email')}
+                {renderField('Mobile Phone No', 'mobilePhone')}
+                {renderField('Policy No', 'policyNo')}
               </div>
-              
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">Transaction Date:</span>
-                <span className="text-gray-900">{formData.transactionDate}</span>
+            </div>
+
+            <div className="border-t border-gray-200 my-8"></div>
+
+            {/* Shipping Information */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Shipping Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {renderField('Conveyance', 'conveyance')}
+                {renderField('TIN NO', 'tinNo')}
+                {renderField('Destination', 'destination')}
+                {renderField('Packaging Type', 'packagingType')}
+                {renderField('PROFORMA INV.NO', 'proformaInvNo')}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">Containerized</label>
+                  <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm">
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                      formData.containerized 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {formData.containerized ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">Vessel Name:</span>
-                <span className="text-gray-900">{formData.vesselName}</span>
+            </div>
+
+            <div className="border-t border-gray-200 my-8"></div>
+
+            {/* Insurance Information */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Insurance Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {renderField('Interest Insured', 'interestInsured')}
+                {renderField('Nature of Goods', 'natureOfGoods')}
+                {renderField('Terms', 'terms')}
+                {renderField('Currency Type', 'currencyType')}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">Sum Insured</label>
+                  <div className="px-3 py-2 bg-green-50 border border-green-200 rounded-md text-sm font-semibold text-green-900">
+                    {formData.currencyType} {formData.sumInsured}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">Rate</label>
+                  <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm font-semibold text-blue-900">
+                    {formData.rate}%
+                  </div>
+                </div>
               </div>
-              
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">Type of Cover:</span>
-                <span className="text-gray-900">{formData.typeOfCover}</span>
-              </div>
-              
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">Voyage From:</span>
-                <span className="text-gray-900">{formData.voyageFrom}</span>
-              </div>
-              
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">Origin:</span>
-                <span className="text-gray-900">{formData.origin}</span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="border-t border-gray-200 pt-6">
+              <div className="flex justify-end">
+                <Link
+                  to={getCertificatesPath()}
+                  className="inline-flex items-center px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  Go Back
+                </Link>
               </div>
             </div>
           </div>
-
-          <div className="border-t border-gray-200 my-6"></div>
-
-          {/* Contact Information Section */}
-          <div className="mb-8 bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">E-mail Address:</span>
-                <span className="text-gray-900">{formData.email}</span>
-              </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="p-6">
+            {/* Certificate Details Section */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Certificate Details</h2>
               
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">Mobile Phone No:</span>
-                <span className="text-gray-900">{formData.mobilePhone}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">Certificate No</label>
+                  <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm font-semibold text-blue-900">
+                    {formData.certificateNo}
+                  </div>
+                </div>
+                
+                {renderField('Insured Name', 'insuredName')}
+                {renderField('Address', 'address')}
+                {renderField('Transaction Date', 'transactionDate', 'date')}
+                {renderField('Vessel Name', 'vesselName')}
+                {renderField('Type of Cover', 'typeOfCover')}
+                {renderField('Voyage From', 'voyageFrom')}
+                {renderField('Origin', 'origin')}
+                {renderField('Subject', 'subject')}
               </div>
-              
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">Policy No:</span>
-                <span className="text-gray-900">{formData.policyNo}</span>
+            </div>
+
+            <div className="border-t border-gray-200 my-8"></div>
+
+            {/* Contact Information Section */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Contact Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {renderField('Email Address', 'email', 'email')}
+                {renderField('Mobile Phone No', 'mobilePhone', 'tel')}
+                {renderField('Policy No', 'policyNo')}
               </div>
             </div>
-          </div>
 
-          {/* ... Continue with all other sections in view mode ... */}
+            <div className="border-t border-gray-200 my-8"></div>
 
-          <div className="flex justify-end mt-8">
-            <Link
-              to={getCertificatesPath()}
-              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Go Back
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit}>
-          {/* Certificate Details Section */}
-          <div className="mb-8 bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Certificate Details</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center">
-                <span className="w-48 font-medium text-gray-700">Certificate No:</span>
-                <span className="text-gray-900 font-semibold">{formData.certificateNo}</span>
+            {/* Shipping Information */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Shipping Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {renderField('Conveyance', 'conveyance')}
+                {renderField('TIN NO', 'tinNo')}
+                {renderField('Destination', 'destination')}
+                {renderField('Packaging Type', 'packagingType')}
+                {renderField('PROFORMA INV.NO', 'proformaInvNo')}
+                {renderField('Containerized', 'containerized', 'checkbox')}
               </div>
-              
-              {renderField('Insured Name', 'insuredName')}
-              {renderField('Address', 'address')}
-              {renderField('Transaction Date', 'transactionDate', 'date')}
-              {renderField('Vessel Name', 'vesselName')}
-              {renderField('Type of Cover', 'typeOfCover')}
-              {renderField('Voyage From', 'voyageFrom')}
-              {renderField('Origin', 'origin')}
             </div>
-          </div>
 
-          <div className="border-t border-gray-200 my-6"></div>
+            <div className="border-t border-gray-200 my-8"></div>
 
-          {/* Contact Information Section */}
-          <div className="mb-8 bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {renderField('E-mail Address', 'email', 'email')}
-              {renderField('Mobile Phone No', 'mobilePhone', 'tel')}
-              {renderField('Policy No', 'policyNo')}
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 my-6"></div>
-
-          {/* Shipping Information */}
-          <div className="mb-8 bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Shipping Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {renderField('Conveyance', 'conveyance')}
-              {renderField('TIN NO', 'tinNo')}
-              {renderField('Destination', 'destination')}
-              {renderField('Packaging Type', 'packagingType')}
-              {renderField('PROFORMA INV.NO', 'proformaInvNo')}
-              {renderField('Containerized', 'containerized', 'checkbox')}
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 my-6"></div>
-
-          {/* Insurance Information */}
-          <div className="mb-8 bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Insurance Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {renderField('Interest Insured', 'interestInsured')}
-              {renderField('Nature of Cargo', 'natureOfGoods', 'select', [
-                { value: '', label: 'Select' },
-                { value: 'General', label: 'General' },
-                { value: 'Perishable', label: 'Perishable' },
-                { value: 'Hazardous', label: 'Hazardous' }
-              ])}
-              {renderField('Terms', 'terms')}
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 my-6"></div>
-
-          {/* Payment Information */}
-          <div className="mb-8 bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Payment Information</h2>
-            <div className="space-y-6">
-              <div>
-                <h3 className="font-medium text-gray-700 mb-3">PAYMENT TYPE:</h3>
-                {renderField('', 'paymentType', 'radio', [
-                  { value: 'Credit Note', label: 'Credit Note' },
-                  { value: 'CAF', label: 'CAF' },
-                  { value: 'Cash', label: 'Cash' }
+            {/* Insurance Information */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Insurance Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {renderField('Interest Insured', 'interestInsured')}
+                {renderField('Nature of Cargo', 'natureOfGoods', 'select', [
+                  { value: '', label: 'Select Nature of Cargo' },
+                  { value: 'General', label: 'General Cargo' },
+                  { value: 'Perishable', label: 'Perishable Goods' },
+                  { value: 'Hazardous', label: 'Hazardous Materials' },
+                  { value: 'Electronics', label: 'Electronics' },
+                  { value: 'Textiles', label: 'Textiles' }
+                ])}
+                {renderField('Terms', 'terms')}
+                {renderField('Clauses Type', 'clausesType', 'select', [
+                  { value: '', label: 'Select Clauses Type' },
+                  { value: 'Standard', label: 'Standard Clauses' },
+                  { value: 'Extended', label: 'Extended Coverage' },
+                  { value: 'Special', label: 'Special Conditions' },
+                  { value: 'ICC A', label: 'Institute Cargo Clauses A' },
+                  { value: 'ICC B', label: 'Institute Cargo Clauses B' },
+                  { value: 'ICC C', label: 'Institute Cargo Clauses C' }
                 ])}
               </div>
+            </div>
 
-              <div className="flex items-center">
-                <label className="w-48 font-medium text-gray-700">LOADING:</label>
-                <span className="mr-4 text-gray-900">{formData.loading}</span>
-                <button
-                  type="button"
-                  className="px-4 py-1 bg-gray-200 rounded hover:bg-gray-300 text-gray-700 transition-colors"
+            <div className="border-t border-gray-200 my-8"></div>
+
+            {/* Payment Information */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Payment Information</h2>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Payment Type</h3>
+                  {renderField('', 'paymentType', 'radio', [
+                    { value: 'Credit Note', label: 'Credit Note' },
+                    { value: 'CAF', label: 'CAF' },
+                    { value: 'Cash', label: 'Cash' }
+                  ])}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Loading</label>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-900">
+                        {formData.loading}
+                      </div>
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700 transition-colors"
+                      >
+                        Calc
+                      </button>
+                    </div>
+                  </div>
+
+                  {renderField('Currency Type', 'currencyType', 'select', [
+                    { value: '', label: 'Select Currency' },
+                    { value: 'NGN', label: 'Nigerian Naira (NGN)' },
+                    { value: 'USD', label: 'US Dollar (USD)' },
+                    { value: 'EUR', label: 'Euro (EUR)' },
+                    { value: 'GBP', label: 'British Pound (GBP)' }
+                  ])}
+
+                  {renderField('Sum Insured', 'sumInsured', 'number')}
+
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Rate</label>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-900">
+                        {formData.rate}%
+                      </div>
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        Compute
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 my-8"></div>
+
+            {/* Lending Information */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Lending Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {renderField('Lending Title', 'lendingTitle')}
+                {renderField('Legend Title', 'legendTitle')}
+                {renderField('Date', 'date', 'date')}
+                {renderField('Lending Address', 'lendingAddress')}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 my-8"></div>
+
+            {/* Conditions/Clauses */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Conditions/Clauses</h2>
+              {renderField('Additional Terms and Conditions', 'conditionsClauses', 'textarea')}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="border-t border-gray-200 pt-6">
+              <div className="flex justify-end space-x-4">
+                <Link
+                  to={getCertificatesPath()}
+                  className="inline-flex items-center px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   {loading ? (
                     <>
@@ -575,56 +773,9 @@ const getToken = () => {
                 </button>
               </div>
             </div>
-          </div>
-
-          <div className="border-t border-gray-200 my-6"></div>
-
-          {/* Lending Information */}
-          <div className="mb-8 bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Lending Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {renderField('Lending Title', 'lendingTitle')}
-              {renderField('Legend Title', 'legendTitle')}
-              {renderField('Date', 'date')}
-              {renderField('Address', 'lendingAddress')}
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 my-6"></div>
-
-          {/* Conditions/Clauses */}
-          <div className="mb-8 bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Conditions/Clauses</h2>
-            {renderField('', 'conditionsClauses', 'textarea')}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-4 mt-8">
-            <Link
-              to={getCertificatesPath()}
-              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </Link>
-            
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 transition-colors flex items-center"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing...
-                </>
-              ) : 'Submit'}
-            </button>
-          </div>
-        </form>
-      )}
+          </form>
+        )}
+      </div>
     </div>
   );
 };

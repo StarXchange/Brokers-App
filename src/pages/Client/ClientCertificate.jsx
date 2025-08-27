@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 const ClientCertificate = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [certificates, setCertificates] = useState([]);
@@ -19,45 +19,45 @@ const ClientCertificate = () => {
         */
 
         // MOCK DATA - REMOVE IN PRODUCTION
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise((resolve) => setTimeout(resolve, 800));
         const mockData = [
-          { 
-            id: 'MC-2025-001', 
-            date: '01 Aug, 2025', 
-            insured: 'Oceanic Shipping Ltd', 
-            status: 'Active',
-            viewUrl: '/client-dashboard/certificates/MC-2025-001'
+          {
+            id: "MC-2025-001",
+            date: "01 Aug, 2025",
+            insured: "Oceanic Shipping Ltd",
+            status: "Active",
+            viewUrl: "/client-dashboard/certificates/MC-2025-001",
           },
-          { 
-            id: 'MC-2025-002', 
-            date: '05 Aug, 2025', 
-            insured: 'Global Freight Solutions', 
-            status: 'Active',
-            viewUrl: '/client-dashboard/certificates/MC-2025-002'
+          {
+            id: "MC-2025-002",
+            date: "05 Aug, 2025",
+            insured: "Global Freight Solutions",
+            status: "Active",
+            viewUrl: "/client-dashboard/certificates/MC-2025-002",
           },
-          { 
-            id: 'MC-2025-003', 
-            date: '10 Aug, 2025', 
-            insured: 'Maritime Traders Inc', 
-            status: 'Pending',
-            viewUrl: '/client-dashboard/certificates/MC-2025-003'
+          {
+            id: "MC-2025-003",
+            date: "10 Aug, 2025",
+            insured: "Maritime Traders Inc",
+            status: "Pending",
+            viewUrl: "/client-dashboard/certificates/MC-2025-003",
           },
         ];
         setCertificates(mockData);
-        
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load certificates');
+        setError(err.response?.data?.message || "Failed to load certificates");
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchCertificates();
   }, []);
 
-  const filteredCertificates = certificates.filter(cert =>
-    cert.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cert.insured.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCertificates = certificates.filter(
+    (cert) =>
+      cert.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cert.insured.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleUploadNID = () => {
@@ -72,7 +72,7 @@ const ClientCertificate = () => {
     //   setError(err.response?.data?.message || 'Upload failed');
     // }
     */
-    alert('NID upload functionality would be implemented here');
+    alert("NID upload functionality would be implemented here");
   };
 
   if (isLoading) {
@@ -84,66 +84,306 @@ const ClientCertificate = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Your Marine Certificates</h1>
-        <Link
-          to="/client-dashboard/certificates/create"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-        >
-          Create new Certificate
-        </Link>
+    <div className="p-4 sm:p-6 lg:p-8 w-full">
+      {/* Header Section */}
+      <div className="mb-6 lg:mb-8">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+              Your Marine Certificates
+            </h1>
+            <p className="text-gray-600 text-sm sm:text-base">
+              View and manage your marine certificates
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="flex items-center space-x-3 text-sm text-gray-600">
+              <svg
+                className="w-4 h-4 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              <span className="hidden sm:inline">Welcome back, Client</span>
+              <span className="sm:hidden">Client</span>
+            </div>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+              CN
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* Error Alert */}
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
+        <div className="mb-4 sm:mb-6 bg-red-50 border border-red-200 text-red-700 px-4 sm:px-6 py-4 rounded-lg">
+          <div className="flex items-center">
+            <svg
+              className="w-5 h-5 mr-3 flex-shrink-0"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="font-medium text-sm sm:text-base">{error}</span>
+          </div>
         </div>
       )}
 
-      <div className="mb-6 flex flex-col md:flex-row md:items-center gap-4">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Enter certificate No."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full border rounded px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <svg
-            className="absolute left-3 top-3 h-4 w-4 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      {/* Certificates Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Certificate Management
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                View and manage all your marine certificates
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+              <Link
+                to="/client-dashboard/certificates/create"
+                className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                <svg
+                  className="w-4 h-4 mr-2 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                <span className="whitespace-nowrap">
+                  Create new Certificate
+                </span>
+              </Link>
+              <button
+                className="inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                onClick={handleUploadNID}
+              >
+                <svg
+                  className="w-4 h-4 mr-2 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
+                </svg>
+                Upload NID
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="px-4 sm:px-6 py-4">
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              placeholder="Search by certificate No. or insured name"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-3 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
             />
-          </svg>
+            <svg
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
         </div>
-        <button 
-          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
-          onClick={() => console.log('Search triggered for:', searchTerm)}
-        >
-          Search
-        </button>
-      </div>
 
-      <div className="mb-6">
-        <button 
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          onClick={handleUploadNID}
-        >
-          UPLOAD NID
-        </button>
-      </div>
+        {/* Mobile Card View - Shows on small screens */}
+        <div className="block lg:hidden">
+          <div className="px-4 sm:px-6 pb-4 space-y-4">
+            {filteredCertificates.map((cert) => (
+              <div
+                key={cert.id}
+                className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex flex-col space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold text-gray-900">
+                      {cert.id}
+                    </div>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        cert.status === "Active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {cert.status}
+                    </span>
+                  </div>
 
-     
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">Date: </span>
+                      <span className="text-gray-900">{cert.date}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-gray-500">Insured: </span>
+                      <span className="text-gray-900">{cert.insured}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Link
+                      to={cert.viewUrl}
+                      className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      <svg
+                        className="w-4 h-4 mr-1 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                      View
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      )}
+
+        {/* Desktop Table View - Hidden on small screens */}
+        <div className="hidden lg:block w-full overflow-x-auto">
+          <table
+            className="w-full divide-y divide-gray-200"
+            style={{ minWidth: "1100px" }}
+          >
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                  Certificate ID
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                  Date
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                  Insured
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredCertificates.map((cert) => (
+                <tr key={cert.id} className="hover:bg-gray-50 cursor-pointer">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {cert.id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {cert.date}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {cert.insured}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        cert.status === "Active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {cert.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <Link
+                      to={cert.viewUrl}
+                      className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                      View
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer */}
+        <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-200">
+          <p className="text-sm text-gray-600">
+            {filteredCertificates.length} certificate
+            {filteredCertificates.length !== 1 ? "s" : ""} total
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default ClientCertificate;

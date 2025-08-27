@@ -4,10 +4,12 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 
 const BrokerCertificates = () => {
+
   // Tab state
   const [activeTab, setActiveTab] = useState("investments");
   const [certificates, setCertificates] = useState([]);
   const [selectedCerts, setSelectedCerts] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -105,19 +107,49 @@ const BrokerCertificates = () => {
     console.log("Printing quotation schedule");
   };
 
+  const toggleCertificateSelection = (certId) => {
+    setSelectedCerts((prev) =>
+      prev.includes(certId)
+        ? prev.filter((id) => id !== certId)
+        : [...prev, certId]
+    );
+  };
+
   if (loading) {
-    return <div className="text-center py-4">Loading certificates...</div>;
+    return (
+      <div className="p-4 sm:p-8 text-center text-gray-600">
+        Loading certificates...
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-        {error}
+      <div className="p-4 sm:p-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="flex items-center">
+            <svg
+              className="w-5 h-5 text-red-600 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.634 0L4.18 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+            <span className="text-sm font-medium">{error}</span>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
+
     <div className="p-8" style={{ minWidth: "1200px" }}>
       {/* Header Section */}
       <div className="mb-6">
@@ -214,6 +246,7 @@ const BrokerCertificates = () => {
             >
               <svg
                 className="w-4 h-4 mr-2"
+
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -226,10 +259,21 @@ const BrokerCertificates = () => {
                 />
               </svg>
               Create new Policy
-            </Link>
+
           </div>
         </div>
       </div>
+      {/* Certificates Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Your Certificates
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Manage and track all your insurance certificates
+          </p>
+        </div>
+
 
       {/* Certificates Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -275,6 +319,7 @@ const BrokerCertificates = () => {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+
                   Actions
                 </th>
               </tr>
@@ -290,7 +335,9 @@ const BrokerCertificates = () => {
                       type="checkbox"
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                       checked={selectedCerts.includes(certificate.id)}
+
                       onChange={() => toggleCertificateSelection(certificate.id)}
+
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -325,6 +372,7 @@ const BrokerCertificates = () => {
                           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                         />
                       </svg>
+
                       {formatDate(certificate.transDate)}
                     </div>
                   </td>
@@ -340,6 +388,7 @@ const BrokerCertificates = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-200">
                       Active
+
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -403,8 +452,10 @@ const BrokerCertificates = () => {
                   {selectedCerts.length > 1 ? "s" : ""} selected
                 </span>
               </div>
+
               <div className="flex items-center space-x-3">
                 <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+
                   <svg
                     className="w-4 h-4 mr-2"
                     fill="none"
@@ -420,6 +471,7 @@ const BrokerCertificates = () => {
                   </svg>
                   DOWNLOAD SELECTED
                 </button>
+
                 <button className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                   <svg
                     className="w-4 h-4 mr-2"
