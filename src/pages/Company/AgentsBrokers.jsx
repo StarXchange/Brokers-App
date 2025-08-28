@@ -1,101 +1,183 @@
 // src/pages/AgentsBrokers.jsx
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import axios from "axios";
 
 const AgentsBrokers = () => {
-  // Mock data
-  const mockBrokers = [
-    {
-      id: "D1/20003",
-      companyCode: "STACO-MARINE",
-      name: "OMOLOLA.OLAWORE",
-      mobile: "2348024242567",
-      date: "26 Feb 2025",
-      contactPerson: "STACO, PLC",
-    },
-    {
-      id: "BR/20003",
-      companyCode: "STACO-MARINE",
-      name: "ENDUARANCE.OTUMUDIA",
-      mobile: "2348073333517",
-      date: "15 Feb 2025",
-      contactPerson: "STACO-MARINE",
-    },
-    {
-      id: "MODUPE.STACO",
-      companyCode: "STACO-MARINE",
-      name: "MODUPE AJAYI CCS",
-      mobile: "2348133472029",
-      date: "23 Aug 2024",
-      contactPerson: "MODUPE",
-    },
-  ];
-
-  const [brokers, setBrokers] = useState(mockBrokers); // Initialize with mock data
+  const [brokers, setBrokers] = useState([]);
   const [selectedBroker, setSelectedBroker] = useState(null);
-  const [loading, setLoading] = useState(false); // Set to false since we're using mock data
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  /* 
-  BACKEND INTEGRATION (COMMENTED OUT FOR NOW)
-  Uncomment and implement when backend is ready
+  const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
 
-  useEffect(() => {
-    const fetchBrokers = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/api/brokers');
-        
-        // Handle different response structures
-        let brokersData = [];
-        if (Array.isArray(response.data)) {
-          brokersData = response.data;
-        } else if (response.data?.brokers) {
-          brokersData = response.data.brokers;
-        } else if (response.data?.data) {
-          brokersData = response.data.data;
-        }
-        
-        setBrokers(brokersData);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching brokers:', err);
-        setError(err.response?.data?.message || 'Failed to fetch brokers');
-        setBrokers([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBrokers();
-  }, []);
-
-  const handleDelete = async (brokerId) => {
+  // Fetch brokers from real API
+  const fetchBrokers = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      await axios.delete(`/api/brokers/${brokerId}`);
-      setBrokers(brokers.filter(broker => broker.id !== brokerId));
-      setSelectedBroker(null);
-    } catch (err) {
-      console.error('Error deleting broker:', err);
-      setError(err.response?.data?.message || 'Failed to delete broker');
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("authToken") ||
+        sessionStorage.getItem("token");
+
+      console.log(
+        "Attempting to fetch brokers from:",
+        `${API_BASE_URL}/Brokers`
+      );
+      console.log("Using token:", token ? "Token found" : "No token");
+
+      const response = await fetch(`${API_BASE_URL}/Brokers`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      console.log("Response status:", response.status);
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error Response:", errorText);
+
+        // Handle specific error cases
+        if (response.status === 403) {
+          throw new Error(
+            `Access denied to Brokers API. Please check your permissions or contact your administrator.`
+          );
+        } else if (response.status === 401) {
+          throw new Error(
+            `Authentication failed. Please try logging in again.`
+          );
+        } else {
+          throw new Error(
+            `HTTP error! status: ${response.status} - ${
+              errorText || "Unknown error"
+            }`
+          );
+        }
+      }
+
+      const data = await response.json();
+      console.log("Raw API data:", data);
+
+      // Handle different response structures
+      let brokersData = [];
+      if (Array.isArray(data)) {
+        brokersData = data;
+      } else if (data?.brokers) {
+        brokersData = data.brokers;
+      } else if (data?.data) {
+        brokersData = data.data;
+      } else if (data?.result) {
+        brokersData = data.result;
+      } else {
+        console.warn("Unexpected API response structure:", data);
+        brokersData = [];
+      }
+
+      console.log("Processed brokers data:", brokersData);
+
+      // Transform API data to match expected format
+      const transformedData = brokersData.map((broker) => ({
+        id: broker.brokerId || broker.id, // Using brokerId as the main ID
+        companyCode: broker.insCompanyId || broker.companyCode || "N/A",
+        name: broker.brokerName || broker.name,
+        mobile: broker.mobilePhone || broker.mobile,
+        date: broker.submitDate
+          ? new Date(broker.submitDate).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
+          : "N/A",
+        contactPerson: broker.contactPerson,
+        // Include all original fields for potential future use
+        brokerId: broker.brokerId,
+        insCompanyId: broker.insCompanyId,
+        brokerName: broker.brokerName,
+        address: broker.address,
+        email: broker.email,
+        mobilePhone: broker.mobilePhone,
+        password: broker.password,
+        submitDate: broker.submitDate,
+        rate: broker.rate,
+        value: broker.value,
+        remarks: broker.remarks,
+        tag: broker.tag,
+        ...broker,
+      }));
+
+      console.log("Transformed brokers data:", transformedData);
+      setBrokers(transformedData);
+    } catch (error) {
+      console.error("Error fetching brokers:", error);
+      setError(`Failed to load brokers: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
-  */
 
-  // Mock delete function for now
-  const handleDelete = (brokerId) => {
-    setBrokers(brokers.filter((broker) => broker.id !== brokerId));
-    setSelectedBroker(null);
+  useEffect(() => {
+    fetchBrokers();
+  }, []);
+
+  // Delete broker via API
+  const handleDelete = async (brokerId) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this broker? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("authToken") ||
+        sessionStorage.getItem("token");
+
+      const response = await fetch(`${API_BASE_URL}/Brokers/${brokerId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete broker: ${response.status}`);
+      }
+
+      // Remove broker from local state
+      setBrokers(brokers.filter((broker) => broker.id !== brokerId));
+      setSelectedBroker(null);
+
+      // Show success message (you could use a toast notification here)
+      alert("Broker deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting broker:", error);
+      setError("Failed to delete broker. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
     return (
       <div className="p-4 sm:p-8 text-center">
-        <div className="animate-pulse text-gray-600">Loading brokers...</div>
+        <div className="flex items-center justify-center space-x-2">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <span className="text-gray-600">Loading brokers...</span>
+        </div>
       </div>
     );
   }
@@ -121,7 +203,7 @@ const AgentsBrokers = () => {
             </span>
           </div>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => fetchBrokers()}
             className="mt-3 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors text-sm"
           >
             Retry
@@ -267,7 +349,7 @@ const AgentsBrokers = () => {
                             d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                           />
                         </svg>
-                        {broker.mobile}
+                        {broker.mobile || "N/A"}
                       </div>
                     </div>
                     <div>
@@ -294,7 +376,7 @@ const AgentsBrokers = () => {
                         Contact Person:
                       </span>
                       <div className="text-gray-900 mt-1">
-                        {broker.contactPerson}
+                        {broker.contactPerson || "N/A"}
                       </div>
                     </div>
                   </div>
@@ -400,7 +482,7 @@ const AgentsBrokers = () => {
                             d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                           />
                         </svg>
-                        {broker.mobile}
+                        {broker.mobile || "N/A"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -422,7 +504,7 @@ const AgentsBrokers = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {broker.contactPerson}
+                      {broker.contactPerson || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {selectedBroker === broker.id && (

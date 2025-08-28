@@ -2,8 +2,10 @@
 
 import { Outlet, Link, useLocation } from "react-router-dom";
 
+import React, { useState } from "react";
 const BrokersDashboard = () => {
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Helper function to check if current path is active
   const isActivePath = (path) => {
@@ -130,10 +132,9 @@ const BrokersDashboard = () => {
           } lg:translate-x-0`}
         >
           <div className="p-4 pt-8 h-full overflow-y-auto">
-            <nav className="space-y-1">
+            <nav>
               <Link
                 to="/brokers-dashboard/certificates"
-
                 className={`flex items-center font-semibold text-lg p-2 rounded transition-colors ${
                   isActivePath("certificates")
                     ? "bg-blue-100 text-blue-700"
@@ -154,7 +155,6 @@ const BrokersDashboard = () => {
                   />
                 </svg>
                 <span>Policy</span>
-
               </Link>
 
               <Link
@@ -303,8 +303,6 @@ const BrokersDashboard = () => {
                 </svg>
                 <span>Change Password</span>
               </Link>
-            </li>
-            <li>
               <Link
                 to="/brokers"
                 className="flex items-center font-semibold text-lg p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -324,30 +322,6 @@ const BrokersDashboard = () => {
                 </svg>
                 <span>Logout</span>
               </Link>
-
-              <div className="pt-6 mt-6 border-t border-gray-200">
-                <Link
-                  to="/brokers"
-                  className="group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
-                >
-                  <div className="p-1 rounded-md group-hover:bg-red-100">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
-                    </svg>
-                  </div>
-                  <span>Logout</span>
-                </Link>
-              </div>
             </nav>
           </div>
         </aside>

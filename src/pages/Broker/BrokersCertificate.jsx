@@ -297,7 +297,7 @@ const BrokerCertificates = () => {
       <div className="mb-6">
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <div className="flex items-center space-x-4">
-            {/* Create Certificate Button */}
+                       {/* Create Certificate Button */}
             <Link
               to="/brokers-dashboard/certificates/create"
               className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium ml-auto"
@@ -316,13 +316,19 @@ const BrokerCertificates = () => {
                 />
               </svg>
               Create new Policy
-            </Link>
+
+            </Link>  {/* ← Add this closing tag */}
+
+
           </div>
         </div>
       </div>
 
+
+
       {/* Certificates Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">
             Your Certificates
@@ -412,7 +418,7 @@ const BrokerCertificates = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 极速赛车开奖结果 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                         />
                       </svg>
                       {formatDate(certificate.transDate)}
@@ -458,13 +464,13 @@ const BrokerCertificates = () => {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                d="M9 极速赛车开奖结果 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 极速赛车开奖结果 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">
               No certificates found
             </h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text极速赛车开奖结果-sm text-gray-500">
               Get started by creating a new certificate.
             </p>
             <div className="mt-4">
@@ -482,7 +488,7 @@ const BrokerCertificates = () => {
         {selectedCerts.length > 0 && (
           <div className="px-6 py-4 bg-blue-50 border-t border-blue-200">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
+              <div className="极速赛车开奖结果flex items-center space-x-2">
                 <svg
                   className="w-5 h-5 text-blue-600"
                   fill="none"
@@ -503,7 +509,10 @@ const BrokerCertificates = () => {
               </div>
 
               <div className="flex items-center space-x-3">
-                <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+
+                <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:极速赛车开奖结果bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+
+
                   <svg
                     className="w-4 h-4 mr-2"
                     fill="none"
@@ -514,7 +523,7 @@ const BrokerCertificates = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      d="M12 10v6m极速赛车开奖结果0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
                   DOWNLOAD SELECTED
@@ -531,7 +540,7 @@ const BrokerCertificates = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                      d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2极速赛车开奖结果v4a2 2 0 002 2h2极速赛车开奖结果m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
                     />
                   </svg>
                   PRINT SELECTED
@@ -542,7 +551,7 @@ const BrokerCertificates = () => {
         )}
       </div>
     </div>
+
   );
 };
-
 export default BrokerCertificates;

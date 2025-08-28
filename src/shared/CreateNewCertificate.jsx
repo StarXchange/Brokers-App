@@ -1,138 +1,144 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Adjust path as needed
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; // Adjust path as needed
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = "/api";
 
-const CreateNewCertificate = ({ viewMode = false, userRole = 'broker' }) => {
+const CreateNewCertificate = ({ viewMode = false, userRole = "broker" }) => {
   const { user, token } = useAuth();
   const { brokerId, year, month, certId } = useParams();
   const navigate = useNavigate();
-  const today = new Date().toISOString().split('T')[0]; // "2024-01-15"
-  const insCompanyId ='00000000-0000-0000-0000-000000000001';
+  const today = new Date().toISOString().split("T")[0]; // "2024-01-15"
+  const insCompanyId = "00000000-0000-0000-0000-000000000001";
   // // Add the isValidGuid function definition FIRST
   const isValidGuid = (guid) => {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(guid);
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      guid
+    );
   };
   const [formData, setFormData] = useState({
-    certificateNo: viewMode ? '' : 'AUTO',
-    insuredName: '',
-    address: '',
-    transactionDate:today,
-    vesselName: 'AMY APPROVED STEAMER(S) AS PER',
-    subject: '',
+    certificateNo: viewMode ? "" : "AUTO",
+    insuredName: "",
+    address: "",
+    transactionDate: today,
+    vesselName: "AMY APPROVED STEAMER(S) AS PER",
+    subject: "",
     typeOfCover: "ICC 'A'",
-    voyageFrom: '',
-    origin: '',
-    email: '',
-    mobilePhone: '',
-    policyNo: '',
-    conveyance: '',
-    tinNo: '',
-    destination: '',
-    packagingType: '',
-    proformaInvNo: '',
+    voyageFrom: "",
+    origin: "",
+    email: "",
+    mobilePhone: "",
+    policyNo: "",
+    conveyance: "",
+    tinNo: "",
+    destination: "",
+    packagingType: "",
+    proformaInvNo: "",
     containerized: false,
-    interestInsured: '',
-    natureOfGoods: '',
-    paymentType: 'Credit Note',
-    terms: '',
-    loading: '100%',
-    currencyType: '',
-    sumInsured: '0.0',
-    clausesType: '',
-    rate: '0.0',
-    conditionsClauses: '',
-    lendingTitle: '',
-    legendTitle: '',
-    date: '',
-    lendingAddress: ''
+    interestInsured: "",
+    natureOfGoods: "",
+    paymentType: "Credit Note",
+    terms: "",
+    loading: "100%",
+    currencyType: "",
+    sumInsured: "0.0",
+    clausesType: "",
+    rate: "0.0",
+    conditionsClauses: "",
+    lendingTitle: "",
+    legendTitle: "",
+    date: "",
+    lendingAddress: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-const getToken = () => {
-  return localStorage.getItem('token')
-};
+  const getToken = () => {
+    return localStorage.getItem("token");
+  };
 
   const fetchCertificateData = async () => {
     setLoading(true);
     try {
       const token = getToken();
       if (!token) {
-        setError('Authentication required. Please login again.');
+        setError("Authentication required. Please login again.");
         return;
       }
-      const response = await axios.get(`${API_BASE_URL}/Certificates/${certId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const response = await axios.get(
+        `${API_BASE_URL}/Certificates/${certId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
-      
+      );
+
       // Map API response to form fields
       const apiData = response.data;
       setFormData({
         certificateNo: apiData.certNo,
         insuredName: apiData.insuredName,
-        address: apiData.field6 || '',
+        address: apiData.field6 || "",
         transactionDate: apiData.transDate,
-        vesselName: apiData.field1 || 'AMY APPROVED STEAMER(S) AS PER',
-        subject: apiData.field9 || '',
+        vesselName: apiData.field1 || "AMY APPROVED STEAMER(S) AS PER",
+        subject: apiData.field9 || "",
         typeOfCover: apiData.perDesc || "ICC 'A'",
-        origin: apiData.fromDesc || '',
-        email: apiData.field4 || '',
-        mobilePhone: apiData.field5 || '',
+        origin: apiData.fromDesc || "",
+        email: apiData.field4 || "",
+        mobilePhone: apiData.field5 || "",
         policyNo: apiData.policyNo,
-        conveyance: apiData.field2 || '',
-        tinNo: apiData.field7 || '',
-        destination: apiData.toDesc || '',
-        packagingType: apiData.field7 || '',
-        proformaInvNo: apiData.formMno || '',
-        containerized: apiData.field8 === 'Yes',
-        interestInsured: apiData.interestDesc || '',
-        natureOfGoods: apiData.field3 || '',
-        paymentType: apiData.field10 || 'Credit Note',
-        terms: apiData.field9 || '',
-        loading: '100%',
-        currencyType: apiData.field10 || '',
-        sumInsured: apiData.insuredValue?.toString() || '0.0',
-        clausesType: apiData.field9 || '',
-        rate: apiData.rate?.toString() || '0.0',
-        conditionsClauses: apiData.remarks || '',
-        lendingTitle: apiData.field101 || '',
-        legendTitle: apiData.field102 || '',
+        conveyance: apiData.field2 || "",
+        tinNo: apiData.field7 || "",
+        destination: apiData.toDesc || "",
+        packagingType: apiData.field7 || "",
+        proformaInvNo: apiData.formMno || "",
+        containerized: apiData.field8 === "Yes",
+        interestInsured: apiData.interestDesc || "",
+        natureOfGoods: apiData.field3 || "",
+        paymentType: apiData.field10 || "Credit Note",
+        terms: apiData.field9 || "",
+        loading: "100%",
+        currencyType: apiData.field10 || "",
+        sumInsured: apiData.insuredValue?.toString() || "0.0",
+        clausesType: apiData.field9 || "",
+        rate: apiData.rate?.toString() || "0.0",
+        conditionsClauses: apiData.remarks || "",
+        lendingTitle: apiData.field101 || "",
+        legendTitle: apiData.field102 || "",
         date: apiData.transDate,
-        lendingAddress: apiData.field103 || ''
+        lendingAddress: apiData.field103 || "",
       });
-    
     } catch (err) {
       if (err.response?.status === 401) {
-        setError('Session expired. Please login again.');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('role');
+        setError("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("role");
       } else if (err.response?.status === 409) {
         // Handle conflict error specifically
-        setError('Conflict error: This may be due to duplicate data or invalid references. Please check your entries.');
-        console.error('Conflict details:', err.response?.data);
+        setError(
+          "Conflict error: This may be due to duplicate data or invalid references. Please check your entries."
+        );
+        console.error("Conflict details:", err.response?.data);
       } else if (err.response?.status === 400) {
         // Show validation errors
         const validationErrors = err.response?.data?.errors;
         if (validationErrors) {
           const errorMessages = Object.entries(validationErrors)
-            .map(([field, errors]) => `${field}: ${errors.join(', ')}`)
-            .join('\n');
+            .map(([field, errors]) => `${field}: ${errors.join(", ")}`)
+            .join("\n");
           setError(`Validation errors:\n${errorMessages}`);
         } else {
-          setError(err.response?.data?.title || 'Invalid request data');
+          setError(err.response?.data?.title || "Invalid request data");
         }
       } else {
-        setError(err.response?.data?.message || 'Failed to create certificate');
+        setError(err.response?.data?.message || "Failed to create certificate");
       }
     }
-  }
+  };
 
   useEffect(() => {
     if (viewMode && certId) {
@@ -143,9 +149,9 @@ const getToken = () => {
   const handleChange = (e) => {
     if (viewMode) return;
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -159,39 +165,41 @@ const getToken = () => {
     try {
       const token = getToken();
       if (!token) {
-        setError('Authentication required. Please login again.');
+        setError("Authentication required. Please login again.");
         setLoading(false);
         return;
       }
 
-       // Check if user object exists and has the required properties
-    if (!user) {
-      setError('User not authenticated. Please login again.');
-      setLoading(false);
-      return;
-    }
+      // Check if user object exists and has the required properties
+      if (!user) {
+        setError("User not authenticated. Please login again.");
+        setLoading(false);
+        return;
+      }
 
-        // Use actual user IDs instead of test IDs
+      // Use actual user IDs instead of test IDs
       const brokerId = user.brokerId;
       const clientId = user.clientId;
 
-  // Check if IDs exist and are valid GUIDs
-    if (!brokerId || !clientId) {
-      setError('User account missing required information. Please contact administrator.');
-      setLoading(false);
-      return;
-    }
+      // Check if IDs exist and are valid GUIDs
+      if (!brokerId || !clientId) {
+        setError(
+          "User account missing required information. Please contact administrator."
+        );
+        setLoading(false);
+        return;
+      }
 
-    if (!isValidGuid(brokerId) || !isValidGuid(clientId)) {
-      setError('Invalid user IDs. Please contact administrator.');
-      setLoading(false);
-      return;
-    }
+      if (!isValidGuid(brokerId) || !isValidGuid(clientId)) {
+        setError("Invalid user IDs. Please contact administrator.");
+        setLoading(false);
+        return;
+      }
 
       const apiPayload = {
-        certNo: formData.certificateNo === 'AUTO' ? '' : formData.certificateNo,
-        brokerId: brokerId, 
-        clientId: clientId, 
+        certNo: formData.certificateNo === "AUTO" ? "" : formData.certificateNo,
+        brokerId: brokerId,
+        clientId: clientId,
         insCompanyId: user.insCompanyId || insCompanyId, // Valid GUID
         insuredName: formData.insuredName,
         transDate: today,
@@ -202,7 +210,9 @@ const getToken = () => {
         interestDesc: formData.interestInsured,
         rate: parseFloat(formData.rate) || 0,
         insuredValue: parseFloat(formData.sumInsured) || 0,
-        grossPrenium: (parseFloat(formData.sumInsured) * (parseFloat(formData.rate)/100)) || 0,
+        grossPrenium:
+          parseFloat(formData.sumInsured) * (parseFloat(formData.rate) / 100) ||
+          0,
         formMno: formData.proformaInvNo,
         submitDate: today,
         remarks: formData.conditionsClauses,
@@ -213,7 +223,7 @@ const getToken = () => {
         field5: formData.mobilePhone,
         field6: formData.address,
         field7: formData.tinNo,
-        field8: formData.containerized ? 'Yes' : 'No',
+        field8: formData.containerized ? "Yes" : "No",
         field9: formData.terms,
         field10: formData.currencyType,
         field101: formData.lendingTitle,
@@ -230,38 +240,39 @@ const getToken = () => {
         field106: "",
         field107: "",
         field108: "",
-        field109: ""
+        field109: "",
       };
 
       await axios.post(`${API_BASE_URL}/Certificates`, apiPayload, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
-       console.log('Certificate created successfully:', response.data);
+      console.log("Certificate created successfully:", response.data);
 
       const redirectPath = getCertificatesPath();
       navigate(redirectPath, {
-        state: { success: 'Certificate created successfully!' }
+        state: { success: "Certificate created successfully!" },
       });
-     } catch (err) {
+    } catch (err) {
       if (err.response?.status === 401) {
-        setError('Session expired. Please login again.');
+        setError("Session expired. Please login again.");
         // Clear invalid token and redirect to login
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('role');
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("role");
         // navigate('/login');
       } else if (err.response?.status === 400) {
-        setError(err.response?.data?.message || 'Invalid request data');
-      }  // Show detailed error message from server
-      const errorMessage = err.response?.data || 
-                          err.response?.data?.message || 
-                          err.message || 
-                          'Failed to create certificate';
-      console.error('Full error details:', err.response?.data);
+        setError(err.response?.data?.message || "Invalid request data");
+      } // Show detailed error message from server
+      const errorMessage =
+        err.response?.data ||
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to create certificate";
+      console.error("Full error details:", err.response?.data);
       setError(`Server error: ${JSON.stringify(errorMessage)}`);
     } finally {
       setLoading(false);
@@ -269,47 +280,50 @@ const getToken = () => {
   };
 
   const getCertificatesPath = () => {
-    switch(userRole) {
-      case 'broker': return '/brokers-dashboard/certificates';
-      case 'client': return '/client-dashboard/client-certificate';
-      default: return '/';
+    switch (userRole) {
+      case "broker":
+        return "/brokers-dashboard/certificates";
+      case "client":
+        return "/client-dashboard/client-certificate";
+      default:
+        return "/";
     }
   };
 
-  const renderField = (label, name, type = 'text', options = null) => {
+  const renderField = (label, name, type = "text", options = null) => {
     if (viewMode) {
       return (
-
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">{label}</label>
+          <label className="block text-sm font-medium text-gray-700">
+            {label}
+          </label>
           <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
-            {formData[name] || 'N/A'}
+            {formData[name] || "N/A"}
           </div>
-
         </div>
       );
     }
 
     return (
-
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">{label}</label>
+        <label className="block text-sm font-medium text-gray-700">
+          {label}
+        </label>
 
-        {type === 'select' ? (
+        {type === "select" ? (
           <select
             name={name}
             value={formData[name]}
             onChange={handleChange}
-
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-
           >
-            {options?.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
+            {options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
             ))}
           </select>
-        ) : type === 'checkbox' ? (
-
+        ) : type === "checkbox" ? (
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -320,10 +334,9 @@ const getToken = () => {
             />
             <span className="ml-2 text-sm text-gray-700">Yes</span>
           </div>
-        ) : type === 'radio' ? (
+        ) : type === "radio" ? (
           <div className="flex flex-wrap gap-4">
-
-            {options?.map(option => (
+            {options?.map((option) => (
               <label key={option.value} className="flex items-center space-x-2">
                 <input
                   type="radio"
@@ -335,20 +348,17 @@ const getToken = () => {
                 />
 
                 <span className="text-sm text-gray-700">{option.label}</span>
-
               </label>
             ))}
           </div>
-        ) : type === 'textarea' ? (
+        ) : type === "textarea" ? (
           <textarea
             name={name}
             value={formData[name]}
             onChange={handleChange}
-
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
             rows={4}
             placeholder={`Enter ${label.toLowerCase()}...`}
-
           />
         ) : (
           <input
@@ -357,27 +367,27 @@ const getToken = () => {
             value={formData[name]}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-            required={!viewMode && name === 'insuredName'}
+            required={!viewMode && name === "insuredName"}
             placeholder={`Enter ${label.toLowerCase()}...`}
-
           />
         )}
       </div>
     );
   };
 
-  if (loading) return (
-    <div className="p-8" style={{ minWidth: "1200px" }}>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading certificate...</p>
+  if (loading)
+    return (
+      <div className="p-8" style={{ minWidth: "1200px" }}>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading certificate...</p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="p-8" style={{ minWidth: "1200px" }}>
@@ -386,10 +396,12 @@ const getToken = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Marine Certificate {viewMode ? 'Details' : 'Setup'}
+              Marine Certificate {viewMode ? "Details" : "Setup"}
             </h1>
             <p className="text-gray-600">
-              {viewMode ? 'View certificate information and details' : 'Create a new marine insurance certificate'}
+              {viewMode
+                ? "View certificate information and details"
+                : "Create a new marine insurance certificate"}
             </p>
           </div>
           {viewMode && (
@@ -450,12 +462,10 @@ const getToken = () => {
               <span>
                 <strong>Error:</strong> {error}
               </span>
-
             </div>
           </div>
         </div>
       )}
-
 
       {/* Main Content */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -464,28 +474,32 @@ const getToken = () => {
             {/* Certificate Details Section */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">Certificate Details</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Certificate Details
+                </h2>
                 <span className="inline-flex px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full border border-green-200">
                   Active
                 </span>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">Certificate No</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Certificate No
+                  </label>
                   <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm font-semibold text-blue-900">
                     {formData.certificateNo}
                   </div>
                 </div>
-                
-                {renderField('Insured Name', 'insuredName')}
-                {renderField('Address', 'address')}
-                {renderField('Transaction Date', 'transactionDate')}
-                {renderField('Vessel Name', 'vesselName')}
-                {renderField('Type of Cover', 'typeOfCover')}
-                {renderField('Voyage From', 'voyageFrom')}
-                {renderField('Origin', 'origin')}
-                {renderField('Subject', 'subject')}
+
+                {renderField("Insured Name", "insuredName")}
+                {renderField("Address", "address")}
+                {renderField("Transaction Date", "transactionDate")}
+                {renderField("Vessel Name", "vesselName")}
+                {renderField("Type of Cover", "typeOfCover")}
+                {renderField("Voyage From", "voyageFrom")}
+                {renderField("Origin", "origin")}
+                {renderField("Subject", "subject")}
               </div>
             </div>
 
@@ -493,11 +507,13 @@ const getToken = () => {
 
             {/* Contact Information Section */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Contact Information</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Contact Information
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {renderField('Email Address', 'email')}
-                {renderField('Mobile Phone No', 'mobilePhone')}
-                {renderField('Policy No', 'policyNo')}
+                {renderField("Email Address", "email")}
+                {renderField("Mobile Phone No", "mobilePhone")}
+                {renderField("Policy No", "policyNo")}
               </div>
             </div>
 
@@ -505,22 +521,28 @@ const getToken = () => {
 
             {/* Shipping Information */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Shipping Information</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Shipping Information
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {renderField('Conveyance', 'conveyance')}
-                {renderField('TIN NO', 'tinNo')}
-                {renderField('Destination', 'destination')}
-                {renderField('Packaging Type', 'packagingType')}
-                {renderField('PROFORMA INV.NO', 'proformaInvNo')}
+                {renderField("Conveyance", "conveyance")}
+                {renderField("TIN NO", "tinNo")}
+                {renderField("Destination", "destination")}
+                {renderField("Packaging Type", "packagingType")}
+                {renderField("PROFORMA INV.NO", "proformaInvNo")}
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">Containerized</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Containerized
+                  </label>
                   <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                      formData.containerized 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {formData.containerized ? 'Yes' : 'No'}
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        formData.containerized
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {formData.containerized ? "Yes" : "No"}
                     </span>
                   </div>
                 </div>
@@ -531,20 +553,26 @@ const getToken = () => {
 
             {/* Insurance Information */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Insurance Information</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Insurance Information
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {renderField('Interest Insured', 'interestInsured')}
-                {renderField('Nature of Goods', 'natureOfGoods')}
-                {renderField('Terms', 'terms')}
-                {renderField('Currency Type', 'currencyType')}
+                {renderField("Interest Insured", "interestInsured")}
+                {renderField("Nature of Goods", "natureOfGoods")}
+                {renderField("Terms", "terms")}
+                {renderField("Currency Type", "currencyType")}
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">Sum Insured</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Sum Insured
+                  </label>
                   <div className="px-3 py-2 bg-green-50 border border-green-200 rounded-md text-sm font-semibold text-green-900">
                     {formData.currencyType} {formData.sumInsured}
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">Rate</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Rate
+                  </label>
                   <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm font-semibold text-blue-900">
                     {formData.rate}%
                   </div>
@@ -581,24 +609,28 @@ const getToken = () => {
           <form onSubmit={handleSubmit} className="p-6">
             {/* Certificate Details Section */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Certificate Details</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Certificate Details
+              </h2>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">Certificate No</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Certificate No
+                  </label>
                   <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm font-semibold text-blue-900">
                     {formData.certificateNo}
                   </div>
                 </div>
-                
-                {renderField('Insured Name', 'insuredName')}
-                {renderField('Address', 'address')}
-                {renderField('Transaction Date', 'transactionDate', 'date')}
-                {renderField('Vessel Name', 'vesselName')}
-                {renderField('Type of Cover', 'typeOfCover')}
-                {renderField('Voyage From', 'voyageFrom')}
-                {renderField('Origin', 'origin')}
-                {renderField('Subject', 'subject')}
+
+                {renderField("Insured Name", "insuredName")}
+                {renderField("Address", "address")}
+                {renderField("Transaction Date", "transactionDate", "date")}
+                {renderField("Vessel Name", "vesselName")}
+                {renderField("Type of Cover", "typeOfCover")}
+                {renderField("Voyage From", "voyageFrom")}
+                {renderField("Origin", "origin")}
+                {renderField("Subject", "subject")}
               </div>
             </div>
 
@@ -606,11 +638,13 @@ const getToken = () => {
 
             {/* Contact Information Section */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Contact Information</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Contact Information
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {renderField('Email Address', 'email', 'email')}
-                {renderField('Mobile Phone No', 'mobilePhone', 'tel')}
-                {renderField('Policy No', 'policyNo')}
+                {renderField("Email Address", "email", "email")}
+                {renderField("Mobile Phone No", "mobilePhone", "tel")}
+                {renderField("Policy No", "policyNo")}
               </div>
             </div>
 
@@ -618,14 +652,16 @@ const getToken = () => {
 
             {/* Shipping Information */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Shipping Information</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Shipping Information
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {renderField('Conveyance', 'conveyance')}
-                {renderField('TIN NO', 'tinNo')}
-                {renderField('Destination', 'destination')}
-                {renderField('Packaging Type', 'packagingType')}
-                {renderField('PROFORMA INV.NO', 'proformaInvNo')}
-                {renderField('Containerized', 'containerized', 'checkbox')}
+                {renderField("Conveyance", "conveyance")}
+                {renderField("TIN NO", "tinNo")}
+                {renderField("Destination", "destination")}
+                {renderField("Packaging Type", "packagingType")}
+                {renderField("PROFORMA INV.NO", "proformaInvNo")}
+                {renderField("Containerized", "containerized", "checkbox")}
               </div>
             </div>
 
@@ -633,26 +669,28 @@ const getToken = () => {
 
             {/* Insurance Information */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Insurance Information</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Insurance Information
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {renderField('Interest Insured', 'interestInsured')}
-                {renderField('Nature of Cargo', 'natureOfGoods', 'select', [
-                  { value: '', label: 'Select Nature of Cargo' },
-                  { value: 'General', label: 'General Cargo' },
-                  { value: 'Perishable', label: 'Perishable Goods' },
-                  { value: 'Hazardous', label: 'Hazardous Materials' },
-                  { value: 'Electronics', label: 'Electronics' },
-                  { value: 'Textiles', label: 'Textiles' }
+                {renderField("Interest Insured", "interestInsured")}
+                {renderField("Nature of Cargo", "natureOfGoods", "select", [
+                  { value: "", label: "Select Nature of Cargo" },
+                  { value: "General", label: "General Cargo" },
+                  { value: "Perishable", label: "Perishable Goods" },
+                  { value: "Hazardous", label: "Hazardous Materials" },
+                  { value: "Electronics", label: "Electronics" },
+                  { value: "Textiles", label: "Textiles" },
                 ])}
-                {renderField('Terms', 'terms')}
-                {renderField('Clauses Type', 'clausesType', 'select', [
-                  { value: '', label: 'Select Clauses Type' },
-                  { value: 'Standard', label: 'Standard Clauses' },
-                  { value: 'Extended', label: 'Extended Coverage' },
-                  { value: 'Special', label: 'Special Conditions' },
-                  { value: 'ICC A', label: 'Institute Cargo Clauses A' },
-                  { value: 'ICC B', label: 'Institute Cargo Clauses B' },
-                  { value: 'ICC C', label: 'Institute Cargo Clauses C' }
+                {renderField("Terms", "terms")}
+                {renderField("Clauses Type", "clausesType", "select", [
+                  { value: "", label: "Select Clauses Type" },
+                  { value: "Standard", label: "Standard Clauses" },
+                  { value: "Extended", label: "Extended Coverage" },
+                  { value: "Special", label: "Special Conditions" },
+                  { value: "ICC A", label: "Institute Cargo Clauses A" },
+                  { value: "ICC B", label: "Institute Cargo Clauses B" },
+                  { value: "ICC C", label: "Institute Cargo Clauses C" },
                 ])}
               </div>
             </div>
@@ -661,20 +699,26 @@ const getToken = () => {
 
             {/* Payment Information */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Payment Information</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Payment Information
+              </h2>
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Payment Type</h3>
-                  {renderField('', 'paymentType', 'radio', [
-                    { value: 'Credit Note', label: 'Credit Note' },
-                    { value: 'CAF', label: 'CAF' },
-                    { value: 'Cash', label: 'Cash' }
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    Payment Type
+                  </h3>
+                  {renderField("", "paymentType", "radio", [
+                    { value: "Credit Note", label: "Credit Note" },
+                    { value: "CAF", label: "CAF" },
+                    { value: "Cash", label: "Cash" },
                   ])}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">Loading</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Loading
+                    </label>
                     <div className="flex items-center space-x-2">
                       <div className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-900">
                         {formData.loading}
@@ -688,18 +732,20 @@ const getToken = () => {
                     </div>
                   </div>
 
-                  {renderField('Currency Type', 'currencyType', 'select', [
-                    { value: '', label: 'Select Currency' },
-                    { value: 'NGN', label: 'Nigerian Naira (NGN)' },
-                    { value: 'USD', label: 'US Dollar (USD)' },
-                    { value: 'EUR', label: 'Euro (EUR)' },
-                    { value: 'GBP', label: 'British Pound (GBP)' }
+                  {renderField("Currency Type", "currencyType", "select", [
+                    { value: "", label: "Select Currency" },
+                    { value: "NGN", label: "Nigerian Naira (NGN)" },
+                    { value: "USD", label: "US Dollar (USD)" },
+                    { value: "EUR", label: "Euro (EUR)" },
+                    { value: "GBP", label: "British Pound (GBP)" },
                   ])}
 
-                  {renderField('Sum Insured', 'sumInsured', 'number')}
+                  {renderField("Sum Insured", "sumInsured", "number")}
 
                   <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">Rate</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Rate
+                    </label>
                     <div className="flex items-center space-x-2">
                       <div className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-900">
                         {formData.rate}%
@@ -720,12 +766,14 @@ const getToken = () => {
 
             {/* Lending Information */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Lending Information</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Lending Information
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {renderField('Lending Title', 'lendingTitle')}
-                {renderField('Legend Title', 'legendTitle')}
-                {renderField('Date', 'date', 'date')}
-                {renderField('Lending Address', 'lendingAddress')}
+                {renderField("Lending Title", "lendingTitle")}
+                {renderField("Legend Title", "legendTitle")}
+                {renderField("Date", "date", "date")}
+                {renderField("Lending Address", "lendingAddress")}
               </div>
             </div>
 
@@ -733,22 +781,45 @@ const getToken = () => {
 
             {/* Conditions/Clauses */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Conditions/Clauses</h2>
-              {renderField('Additional Terms and Conditions', 'conditionsClauses', 'textarea')}
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Conditions/Clauses
+              </h2>
+              {renderField(
+                "Additional Terms and Conditions",
+                "conditionsClauses",
+                "textarea"
+              )}
             </div>
 
             {/* Action Buttons */}
             <div className="border-t border-gray-200 pt-6">
               <div className="flex justify-end space-x-4">
-                <Link
-                  to={getCertificatesPath()}
-                  className="inline-flex items-center px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex items-center px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       Processing...
                     </>
