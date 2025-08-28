@@ -454,7 +454,7 @@ const CompanyDashboard = () => {
                     />
                   </svg>
                 </div>
-                <span>Certificates</span>
+                <span>Policy</span>
               </Link>
 
               <Link

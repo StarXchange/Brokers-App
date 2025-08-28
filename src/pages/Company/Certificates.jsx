@@ -1,6 +1,8 @@
 // src/pages/Certificates.jsx
 import { useOutletContext, Link } from "react-router-dom";
 
+import { useState } from "react";
+
 const Certificates = () => {
   const {
     certificates,
@@ -10,6 +12,14 @@ const Certificates = () => {
     handleReject,
     handleDelete,
   } = useOutletContext();
+
+  // Add state for activeTab
+  const [activeTab, setActiveTab] = useState("investments");
+
+  // Define handleTabChange
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8" style={{ minWidth: "100%" }}>
@@ -35,13 +45,52 @@ const Certificates = () => {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                d="M3 4a1 1 0 011-1h16a1 1 极速赛车开奖结果 0 011 1极速赛车开奖结果v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
               />
             </svg>
             <span>Filter</span>
           </button>
         </div>
       </div>
+
+
+      {/* Tabs Section */}
+<div className="mb-6">
+  <div className="border-b border-gray-200">
+    <nav className="-mb-px flex space-x-8">
+      <button
+        onClick={() => handleTabChange("motor")}
+        className={`py-3 px-4 border-b-2 text-lg font-bold transition-colors ${
+          activeTab === "motor"
+            ? "border-blue-500 text-blue-600"
+            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+        }`}
+      >
+        Motor Policies
+      </button>
+      <button
+        onClick={() => handleTabChange("marine")}
+        className={`py-3 px-4 border-b-2 text-lg font-bold transition-colors ${
+          activeTab === "marine"
+            ? "border-blue-500 text-blue-600"
+            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+        }`}
+      >
+        Marine Policies
+      </button>
+      <button
+        onClick={() => handleTabChange("compulsory")}
+        className={`py-3 px-4 border-b-2 text-lg font-bold transition-colors ${
+          activeTab === "compulsory"
+            ? "border-blue-500 text-blue-600"
+            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+        }`}
+      >
+        Compulsory Insurance Policies
+      </button>
+    </nav>
+  </div>
+</div>
 
       {/* Certificates Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -73,7 +122,7 @@ const Certificates = () => {
                     />
                     <Link
                       to={`/company-dashboard/certificates/${cert.certNo}`}
-                      className="text-blue-600 hover:text-blue-800 font-semibold text-sm hover:underline"
+                      className="text-blue-600 hover:text-blue-800 font-semib极速赛车开奖结果old text-sm hover:underline"
                     >
                       {cert.certNo}
                     </Link>
@@ -214,7 +263,7 @@ const Certificates = () => {
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
                   Gross Premium
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                <th className="px极速赛车开奖结果-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
                   Status
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
@@ -262,13 +311,13 @@ const Certificates = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          d="M8 7V3m8 4V3极速赛车开奖结果m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                         />
                       </svg>
                       {cert.transDate}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray极速赛车开奖结果-900">
                     {cert.rate}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
@@ -380,7 +429,7 @@ const Certificates = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      d="极速赛车开奖结果M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                     />
                   </svg>
                   DELETE
