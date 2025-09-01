@@ -330,11 +330,6 @@ const BrokersDashboard = () => {
         <main className="flex-1 bg-gray-50 overflow-x-auto lg:ml-64">
           <div className="p-4">
             <div className="max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  Broker Portal
-                </h1>
-              </div>
               <Outlet />
             </div>
           </div>

@@ -7,7 +7,7 @@ const API_BASE_URL = "/api";
 
 const CreateNewCertificate = ({ viewMode = false, userRole = "broker" }) => {
   const { user, token } = useAuth();
-  const { brokerId, year, month, certId } = useParams();
+  const {  certId } = useParams();
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0]; // "2024-01-15"
   const insCompanyId = "00000000-0000-0000-0000-000000000001";
@@ -59,92 +59,100 @@ const CreateNewCertificate = ({ viewMode = false, userRole = "broker" }) => {
     return localStorage.getItem("token");
   };
 
-  const fetchCertificateData = async () => {
-    setLoading(true);
-    try {
-      const token = getToken();
-      if (!token) {
-        setError("Authentication required. Please login again.");
-        return;
-      }
-      const response = await axios.get(
-        `${API_BASE_URL}/Certificates/${certId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      // Map API response to form fields
-      const apiData = response.data;
-      setFormData({
-        certificateNo: apiData.certNo,
-        insuredName: apiData.insuredName,
-        address: apiData.field6 || "",
-        transactionDate: apiData.transDate,
-        vesselName: apiData.field1 || "AMY APPROVED STEAMER(S) AS PER",
-        subject: apiData.field9 || "",
-        typeOfCover: apiData.perDesc || "ICC 'A'",
-        origin: apiData.fromDesc || "",
-        email: apiData.field4 || "",
-        mobilePhone: apiData.field5 || "",
-        policyNo: apiData.policyNo,
-        conveyance: apiData.field2 || "",
-        tinNo: apiData.field7 || "",
-        destination: apiData.toDesc || "",
-        packagingType: apiData.field7 || "",
-        proformaInvNo: apiData.formMno || "",
-        containerized: apiData.field8 === "Yes",
-        interestInsured: apiData.interestDesc || "",
-        natureOfGoods: apiData.field3 || "",
-        paymentType: apiData.field10 || "Credit Note",
-        terms: apiData.field9 || "",
-        loading: "100%",
-        currencyType: apiData.field10 || "",
-        sumInsured: apiData.insuredValue?.toString() || "0.0",
-        clausesType: apiData.field9 || "",
-        rate: apiData.rate?.toString() || "0.0",
-        conditionsClauses: apiData.remarks || "",
-        lendingTitle: apiData.field101 || "",
-        legendTitle: apiData.field102 || "",
-        date: apiData.transDate,
-        lendingAddress: apiData.field103 || "",
-      });
-    } catch (err) {
-      if (err.response?.status === 401) {
-        setError("Session expired. Please login again.");
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("role");
-      } else if (err.response?.status === 409) {
-        // Handle conflict error specifically
-        setError(
-          "Conflict error: This may be due to duplicate data or invalid references. Please check your entries."
-        );
-        console.error("Conflict details:", err.response?.data);
-      } else if (err.response?.status === 400) {
-        // Show validation errors
-        const validationErrors = err.response?.data?.errors;
-        if (validationErrors) {
-          const errorMessages = Object.entries(validationErrors)
-            .map(([field, errors]) => `${field}: ${errors.join(", ")}`)
-            .join("\n");
-          setError(`Validation errors:\n${errorMessages}`);
-        } else {
-          setError(err.response?.data?.title || "Invalid request data");
-        }
-      } else {
-        setError(err.response?.data?.message || "Failed to create certificate");
-      }
+  const fetchCertificateData = async (id) => {
+  setLoading(true);
+  try {
+    const token = getToken();
+    if (!token) {
+      setError("Authentication required. Please login again.");
+      return;
     }
-  };
+    
+    // First, let's log the API response to see what we're getting
+    console.log("Fetching certificate data for ID:", id);
+    
+    const response = await axios.get(
+      `${API_BASE_URL}/Certificates/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    console.log("API Response:", response.data);
+    
+    // Map API response to form fields based on actual API structure
+    const apiData = response.data;
+    
+    // Update the form data mapping based on actual API response
+    setFormData({
+      certificateNo: apiData.certNo || apiData.certificateNo || "",
+      insuredName: apiData.insuredName || apiData.insured || "",
+      address: apiData.address || apiData.field6 || "",
+      transactionDate: apiData.transDate || apiData.transactionDate || today,
+      vesselName: apiData.vesselName || apiData.field1 || "AMY APPROVED STEAMER(S) AS PER",
+      subject: apiData.subject || apiData.field9 || "",
+      typeOfCover: apiData.typeOfCover || apiData.perDesc || "ICC 'A'",
+      voyageFrom: apiData.voyageFrom || "",
+      origin: apiData.origin || apiData.fromDesc || "",
+      email: apiData.email || apiData.field4 || "",
+      mobilePhone: apiData.mobilePhone || apiData.field5 || "",
+      policyNo: apiData.policyNo || "",
+      conveyance: apiData.conveyance || apiData.field2 || "",
+      tinNo: apiData.tinNo || apiData.field7 || "",
+      destination: apiData.destination || apiData.toDesc || "",
+      packagingType: apiData.packagingType || "",
+      proformaInvNo: apiData.proformaInvNo || apiData.formMno || "",
+      containerized: apiData.containerized || apiData.field8 === "Yes",
+      interestInsured: apiData.interestInsured || apiData.interestDesc || "",
+      natureOfGoods: apiData.natureOfGoods || apiData.field3 || "",
+      paymentType: apiData.paymentType || apiData.field10 || "Credit Note",
+      terms: apiData.terms || apiData.field9 || "",
+      loading: apiData.loading || "100%",
+      currencyType: apiData.currencyType || apiData.field10 || "",
+      sumInsured: apiData.sumInsured || apiData.insuredValue?.toString() || "0.0",
+      clausesType: apiData.clausesType || apiData.field9 || "",
+      rate: apiData.rate?.toString() || "0.0",
+      conditionsClauses: apiData.conditionsClauses || apiData.remarks || "",
+      lendingTitle: apiData.lendingTitle || apiData.field101 || "",
+      legendTitle: apiData.legendTitle || apiData.field102 || "",
+      date: apiData.date || apiData.transDate || "",
+      lendingAddress: apiData.lendingAddress || apiData.field103 || "",
+    });
+    
+    setIsEditMode(true);
+  } catch (err) {
+    if (err.response?.status === 401) {
+      setError("Session expired. Please login again.");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("role");
+    } else if (err.response?.status === 404) {
+      setError("Certificate not found.");
+    } else {
+      setError(err.response?.data?.message || "Failed to fetch certificate data");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
-    if (viewMode && certId) {
-      fetchCertificateData();
-    }
-  }, [viewMode, certId]);
+  console.log("certId from useParams:", certId);
+  console.log("certId type:", typeof certId);
+  
+  // If certId exists in URL params and is valid, fetch certificate data
+  if (certId && certId !== "undefined" && isValidGuid(certId)) {
+    console.log("Fetching certificate data for ID:", certId);
+    fetchCertificateData(certId); // Pass certId as parameter
+  } else if (certId && certId !== "undefined") {
+    console.log("Invalid certificate ID format:", certId);
+    setError("Invalid certificate ID format");
+  } else {
+    console.log("No certificate ID provided, creating new certificate");
+  }
+}, [certId]);
 
   const handleChange = (e) => {
     if (viewMode) return;
@@ -242,7 +250,15 @@ const CreateNewCertificate = ({ viewMode = false, userRole = "broker" }) => {
         field108: "",
         field109: "",
       };
-
+      
+       if (isEditMode && certId) {
+        await axios.put(`${API_BASE_URL}/Certificates/${certId}`, apiPayload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      } else {
       await axios.post(`${API_BASE_URL}/Certificates`, apiPayload, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -256,6 +272,7 @@ const CreateNewCertificate = ({ viewMode = false, userRole = "broker" }) => {
       navigate(redirectPath, {
         state: { success: "Certificate created successfully!" },
       });
+    }
     } catch (err) {
       if (err.response?.status === 401) {
         setError("Session expired. Please login again.");
@@ -291,18 +308,20 @@ const CreateNewCertificate = ({ viewMode = false, userRole = "broker" }) => {
   };
 
   const renderField = (label, name, type = "text", options = null) => {
-    if (viewMode) {
-      return (
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
-            {label}
-          </label>
-          <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
-            {formData[name] || "N/A"}
-          </div>
+  if (viewMode) {
+    const value = formData[name];
+    return (
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">
+          {label}
+        </label>
+        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900">
+          {value !== undefined && value !== null && value !== "" ? value : "N/A"}
         </div>
-      );
-    }
+      </div>
+    );
+  }
+
 
     return (
       <div className="space-y-1">
@@ -838,7 +857,7 @@ const CreateNewCertificate = ({ viewMode = false, userRole = "broker" }) => {
                           d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
-                      Create Policy
+                    Submit
                     </>
                   )}
                 </button>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const ClientCertificate = () => {
@@ -8,67 +8,9 @@ const ClientCertificate = () => {
   const [certificates, setCertificates] = useState([]);
   const [selectedCerts, setSelectedCerts] = useState([]);
   const [activeTab, setActiveTab] = useState("marine");
+  const [hasSearched, setHasSearched] = useState(false);
 
-  // Fetch certificates from backend API
-  useEffect(() => {
-    const fetchCertificates = async () => {
-      setIsLoading(true);
-      try {
-        // Get user data from localStorage or context
-        const userData = localStorage.getItem("user");
-        const user = userData ? JSON.parse(userData) : null;
-        
-        // API call to fetch certificates
-        const response = await fetch(
-          `https://gibsbrokersapi.newgibsonline.com/api/certificates`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              ...(user?.token && { Authorization: `Bearer ${user.token}` }),
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // Handle different response formats and ensure data structure
-        let certificatesData = [];
-        
-        if (Array.isArray(data)) {
-          certificatesData = data;
-        } else if (data.certificates && Array.isArray(data.certificates)) {
-          certificatesData = data.certificates;
-        } else if (data.data && Array.isArray(data.data)) {
-          certificatesData = data.data;
-        } else if (typeof data === 'object' && data !== null) {
-          certificatesData = [data];
-        }
-        
-        // Ensure each certificate has the required properties
-        const processedCertificates = certificatesData.map(cert => ({
-          id: cert.id || cert.certificateId || cert.certNo || 'N/A',
-          date: cert.date || cert.issueDate || cert.transDate || 'N/A',
-          insured: cert.insured || cert.insuredName || cert.clientName || 'N/A',
-          status: cert.status || 'Unknown',
-          viewUrl: cert.viewUrl || `/client-dashboard/certificates/${cert.id || 'unknown'}`
-        }));
-        
-        setCertificates(processedCertificates);
-      } catch (err) {
-        setError("Failed to load certificates. Please try again later.");
-        console.error("Error fetching certificates:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCertificates();
-  }, []);
+  const getCertId = (cert) => cert.id;
 
   const toggleCertificateSelection = (certId) => {
     if (selectedCerts.includes(certId)) {
@@ -78,121 +20,115 @@ const ClientCertificate = () => {
     }
   };
 
-  const handleApprove = async () => {
-    try {
-      setIsLoading(true);
-      // Get user data from localStorage or context
-      const userData = localStorage.getItem("user");
-      const user = userData ? JSON.parse(userData) : null;
-      
-      // API call to approve certificates
-      const response = await fetch(
-        `https://gibsbrokersapi.newgibsonline.com/api/certificates/approve`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(user?.token && { Authorization: `Bearer ${user.token}` }),
-          },
-          body: JSON.stringify({ certificateIds: selectedCerts })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      // Update local state
-      const updatedCertificates = certificates.map(cert => 
-        selectedCerts.includes(cert.id) ? { ...cert, status: "Active" } : cert
-      );
-      setCertificates(updatedCertificates);
-      setSelectedCerts([]);
-    } catch (err) {
-      setError("Failed to approve certificates");
-      console.error("Error approving certificates:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleReject = async () => {
-    try {
-      setIsLoading(true);
-      // Get user data from localStorage or context
-      const userData = localStorage.getItem("user");
-      const user = userData ? JSON.parse(userData) : null;
-      
-      // API call to reject certificates
-      const response = await fetch(
-        `https://gibsbrokersapi.newgibsonline.com/api/certificates/reject`,
-        {
-          method极速赛车开奖结果: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(user?.token && { Authorization: `Bearer ${user.token}` }),
-          },
-          body: JSON.stringify({ certificateIds: selectedCerts })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      // Update local state
-      const updatedCertificates = certificates.map(cert => 
-        selectedCerts.includes(cert.id) ? { ...cert, status: "Rejected" } : cert
-      );
-      setCertificates(updatedCertificates);
-      setSelectedCerts([]);
-    } catch (err) {
-      setError("Failed to reject certificates");
-      console.error("Error rejecting certificates:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete the selected certificates?")) {
-      return;
-    }
+  const formatDate = (dateString) => {
+    if (!dateString || dateString === 'N/A') return 'N/A';
     
     try {
-      setIsLoading(true);
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    if (!amount || amount === 0) return '$0.00';
+    
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
+
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) {
+      setError("Please enter a certificate number");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setHasSearched(true);
+    
+    try {
       // Get user data from localStorage or context
       const userData = localStorage.getItem("user");
       const user = userData ? JSON.parse(userData) : null;
       
-      // API call to delete certificates
+      // API call to search for certificate by number
       const response = await fetch(
-        `https://gibsbrokersapi.newgibsonline.com/api/certificates/delete`,
+        `https://gibsbrokersapi.newgibsonline.com/api/certificates/${searchTerm}`,
         {
-          method: "DELETE",
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
             ...(user?.token && { Authorization: `Bearer ${user.token}` }),
           },
-          body: JSON.stringify({ certificateIds: selectedCerts })
         }
       );
 
       if (!response.ok) {
+        if (response.status === 404) {
+          setCertificates([]);
+          throw new Error("Certificate not found");
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      // Update local state
-      const updatedCertificates = certificates.filter(
-        cert => !selectedCerts.includes(cert.id)
-      );
-      setCertificates(updatedCertificates);
-      setSelectedCerts([]);
+      const data = await response.json();
+      
+      // Handle different response formats and ensure data structure
+      let certificatesData = [];
+      
+      if (Array.isArray(data)) {
+        certificatesData = data;
+      } else if (data.certificates && Array.isArray(data.certificates)) {
+        certificatesData = data.certificates;
+      } else if (data.data && Array.isArray(data.data)) {
+        certificatesData = data.data;
+      } else if (typeof data === 'object' && data !== null) {
+        certificatesData = [data];
+      }
+      
+      // Ensure each certificate has the required properties
+      const processedCertificates = certificatesData.map(cert => ({
+        id: cert.id || cert.certificateId || cert.certNo || 'N/A',
+        certNo: cert.certNo || cert.certificateNumber || 'N/A',
+        brokerId: cert.brokerId || cert.brokerCode || 'N/A',
+        insuredName: cert.insuredName || cert.insured || cert.clientName || 'N/A',
+        policyNo: cert.policyNo || cert.policyNumber || 'N/A',
+        transDate: cert.transDate || cert.transactionDate || cert.date || 'N/A',
+        insuredValue: cert.insuredValue || cert.sumInsured || 0,
+        premium: cert.premium || cert.grossPremium || 0,
+        status: cert.status || 'Unknown',
+        viewUrl: cert.viewUrl || `/client-dashboard/certificates/${cert.id || 'unknown'}`
+      }));
+      
+      setCertificates(processedCertificates);
     } catch (err) {
-      setError("Failed to delete certificates");
-      console.error("Error deleting certificates:", err);
+      setError(err.message || "Failed to search certificate");
+      setCertificates([]);
+      console.error("Error searching certificate:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getCreateCertificateLink = () => {
+    switch(activeTab) {
+      case "motor":
+        return "/client-dashboard/certificates/create/motor";
+      case "marine":
+        return "/client-dashboard/certificates/create/marine";
+      case "compulsory":
+        return "/client-dashboard/certificates/create/compulsory";
+      default:
+        return "/client-dashboard/certificates/create";
     }
   };
 
@@ -204,11 +140,11 @@ const ClientCertificate = () => {
       const user = userData ? JSON.parse(userData) : null;
       
       // API call to upload NID
-      const form极速赛车开奖结果Data = new FormData();
+      const formData = new FormData();
       formData.append('nidFile', file);
       
       const response = await fetch(
-        `https://gibsbrokersapi.newgibsonline.com/api/upload-nid`,
+        `https://gibsbrokersapi.newgibsonline.com/api/clients/upload-nid`,
         {
           method: "POST",
           headers: {
@@ -235,18 +171,6 @@ const ClientCertificate = () => {
     setActiveTab(tab);
   };
 
-  // Safe filtering with fallback for undefined properties
-  const filteredCertificates = certificates.filter((cert) => {
-    const id = cert.id || '';
-    const insured = cert.insured || '';
-    const searchLower = searchTerm.toLowerCase();
-    
-    return (
-      id.toString().toLowerCase().includes(searchLower) ||
-      insured.toString().toLowerCase().includes(searchLower)
-    );
-  });
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -255,17 +179,19 @@ const ClientCertificate = () => {
     );
   }
 
+
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 w-full">
       {/* Header Section */}
-      <div className="mb-6 lg:mb-8">
+       <div className="mb-6 lg:mb-8">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-              Your Marine Certificates
+              Client Policy
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">
-              View and manage your marine certificates
+              View and manage your certificates
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
@@ -280,7 +206,7 @@ const ClientCertificate = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  d="M16 7a4 4 0 11-8 0 4 4 极速赛车开奖结果0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 />
               </svg>
               <span className="hidden sm:inline">Welcome back, Client</span>
@@ -296,7 +222,7 @@ const ClientCertificate = () => {
       {/* Tabs Section */}
       <div className="mb-6">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-p极速赛车开奖结果x flex space-x-8">
             <button
               onClick={() => handleTabChange("motor")}
               className={`py-3 px-4 border-b-2 text-lg font-bold transition-colors ${
@@ -333,16 +259,16 @@ const ClientCertificate = () => {
 
       {/* Error Alert */}
       {error && (
-        <div className="mb-4 sm:mb极速赛车开奖结果-6 bg-red-50 border border-red-200 text-red-700 px-4 sm:px-6 py-4 rounded-lg">
+        <div className="mb-4 sm:mb-6 bg-red-50 border border-red-200 text-red-700 px-4 sm:px-6 py-4 rounded-lg">
           <div className="flex items-center">
             <svg
               className="w-5 h-5 mr-3 flex-shrink-0"
               fill="currentColor"
-              viewBox="0 极速赛车开奖结果0 20 20"
+              viewBox="0 0 20 20"
             >
               <path
                 fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 极速赛车开奖结果0 1 1 0 012 0zm-1-9a1 1 0 00-1 1极速赛车开奖结果v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                d="M18 10a8 8 极速赛车开奖结果0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0极速赛车开奖结果V6a1 1 0 00-1-1z"
                 clipRule="evenodd"
               />
             </svg>
@@ -363,190 +289,306 @@ const ClientCertificate = () => {
         </div>
       )}
 
-      {/* Certificates Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Certificate Management
-              </h2>
-              <p className="text-sm text-gray-极速赛车开奖结果600 mt-1">
-                View and manage all your marine certificates
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-              <Link
-                to="/client-dashboard/certificates/create"
-                className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus极速赛车开奖结果:ring-blue-500 focus:ring-offset-2"
-              >
-                <svg
-                  className="w-4 h-4 mr-2 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m极速赛车开奖结果0-6h6m-6 0H6"
-                  />
-                </svg>
-                <span className="whitespace-nowrap">
-                  Create new Certificate
-                </span>
-              </Link>
-              <label className="inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 cursor-pointer">
-                <svg
-                  className="w-4 h-4 mr-2 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4极速赛车开奖结果v12"
-                  />
-                </svg>
-                Upload NID
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={(e) => handleUploadNID(e.target.files[0])}
-                  accept=".jpg,.jpeg,.png,.pdf"
-                />
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className="px-4 sm:px-6 py-4">
-          <div className="relative flex items-center">
+      {/* Search and Action Buttons */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-4">
+          <div className="flex-grow">
             <input
               type="text"
-              placeholder="Search by certificate No. or insured name"
+              placeholder="Enter certificate No."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-3 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
             />
-            <svg
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
           </div>
-        </div>
-
-        {/* Desktop Table View */}
-        <div className="w-full overflow-x-auto">
-          <table className="w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                  Certificate ID
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                  Date
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                  Insured
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semib极速赛车开奖结果old text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCertificates.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
-                    {certificates.length === 0 ? "No certificates found" : "No matching certificates found"}
-                  </td>
-                </tr>
-              ) : (
-                filteredCertificates.map((cert) => (
-                  <tr key={cert.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {cert.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {cert.date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {cert.insured}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          cert.status === "Active"
-                            ? "bg-green-100 text-green-800"
-                            : cert.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : cert.status === "Rejected"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {cert.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                     <Link
-  to={`/client-dashboard/certificates/${cert.id}`}
-  className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
->
-  <svg
-    className="w-4 h-4 mr-1"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-    />
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-    />
-  </svg>
-  View
-</Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer */}
-        <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-200">
-          <p className="text-sm text-gray-600">
-            {filteredCertificates.length} certificate
-            {filteredCertificates.length !== 1 ? "s" : ""} total
-          </p>
+          <button
+            onClick={handleSearch}
+            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+          >
+            Search
+          </button>
         </div>
       </div>
+
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 mb-6">
+        <Link
+         to={getCreateCertificateLink()}
+          className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          <svg
+            className="w-5 h-5 mr-2 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin极速赛车开奖结果="round"
+              strokeWidth={2}
+              d="M12 6极速赛车开奖结果v6m0 0v6m0-6h6m-6 0H6"
+            />
+          </svg>
+          Create new Certificate
+        </Link>
+        <label className="inline-flex items-center justify-center px-6 py-3 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 cursor-pointer">
+          <svg
+            className="w-5 h-5 mr-2 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3极速赛车开奖结果v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+            />
+          </svg>
+          UPLOAD NID
+          <input
+            type="file"
+            className="hidden"
+            onChange={(e) => handleUploadNID(e.target.files[0])}
+            accept=".jpg,.jpeg,.png,.pdf"
+          />
+        </label>
+      </div>
+
+      {/* Certificates Section - Only show if user has searched */}
+      {hasSearched && (
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900">
+              Your Certificates
+            </h2>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCerts(certificates.map(c => c.id));
+                        } else {
+                          setSelectedCerts([]);
+                        }
+                      }}
+                      checked={selectedCerts.length === certificates.length && certificates.length > 0}
+                    />
+                  </th>
+                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium极速赛车开奖结果 text-gray-500 uppercase tracking-wider">
+                    Cert No
+                  </th>
+                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Broker ID
+                  </th>
+                  <th scope="col" className="px极速赛车开奖结果-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Insured Name
+                  </th>
+                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Policy No
+                  </th>
+                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Trans.Date
+                  </th>
+                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Insured Value
+                  </th>
+                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Premium
+                  </th>
+                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {certificates.map((certificate) => (
+                  <tr
+                    key={certificate.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        checked={selectedCerts.includes(certificate.id)}
+                        onChange={() => toggleCertificateSelection(certificate.id)}
+                      />
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
+                     <Link
+  to={`/brokers-dashboard/certificates/view/${certificate.id}`}
+  className="text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm hover:underline"
+>
+  {certificate.certNo}
+</Link>
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
+                      {certificate.brokerId}
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
+                      {certificate.insuredName}
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
+                      {certificate.policyNo}
+                    </td>
+                    <td className="px-3 sm:px-4极速赛车开奖结果 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-600">
+                      {formatDate(certificate.transDate)}
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-semibold text-green-极速赛车开奖结果600">
+                      {formatCurrency(certificate.insuredValue)}
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-semibold text-green-600">
+                      {formatCurrency(certificate.premium)}
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        certificate.status === "Active"
+                          ? "bg-green-100 text-green-800 border border-green-200"
+                          : certificate.status === "Pending"
+                          ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                          : certificate.status === "Rejected"
+                          ? "bg-red-100 text-red-800 border border-red-200"
+                          : "bg-gray-100 text-gray-800 border border-gray-200"
+                      }`}>
+                        {certificate.status}
+                      </span>
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
+                      <div className="flex items-center space-x-2">
+                        <Link
+                          to={certificate.viewUrl}
+                          className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                        >
+                          View
+                        </Link>
+                        <button className="text-red-600 hover:text-red-800 font-medium transition-colors">
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Empty State */}
+          {certificates.length === 0 && (
+            <div className="text-center py-8 sm:py-12">
+              <svg
+                className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+               
+                />
+              </svg>
+              <h3 className="mt-2 text-sm sm:text-base font-medium text-gray-900">
+                No certificates found
+              </h3>
+              <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                Try a different search term
+              </p>
+            </div>
+          )}
+
+          {/* Selection Actions Section */}
+          {selectedCerts.length > 0 && (
+            <div className="px-4 sm:px-6 py-4 bg-blue-50 border-t border-blue-200">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center space-x-2">
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                     
+                    />
+                  </svg>
+                  <span className="text-xs sm:text-sm font-medium text-blue-800">
+                    {selectedCerts.length} certificate
+                    {selectedCerts.length > 1 ? "s" : ""} selected
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button className="inline-flex items-center px-2 sm:px-3 py-1.5 sm:极速赛车开奖结果py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
+                    <svg
+                      className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        
+                      />
+                    </svg>
+                    Download Selected
+                  </button>
+
+                  <button className="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-green-700 transition-colors">
+                    <svg
+                      className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4极速赛车开奖结果h6a2 2 0 002-2v-4a2 2 极速赛车开奖结果0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2极速赛车开奖结果v4h10z"
+                      />
+                    </svg>
+                    Print Selected
+                  </button>
+                  
+                  <button className="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-red-700 transition-colors">
+                    <svg
+                      className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                    Delete Selected
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

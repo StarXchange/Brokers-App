@@ -24,7 +24,7 @@ import AddProposal from "./pages/Client/AddProposal";
 import BusinessProposals from "./pages/Client/BusinessProposals";
 import MakePayment from "./pages/Client/MakePayment";
 import ClientCertificate from "./pages/Client/ClientCertificate";
-
+import CreateMotorPolicy from "./shared/CreateMotorPolicy";
 
 const AppContent = () => {
   const location = useLocation();
@@ -32,7 +32,6 @@ const AppContent = () => {
     location.pathname.startsWith('/company-dashboard') ||
     location.pathname.startsWith('/brokers-dashboard') ||
     location.pathname.startsWith('/client-dashboard');
-
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -56,30 +55,37 @@ const AppContent = () => {
             <Route path="agents-brokers/edit/:brokerId" element={<EditBroker />} />
           </Route>
 
-          {/* Brokers Dashboard */}
+          {/* Brokers Dashboard - FIXED ROUTING */}
           <Route path="/brokers-dashboard" element={<BrokersDashboard />}>
             <Route index element={<BrokerCertificate />} />
+            
+            {/* Main certificates list view */}
             <Route path="certificates" element={<BrokerCertificate />} />
+            
+            {/* Create new certificate */}
+            <Route path="certificates/create/marine" element={<CreateNewCertificate userRole="broker" />} />
+            <Route path="certificates/create/motor" element={<CreateMotorPolicy userRole="broker" />} />
+            
+            {/* View existing certificate - FIXED PATH */}
+            <Route 
+              path="certificates/view/:certId" 
+              element={<CreateNewCertificate viewMode={true} userRole="broker" />} 
+            />
+            
+            {/* Edit existing certificate */}
+            <Route 
+              path="certificates/edit/:certId" 
+              element={<CreateNewCertificate userRole="broker" />} 
+            />
+            
             <Route path="view-documents" element={<ViewDocuments />} />
             <Route path="download-certificates" element={<DownloadCertificates userType="broker" userId="BROKER-123" />} />
             <Route path="view-profile" element={<ViewProfile />} />
             <Route path="credit-notes" element={<CreditNotes />} />
             <Route path="change-password" element={<ChangePassword userType="broker" />} />
-            
-            {/* Updated Certificate Routes */}
-            <Route path="certificates">
-              <Route path="create" element={<CreateNewCertificate userRole="broker" />} />
-              <Route 
-                path="/brokers-dashboard/certificates/:brokerId/:year/:month/:certId" 
-                element={<CreateNewCertificate viewMode={true} userRole="broker"/>} 
-              />
-
-            </Route>
-            
             <Route path="client-management" element={<ClientList />} />
             <Route path="client-management/add-client" element={<AddClient />} />
           </Route>
-
 
           {/* Client Dashboard */}
           <Route path="/client-dashboard" element={<ClientDashboard />}>
@@ -88,12 +94,15 @@ const AppContent = () => {
             <Route path="make-payment" element={<MakePayment />} />
             <Route path="client-certificate" element={<ClientCertificate />} />
             <Route path="change-password" element={<ChangePassword userType="client" />} />
+
+              {/* Create new certificate */}
+            <Route path="certificates/create/marine" element={<CreateNewCertificate userRole="client" />} />
+            <Route path="certificates/create/motor" element={<CreateMotorPolicy userRole="client" />} />
+            <Route path="certificates/create/compulsory" element={<CreateNewCertificate userRole="client" />} />
             
-            {/* Updated Certificate Routes */}
-            <Route path="certificates">
-              <Route path="create" element={<CreateNewCertificate userRole="client" />} />
-              <Route path=":year/:month/:certId" element={<CreateNewCertificate viewMode={true} userRole="client" />} />
-            </Route>
+            {/* Certificate Routes for Client */}
+            <Route path="certificates/create" element={<CreateNewCertificate userRole="client" />} />
+            <Route path="certificates/view/:certId" element={<CreateNewCertificate viewMode={true} userRole="client" />} />
           </Route>
         </Routes>
       </main>
