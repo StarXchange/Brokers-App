@@ -1,7 +1,7 @@
 // src/pages/brokers/BrokerCertificates.jsx
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const BrokerCertificates = () => {
   const [activeTab, setActiveTab] = useState("motor");
@@ -11,30 +11,32 @@ const BrokerCertificates = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Format date for display
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     try {
-      const options = { day: '2-digit', month: 'short', year: 'numeric' };
-      return new Date(dateString).toLocaleDateString('en-US', options);
+      const options = { day: "2-digit", month: "short", year: "numeric" };
+      return new Date(dateString).toLocaleDateString("en-US", options);
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid Date';
+      console.error("Error formatting date:", error);
+      return "Invalid Date";
     }
   };
 
   // Format currency for display
-  const formatCurrency = (amount, currency = 'NGN') => {
-    if (!amount) return 'N/A';
+  const formatCurrency = (amount, currency = "NGN") => {
+    if (!amount) return "N/A";
     try {
-      return new Intl.NumberFormat('en-NG', {
-        style: 'currency',
-        currency: currency
+      return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: currency,
       }).format(amount);
     } catch (error) {
-      console.error('Error formatting currency:', error);
-      return 'Invalid Amount';
+      console.error("Error formatting currency:", error);
+      return "Invalid Amount";
     }
   };
 
@@ -42,23 +44,31 @@ const BrokerCertificates = () => {
   const fetchCertificates = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await axios.get(`/api/Certificates`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      
+
       // DEBUG: Check what we're getting from the API
       console.log("API Response:", response.data);
       if (response.data && response.data.length > 0) {
         console.log("First certificate structure:", response.data[0]);
       }
-      
+
       setCertificates(response.data);
       filterCertificatesByType(response.data, activeTab);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch certificates');
+      console.error("Fetch error:", err);
+      if (err.response?.status === 401) {
+        setError("Authentication failed. Please login again.");
+        navigate("/login");
+      } else if (err.response?.status === 403) {
+        setError("You do not have permission to view certificates.");
+      } else {
+        setError(err.response?.data?.message || "Failed to fetch certificates");
+      }
     } finally {
       setLoading(false);
     }
@@ -70,15 +80,23 @@ const BrokerCertificates = () => {
       setFilteredCertificates([]);
       return;
     }
-    
+
     // TEMPORARY: Show all certificates regardless of type for debugging
     setFilteredCertificates(certs);
     console.log(`Showing all ${certs.length} certificates for debugging`);
   };
 
   useEffect(() => {
-    fetchCertificates();
-  }, []);
+    // Check if we need to refresh after certificate creation
+    const needsRefresh = location.state?.refresh;
+    if (needsRefresh) {
+      fetchCertificates();
+      // Clear the refresh flag
+      navigate(location.pathname, { replace: true, state: {} });
+    } else {
+      fetchCertificates();
+    }
+  }, [location, navigate]);
 
   // Handle tab change
   const handleTabChange = (tab) => {
@@ -93,15 +111,21 @@ const BrokerCertificates = () => {
       filterCertificatesByType(certificates, activeTab);
       return;
     }
-    
-    const filtered = certificates.filter(cert => 
-      (cert.certNo && cert.certNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (cert.policyNo && cert.policyNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (cert.insuredName && cert.insuredName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (cert.name && cert.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (cert.brokerId && cert.brokerId.toLowerCase().includes(searchTerm.toLowerCase()))
+
+    const filtered = certificates.filter(
+      (cert) =>
+        (cert.certNo &&
+          cert.certNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (cert.policyNo &&
+          cert.policyNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (cert.insuredName &&
+          cert.insuredName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (cert.name &&
+          cert.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (cert.brokerId &&
+          cert.brokerId.toLowerCase().includes(searchTerm.toLowerCase()))
     );
-    
+
     setFilteredCertificates(filtered);
   };
 
@@ -113,12 +137,14 @@ const BrokerCertificates = () => {
     );
   };
 
-  const getCertificateDetailLink = (certificate) => {
-    return `/brokers-dashboard/certificates/${certificate.id || certificate.certNo}`;
-  };
+  // const getCertificateDetailLink = (certificate) => {
+  //   return `/brokers-dashboard/certificates/${
+  //     certificate.id || certificate.certNo
+  //   }`;
+  // };
 
   const getCreateCertificateLink = () => {
-    switch(activeTab) {
+    switch (activeTab) {
       case "motor":
         return "/brokers-dashboard/certificates/create/motor";
       case "marine":
@@ -166,7 +192,7 @@ const BrokerCertificates = () => {
             </svg>
             <span className="text-sm font-medium">{极速赛车开奖结果error}</span>
           </div>
-          <button 
+          <button
             onClick={fetchCertificates}
             className="mt-3 text-sm bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded"
           >
@@ -188,43 +214,43 @@ const BrokerCertificates = () => {
           Manage your certificates and client operations
         </p>
       </div>
-{/* Tabs Section */}
-<div className="mb-6">
-  <div className="border-b border-gray-200">
-    <nav className="-mb-px flex space-x-8">
-      <button
-        onClick={() => handleTabChange("motor")}
-        className={`py-3 px-4 border-b-2 text-lg font-bold transition-colors ${
-          activeTab === "motor"
-            ? "border-blue-500 text-blue-600"
-            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-        }`}
-      >
-        Motor Policies
-      </button>
-      <button
-        onClick={() => handleTabChange("marine")}
-        className={`py-3 px-4 border-b-2 text-lg font-bold transition-colors ${
-          activeTab === "marine"
-            ? "border-blue-500 text-blue-600"
-            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-        }`}
-      >
-        Marine Policies 
-      </button>
-      <button
-        onClick={() => handleTabChange("compulsory")}
-        className={`py-3 px-4 border-b-2 text-lg font-bold transition-colors ${
-          activeTab === "compulsory"
-            ? "border-blue-500 text-blue-600"
-            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-        }`}
-      >
-        Compulsory Insurance Policies 
-      </button>
-    </nav>
-  </div>
-</div>
+      {/* Tabs Section */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => handleTabChange("motor")}
+              className={`py-3 px-4 border-b-2 text-lg font-bold transition-colors ${
+                activeTab === "motor"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Motor Policies
+            </button>
+            <button
+              onClick={() => handleTabChange("marine")}
+              className={`py-3 px-4 border-b-2 text-lg font-bold transition-colors ${
+                activeTab === "marine"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Marine Policies
+            </button>
+            <button
+              onClick={() => handleTabChange("compulsory")}
+              className={`py-3 px-4 border-b-2 text-lg font-bold transition-colors ${
+                activeTab === "compulsory"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Compulsory Insurance Policies
+            </button>
+          </nav>
+        </div>
+      </div>
 
       {/* Search Filter Section */}
       <div className="mb-6">
@@ -302,45 +328,80 @@ const BrokerCertificates = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <input 
-                    type="checkbox" 
+                <th
+                  scope="col"
+                  className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  <input
+                    type="checkbox"
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     onChange={(e) => {
                       if (e.target.checked) {
-                        setSelectedCerts(filteredCertificates.map(c => getCertId(c)));
+                        setSelectedCerts(
+                          filteredCertificates.map((c) => getCertId(c))
+                        );
                       } else {
                         setSelectedCerts([]);
                       }
                     }}
-                    checked={selectedCerts.length === filteredCertificates.length && filteredCertificates.length > 0}
+                    checked={
+                      selectedCerts.length === filteredCertificates.length &&
+                      filteredCertificates.length > 0
+                    }
                   />
                 </th>
-                <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Cert No
                 </th>
-                <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Broker ID
                 </th>
-                <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Insured Name
                 </th>
-                <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Policy No
                 </th>
-                <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Trans.Date
                 </th>
-                <th scope="极速赛车开奖结果col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="极速赛车开奖结果col"
+                  className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Insured Value
                 </th>
-                <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Premium
                 </th>
-                <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Status
                 </th>
-                <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Actions
                 </th>
               </tr>
@@ -356,38 +417,46 @@ const BrokerCertificates = () => {
                       type="checkbox"
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       checked={selectedCerts.includes(getCertId(certificate))}
-                      onChange={() => toggleCertificateSelection(getCertId(certificate))}
+                      onChange={() =>
+                        toggleCertificateSelection(getCertId(certificate))
+                      }
                     />
                   </td>
                   <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
-                     <Link
-  to={`/brokers-dashboard/certificates/view/${certificate.id}`}
-  className="text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm hover:underline"
->
-  {certificate.certNo}
-</Link>
+                    <Link
+                      to={`/brokers-dashboard/certificates/view/${certificate.id}`}
+                      className="text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm hover:underline"
+                    >
+                      {certificate.certNo}
+                    </Link>
                   </td>
                   <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
-                    {certificate.brokerId || 'N/A'}
+                    {certificate.brokerId || "N/A"}
                   </td>
                   <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
-                    {certificate.insuredName || certificate.name || 'N/A'}
+                    {certificate.insuredName || certificate.name || "N/A"}
                   </td>
                   <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
-                    {certificate.policyNo || 'N/A'}
+                    {certificate.policyNo || "N/A"}
                   </td>
                   <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-600">
-                    {formatDate(certificate.transDate || certificate.transactionDate)}
+                    {formatDate(
+                      certificate.transDate || certificate.transactionDate
+                    )}
                   </td>
                   <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-semibold text-green-600">
-                    {formatCurrency(certificate.insuredValue || certificate.sumInsured)}
+                    {formatCurrency(
+                      certificate.insuredValue || certificate.sumInsured
+                    )}
                   </td>
                   <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-semibold text-green-600">
-                    {formatCurrency(certificate.grossPremium || certificate.premium)}
+                    {formatCurrency(
+                      certificate.grossPremium || certificate.premium
+                    )}
                   </td>
                   <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
                     <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-200">
-                      {certificate.status || 'Active'}
+                      {certificate.status || "Active"}
                     </span>
                   </td>
                   <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
@@ -510,7 +579,7 @@ const BrokerCertificates = () => {
                   </svg>
                   Print Selected
                 </button>
-                
+
                 <button className="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-red-700 transition-colors">
                   <svg
                     className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
