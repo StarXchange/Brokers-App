@@ -17,7 +17,7 @@ export default function ClientList() {
         setError(null);
 
         const response = await fetch(
-          `https://gibsbrokersapi.newgibsonline.com/api/InsuredClients/1234`,
+          `https://gibsbrokersapi.newgibsonline.com/api/InsuredClients`,
           {
             method: "GET",
             headers: {

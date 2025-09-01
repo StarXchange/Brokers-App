@@ -102,7 +102,7 @@ const CompanyDashboard = () => {
         sessionStorage.getItem("token");
 
       // You may need to adjust this endpoint based on your API structure
-      const response = await fetch(`${API_BASE_URL}/Certificate/approve`, {
+      const response = await fetch(`${API_BASE_URL}/Certificates/approve`, {
         method: "PUT", // or POST depending on your API
         headers: {
           "Content-Type": "application/json",
@@ -149,7 +149,7 @@ const CompanyDashboard = () => {
         localStorage.getItem("authToken") ||
         sessionStorage.getItem("token");
 
-      const response = await fetch(`${API_BASE_URL}/Certificate/reject`, {
+      const response = await fetch(`${API_BASE_URL}/Certificates/reject`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -206,7 +206,7 @@ const CompanyDashboard = () => {
 
       // Delete each certificate individually or use bulk delete if available
       const deletePromises = selectedCerts.map((certNo) =>
-        fetch(`${API_BASE_URL}/Certificate/${certNo}`, {
+        fetch(`${API_BASE_URL}/Certificates/${certNo}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
