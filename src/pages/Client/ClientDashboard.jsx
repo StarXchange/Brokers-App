@@ -325,7 +325,7 @@ const ClientDashboard = () => {
                     />
                   </svg>
                 </div>
-                <span>Policy</span>
+                <span>Policy Admin</span>
               </Link>
 
               <Link

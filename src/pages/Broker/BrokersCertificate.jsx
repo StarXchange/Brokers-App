@@ -51,12 +51,8 @@ const BrokerCertificates = () => {
         },
       });
 
-      // DEBUG: Check what we're getting from the API
-      console.log("API Response:", response.data);
-      if (response.data && response.data.length > 0) {
-        console.log("First certificate structure:", response.data[0]);
-      }
-
+    
+    
       setCertificates(response.data);
       filterCertificatesByType(response.data, activeTab);
     } catch (err) {
@@ -83,7 +79,6 @@ const BrokerCertificates = () => {
 
     // TEMPORARY: Show all certificates regardless of type for debugging
     setFilteredCertificates(certs);
-    console.log(`Showing all ${certs.length} certificates for debugging`);
   };
 
   useEffect(() => {
