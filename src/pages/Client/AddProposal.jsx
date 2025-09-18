@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 export default function AddProposal() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePrefix = location.pathname.startsWith("/admin-dashboard")
+    ? "/admin-dashboard/client"
+    : "/client-dashboard";
   const [insuredType, setInsuredType] = useState("Individual");
   const [formData, setFormData] = useState({
     // Common fields
@@ -51,7 +55,7 @@ export default function AddProposal() {
   };
 
   const handleMakePayment = () => {
-    navigate("/client-dashboard/make-payment", {
+    navigate(`${basePrefix}/make-payment`, {
       state: { amount: paymentAmount },
     });
   };
@@ -106,7 +110,7 @@ export default function AddProposal() {
     setTimeout(() => {
       console.log("Proposal saved as draft (mock)", formData);
       setSaveLoading(false);
-      navigate("/client-dashboard");
+      navigate(basePrefix);
     }, 1000);
   };
 
@@ -161,7 +165,7 @@ export default function AddProposal() {
     setTimeout(() => {
       console.log("Proposal submitted (mock)", { ...formData, scannedDocs });
       setLoading(false);
-      navigate("/client-dashboard");
+      navigate(basePrefix);
     }, 1500);
   };
 
@@ -646,7 +650,7 @@ export default function AddProposal() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 sm:pt-6 border-t border-gray-200 gap-4">
             <Link
-              to="/client-dashboard/"
+              to={basePrefix}
               className="inline-flex items-center justify-center sm:justify-start px-4 sm:px-6 py-2 sm:py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors text-sm sm:text-base"
             >
               <svg

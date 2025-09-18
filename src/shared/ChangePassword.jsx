@@ -1,10 +1,12 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const ChangePassword = ({ userType = "company", userId = "STACO-MARINE" }) => {
   const { updatePassword } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith("/admin-dashboard");
 
   const [formData, setFormData] = useState({
     oldPassword: "",
@@ -74,15 +76,19 @@ const ChangePassword = ({ userType = "company", userId = "STACO-MARINE" }) => {
 
       // On success, navigate back based on user type
       let redirectPath;
-      switch (userType) {
-        case "broker":
-          redirectPath = "/brokers-dashboard";
-          break;
-        case "client":
-          redirectPath = "/client-dashboard";
-          break;
-        default: // company
-          redirectPath = "/company-dashboard/certificates";
+      if (isAdmin) {
+        redirectPath = "/admin-dashboard";
+      } else {
+        switch (userType) {
+          case "broker":
+            redirectPath = "/brokers-dashboard";
+            break;
+          case "client":
+            redirectPath = "/client-dashboard";
+            break;
+          default: // company
+            redirectPath = "/company-dashboard/certificates";
+        }
       }
       navigate(redirectPath);
     } catch (err) {
@@ -100,6 +106,7 @@ const ChangePassword = ({ userType = "company", userId = "STACO-MARINE" }) => {
   };
 
   const getDashboardPath = () => {
+    if (isAdmin) return "/admin-dashboard";
     switch (userType) {
       case "broker":
         return "/brokers-dashboard";
