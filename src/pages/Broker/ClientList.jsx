@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 export default function ClientList() {
+  const location = useLocation();
+  const basePrefix = location.pathname.startsWith("/admin-dashboard")
+    ? "/admin-dashboard/broker"
+    : "/brokers-dashboard";
   const { user } = useAuth();
   const [clients, setClients] = useState([]);
   const [selectedClients, setSelectedClients] = useState([]);
@@ -195,7 +199,7 @@ export default function ClientList() {
             </p>
           </div>
           <Link
-            to="/brokers-dashboard/client-management/add-client"
+            to={`${basePrefix}/client-management/add-client`}
             className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             <svg
@@ -270,7 +274,7 @@ export default function ClientList() {
                       {client.status}
                     </span>
                     <Link
-                      to={`/brokers-dashboard/client-management/edit/${client.id}`}
+                      to={`${basePrefix}/client-management/edit/${client.id}`}
                       className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-sm"
                     >
                       Edit
@@ -622,7 +626,7 @@ export default function ClientList() {
               {clients.length} client{clients.length !== 1 ? "s" : ""} total
             </p>
             <Link
-              to="/brokers-dashboard/client-management/add-client"
+              to={`${basePrefix}/client-management/add-client`}
               className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
               <svg

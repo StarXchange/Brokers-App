@@ -1,8 +1,12 @@
 // src/pages/AgentsBrokers.jsx
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const AgentsBrokers = () => {
+  const location = useLocation();
+  const basePrefix = location.pathname.startsWith("/admin-dashboard")
+    ? "/admin-dashboard/company"
+    : "/company-dashboard";
   const [brokers, setBrokers] = useState([]);
   const [selectedBroker, setSelectedBroker] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -227,7 +231,7 @@ const AgentsBrokers = () => {
             </p>
           </div>
           <Link
-            to="/company-dashboard/add-broker"
+            to={`${basePrefix}/add-broker`}
             className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
           >
             <svg
@@ -318,7 +322,7 @@ const AgentsBrokers = () => {
                     </span>
                     <div className="mt-1">
                       <Link
-                        to={`/company-dashboard/agents-brokers/edit/${encodeURIComponent(
+                        to={`${basePrefix}/agents-brokers/edit/${encodeURIComponent(
                           broker.id
                         )}`}
                         className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline transition-colors"
@@ -570,7 +574,7 @@ const AgentsBrokers = () => {
               {brokers.length} broker{brokers.length !== 1 ? "s" : ""} total
             </p>
             <Link
-              to="/company-dashboard/add-broker"
+              to={`${basePrefix}/add-broker`}
               className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full sm:w-auto"
             >
               <svg

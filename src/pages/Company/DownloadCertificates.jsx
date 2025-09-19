@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
@@ -7,6 +7,10 @@ const DownloadCertificates = ({
   userType = "company",
   userId = "STACO-MARINE",
 }) => {
+  const location = useLocation();
+  const basePrefix = location.pathname.startsWith("/admin-dashboard")
+    ? "/admin-dashboard/company"
+    : "/company-dashboard";
   const [showCalendar1, setShowCalendar1] = useState(false);
   const [showCalendar2, setShowCalendar2] = useState(false);
   const [date1, setDate1] = useState(null);
@@ -19,7 +23,7 @@ const DownloadCertificates = ({
   const backLink =
     userType === "broker"
       ? "/brokers-dashboard/certificates"
-      : "/company-dashboard/certificates";
+      : `${basePrefix}/certificates`;
 
   // Handle click outside calendar
   useEffect(() => {

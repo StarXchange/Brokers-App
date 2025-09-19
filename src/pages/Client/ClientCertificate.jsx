@@ -1,7 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const ClientCertificate = () => {
+  const location = useLocation();
+  const basePrefix = location.pathname.startsWith("/admin-dashboard")
+    ? "/admin-dashboard/client"
+    : "/client-dashboard";
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -21,14 +25,14 @@ const ClientCertificate = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString || dateString === 'N/A') return 'N/A';
-    
+    if (!dateString || dateString === "N/A") return "N/A";
+
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
       });
     } catch (e) {
       return dateString;
@@ -36,12 +40,12 @@ const ClientCertificate = () => {
   };
 
   const formatCurrency = (amount) => {
-    if (!amount || amount === 0) return '$0.00';
-    
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
+    if (!amount || amount === 0) return "$0.00";
+
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -54,12 +58,12 @@ const ClientCertificate = () => {
     setIsLoading(true);
     setError(null);
     setHasSearched(true);
-    
+
     try {
       // Get user data from localStorage or context
       const userData = localStorage.getItem("user");
       const user = userData ? JSON.parse(userData) : null;
-      
+
       // API call to search for certificate by number
       const response = await fetch(
         `https://gibsbrokersapi.newgibsonline.com/api/certificates/${searchTerm}`,
@@ -79,36 +83,39 @@ const ClientCertificate = () => {
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       // Handle different response formats and ensure data structure
       let certificatesData = [];
-      
+
       if (Array.isArray(data)) {
         certificatesData = data;
       } else if (data.certificates && Array.isArray(data.certificates)) {
         certificatesData = data.certificates;
       } else if (data.data && Array.isArray(data.data)) {
         certificatesData = data.data;
-      } else if (typeof data === 'object' && data !== null) {
+      } else if (typeof data === "object" && data !== null) {
         certificatesData = [data];
       }
-      
+
       // Ensure each certificate has the required properties
-      const processedCertificates = certificatesData.map(cert => ({
-        id: cert.id || cert.certificateId || cert.certNo || 'N/A',
-        certNo: cert.certNo || cert.certificateNumber || 'N/A',
-        brokerId: cert.brokerId || cert.brokerCode || 'N/A',
-        insuredName: cert.insuredName || cert.insured || cert.clientName || 'N/A',
-        policyNo: cert.policyNo || cert.policyNumber || 'N/A',
-        transDate: cert.transDate || cert.transactionDate || cert.date || 'N/A',
+      const processedCertificates = certificatesData.map((cert) => ({
+        id: cert.id || cert.certificateId || cert.certNo || "N/A",
+        certNo: cert.certNo || cert.certificateNumber || "N/A",
+        brokerId: cert.brokerId || cert.brokerCode || "N/A",
+        insuredName:
+          cert.insuredName || cert.insured || cert.clientName || "N/A",
+        policyNo: cert.policyNo || cert.policyNumber || "N/A",
+        transDate: cert.transDate || cert.transactionDate || cert.date || "N/A",
         insuredValue: cert.insuredValue || cert.sumInsured || 0,
         premium: cert.premium || cert.grossPremium || 0,
-        status: cert.status || 'Unknown',
-        viewUrl: cert.viewUrl || `/client-dashboard/certificates/${cert.id || 'unknown'}`
+        status: cert.status || "Unknown",
+        viewUrl:
+          cert.viewUrl ||
+          `/client-dashboard/certificates/${cert.id || "unknown"}`,
       }));
-      
+
       setCertificates(processedCertificates);
     } catch (err) {
       setError(err.message || "Failed to search certificate");
@@ -120,15 +127,15 @@ const ClientCertificate = () => {
   };
 
   const getCreateCertificateLink = () => {
-    switch(activeTab) {
+    switch (activeTab) {
       case "motor":
-        return "/client-dashboard/certificates/create/motor";
+        return `${basePrefix}/certificates/create/motor`;
       case "marine":
-        return "/client-dashboard/certificates/create/marine";
+        return `${basePrefix}/certificates/create/marine`;
       case "compulsory":
-        return "/client-dashboard/certificates/create/compulsory";
+        return `${basePrefix}/certificates/create/compulsory`;
       default:
-        return "/client-dashboard/certificates/create";
+        return `${basePrefix}/certificates/create`;
     }
   };
 
@@ -138,11 +145,11 @@ const ClientCertificate = () => {
       // Get user data from localStorage or context
       const userData = localStorage.getItem("user");
       const user = userData ? JSON.parse(userData) : null;
-      
+
       // API call to upload NID
       const formData = new FormData();
-      formData.append('nidFile', file);
-      
+      formData.append("nidFile", file);
+
       const response = await fetch(
         `https://gibsbrokersapi.newgibsonline.com/api/clients/upload-nid`,
         {
@@ -150,15 +157,15 @@ const ClientCertificate = () => {
           headers: {
             ...(user?.token && { Authorization: `Bearer ${user.token}` }),
           },
-          body: formData
+          body: formData,
         }
       );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
-      alert('NID uploaded successfully!');
+
+      alert("NID uploaded successfully!");
     } catch (err) {
       setError("Failed to upload NID");
       console.error("Error uploading NID:", err);
@@ -179,12 +186,10 @@ const ClientCertificate = () => {
     );
   }
 
-
-
   return (
     <div className="p-4 sm:p-6 lg:p-8 w-full">
       {/* Header Section */}
-       <div className="mb-6 lg:mb-8">
+      <div className="mb-6 lg:mb-8">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
@@ -298,7 +303,7 @@ const ClientCertificate = () => {
               placeholder="Enter certificate No."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
             />
           </div>
@@ -313,7 +318,7 @@ const ClientCertificate = () => {
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 mb-6">
         <Link
-         to={getCreateCertificateLink()}
+          to={getCreateCertificateLink()}
           className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           <svg
@@ -368,45 +373,78 @@ const ClientCertificate = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <input 
-                      type="checkbox" 
+                  <th
+                    scope="col"
+                    className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    <input
+                      type="checkbox"
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedCerts(certificates.map(c => c.id));
+                          setSelectedCerts(certificates.map((c) => c.id));
                         } else {
                           setSelectedCerts([]);
                         }
                       }}
-                      checked={selectedCerts.length === certificates.length && certificates.length > 0}
+                      checked={
+                        selectedCerts.length === certificates.length &&
+                        certificates.length > 0
+                      }
                     />
                   </th>
-                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium极速赛车开奖结果 text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium极速赛车开奖结果 text-gray-500 uppercase tracking-wider"
+                  >
                     Cert No
                   </th>
-                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Broker ID
                   </th>
-                  <th scope="col" className="px极速赛车开奖结果-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px极速赛车开奖结果-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Insured Name
                   </th>
-                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Policy No
                   </th>
-                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Trans.Date
                   </th>
-                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Insured Value
                   </th>
-                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Premium
                   </th>
-                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Status
                   </th>
-                  <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Actions
                   </th>
                 </tr>
@@ -422,16 +460,18 @@ const ClientCertificate = () => {
                         type="checkbox"
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         checked={selectedCerts.includes(certificate.id)}
-                        onChange={() => toggleCertificateSelection(certificate.id)}
+                        onChange={() =>
+                          toggleCertificateSelection(certificate.id)
+                        }
                       />
                     </td>
                     <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
-                     <Link
-  to={`/brokers-dashboard/certificates/view/${certificate.id}`}
-  className="text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm hover:underline"
->
-  {certificate.certNo}
-</Link>
+                      <Link
+                        to={`${basePrefix}/certificates/view/${certificate.id}`}
+                        className="text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm hover:underline"
+                      >
+                        {certificate.certNo}
+                      </Link>
                     </td>
                     <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                       {certificate.brokerId}
@@ -452,15 +492,17 @@ const ClientCertificate = () => {
                       {formatCurrency(certificate.premium)}
                     </td>
                     <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        certificate.status === "Active"
-                          ? "bg-green-100 text-green-800 border border-green-200"
-                          : certificate.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                          : certificate.status === "Rejected"
-                          ? "bg-red-100 text-red-800 border border-red-200"
-                          : "bg-gray-100 text-gray-800 border border-gray-200"
-                      }`}>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          certificate.status === "Active"
+                            ? "bg-green-100 text-green-800 border border-green-200"
+                            : certificate.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                            : certificate.status === "Rejected"
+                            ? "bg-red-100 text-red-800 border border-red-200"
+                            : "bg-gray-100 text-gray-800 border border-gray-200"
+                        }`}
+                      >
                         {certificate.status}
                       </span>
                     </td>
@@ -496,7 +538,6 @@ const ClientCertificate = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-               
                 />
               </svg>
               <h3 className="mt-2 text-sm sm:text-base font-medium text-gray-900">
@@ -523,7 +564,6 @@ const ClientCertificate = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                     
                     />
                   </svg>
                   <span className="text-xs sm:text-sm font-medium text-blue-800">
@@ -544,7 +584,6 @@ const ClientCertificate = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        
                       />
                     </svg>
                     Download Selected
@@ -566,7 +605,7 @@ const ClientCertificate = () => {
                     </svg>
                     Print Selected
                   </button>
-                  
+
                   <button className="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-red-700 transition-colors">
                     <svg
                       className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"

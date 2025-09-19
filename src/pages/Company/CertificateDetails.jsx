@@ -1,8 +1,12 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const CertificateDetails = () => {
   const { certNo } = useParams();
+  const location = useLocation();
+  const basePrefix = location.pathname.startsWith("/admin-dashboard")
+    ? "/admin-dashboard/company"
+    : "/company-dashboard";
   const navigate = useNavigate();
   const [certificate, setCertificate] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -162,7 +166,7 @@ const CertificateDetails = () => {
           </div>
           <div className="mt-4">
             <button
-              onClick={() => navigate("/company-dashboard/certificates")}
+              onClick={() => navigate(`${basePrefix}/certificates`)}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
             >
               Back to Certificates
@@ -179,7 +183,7 @@ const CertificateDetails = () => {
         <div className="text-center">
           <div className="mb-4 text-gray-600">Certificate not found</div>
           <button
-            onClick={() => navigate("/company-dashboard/certificates")}
+            onClick={() => navigate(`${basePrefix}/certificates`)}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
           >
             Back to Certificates
@@ -786,7 +790,7 @@ const CertificateDetails = () => {
               </>
             ) : (
               <Link
-                to="/company-dashboard/certificates"
+                to={`${basePrefix}/certificates`}
                 className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
               >
                 <svg
