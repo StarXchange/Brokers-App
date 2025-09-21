@@ -126,7 +126,7 @@ const AdminOverview = () => {
           </h3>
           <div className="space-y-3">
             <Link
-              to="/admin-dashboard/company/certificates"
+              to="/admin/company/certificates"
               className="block p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors"
             >
               <div className="flex items-center">
@@ -149,7 +149,7 @@ const AdminOverview = () => {
               </div>
             </Link>
             <Link
-              to="/admin-dashboard/company/agents-brokers"
+              to="/admin/company/agents-brokers"
               className="block p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors"
             >
               <div className="flex items-center">
@@ -181,7 +181,7 @@ const AdminOverview = () => {
           </h3>
           <div className="space-y-3">
             <Link
-              to="/admin-dashboard/broker/certificates"
+              to="/admin/broker/certificates"
               className="block p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors"
             >
               <div className="flex items-center">
@@ -204,7 +204,7 @@ const AdminOverview = () => {
               </div>
             </Link>
             <Link
-              to="/admin-dashboard/broker/client-management"
+              to="/admin/broker/client-management"
               className="block p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors"
             >
               <div className="flex items-center">
@@ -236,7 +236,7 @@ const AdminOverview = () => {
           </h3>
           <div className="space-y-3">
             <Link
-              to="/admin-dashboard/client/business-proposals"
+              to="/admin/client/business-proposals"
               className="block p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors"
             >
               <div className="flex items-center">
@@ -259,7 +259,7 @@ const AdminOverview = () => {
               </div>
             </Link>
             <Link
-              to="/admin-dashboard/client/make-payment"
+              to="/admin/client/make-payment"
               className="block p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors"
             >
               <div className="flex items-center">

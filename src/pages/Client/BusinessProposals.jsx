@@ -1,17 +1,21 @@
 import React from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 
 const BusinessProposals = () => {
+  const navigate = useNavigate();
   const {
     proposals,
     selectedProposal,
     showDelete,
     handleRowClick,
-    handleAddProposal,
     setProposals,
     setSelectedProposal,
     setShowDelete,
   } = useOutletContext();
+
+  const handleAddProposal = () => {
+    navigate('/customer/add-proposal');
+  };
 
   const handleDelete = () => {
     // For now using mock implementation

@@ -51,8 +51,6 @@ const BrokerCertificates = () => {
         },
       });
 
-    
-    
       setCertificates(response.data);
       filterCertificatesByType(response.data, activeTab);
     } catch (err) {
@@ -162,9 +160,9 @@ const BrokerCertificates = () => {
   // };
 
   const getCreateCertificateLink = () => {
-    const basePrefix = location.pathname.startsWith("/admin-dashboard")
-      ? "/admin-dashboard/broker"
-      : "/brokers-dashboard";
+    const basePrefix = location.pathname.startsWith("/admin")
+      ? "/admin/brokers"
+      : "/brokers";
     switch (activeTab) {
       case "motor":
         return `${basePrefix}/certificates/create/motor`;

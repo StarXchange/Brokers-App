@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 const CertificateDetails = () => {
   const { certNo } = useParams();
   const location = useLocation();
-  const basePrefix = location.pathname.startsWith("/admin-dashboard")
-    ? "/admin-dashboard/company"
-    : "/company-dashboard";
+  const basePrefix = location.pathname.startsWith("/admin")
+    ? "/admin/company"
+    : "/company";
   const navigate = useNavigate();
   const [certificate, setCertificate] = useState(null);
   const [loading, setLoading] = useState(true);

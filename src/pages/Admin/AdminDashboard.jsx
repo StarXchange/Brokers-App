@@ -1,20 +1,21 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
+import WelcomeMessage from "../../components/WelcomeMessage";
 
 const AdminDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Dropdown states
-  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
-  const [isBrokerDropdownOpen, setIsBrokerDropdownOpen] = useState(false);
-  const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
 
   // Company certificates state for admin context
   const [certificates, setCertificates] = useState([]);
   const [selectedCerts, setSelectedCerts] = useState([]);
-  const [isProcessing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
 
@@ -23,30 +24,52 @@ const AdminDashboard = () => {
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [showDelete, setShowDelete] = useState(false);
 
+  // Check authentication on component mount
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem("token") || 
+                   localStorage.getItem("authToken") || 
+                   sessionStorage.getItem("token");
+      
+      if (!token) {
+        navigate("/login");
+        return false;
+      }
+      
+      setIsAuthenticated(true);
+      setIsLoading(false);
+      return true;
+    };
+    
+    checkAuth();
+  }, [navigate]);
+
   const handleRowClick = (proposal) => {
     setSelectedProposal(proposal.id);
   };
 
   const handleAddProposal = () => {
-    navigate("/admin-dashboard/client/add-proposal");
+    navigate("/admin/client/add-proposal");
   };
 
   // Auto-expand dropdowns based on current path
   useEffect(() => {
-    if (location.pathname.includes("/admin-dashboard/company")) {
-      setIsCompanyDropdownOpen(true);
-    }
-    if (location.pathname.includes("/admin-dashboard/broker")) {
-      setIsBrokerDropdownOpen(true);
-    }
-    if (location.pathname.includes("/admin-dashboard/client")) {
-      setIsClientDropdownOpen(true);
+    if (location.pathname.includes("/admin/company")) {
+      setActiveDropdown("company");
+    } else if (location.pathname.includes("/admin/broker")) {
+      setActiveDropdown("broker");
+    } else if (location.pathname.includes("/admin/client")) {
+      setActiveDropdown("client");
+    } else if (location.pathname.includes("/admin/security")) {
+      setActiveDropdown("security");
+    } else {
+      setActiveDropdown(null);
     }
   }, [location.pathname]);
 
   // Seed client proposals for admin context using the exact mock from client page
   useEffect(() => {
-    if (location.pathname.startsWith("/admin-dashboard/client")) {
+    if (location.pathname.startsWith("/admin/client")) {
       setProposals([
         {
           id: 1,
@@ -74,7 +97,12 @@ const AdminDashboard = () => {
 
   // Helper function to check if current path is active
   const isActivePath = (path) => {
-    return location.pathname.includes(path);
+    return location.pathname === path || location.pathname.startsWith(path + "/");
+  };
+
+  // Toggle dropdown
+  const toggleDropdown = (dropdownName) => {
+    setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
   };
 
   // Toggle selection (used by Company Certificates page)
@@ -89,86 +117,118 @@ const AdminDashboard = () => {
   // Fetch company certificates for admin context
   const fetchCompanyCertificates = async () => {
     setError(null);
+    setIsProcessing(true);
+    
     try {
-      const token =
-        localStorage.getItem("token") ||
+      const token = localStorage.getItem("token") ||
         localStorage.getItem("authToken") ||
         sessionStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
 
       const response = await fetch(`${API_BASE_URL}/Certificates`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("authToken");
+          sessionStorage.removeItem("token");
+          navigate("/login");
+          return;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       const transformedData = (Array.isArray(data) ? data : []).map((cert) => ({
-        id: cert.certNo,
-        certNo: cert.certNo,
-        brokerId: cert.brokerId,
-        clientId: cert.clientId,
-        insCompanyId: cert.insCompanyId,
-        insuredName: cert.insuredName,
-        policyNo: cert.policyNo,
+        id: cert.certNo || cert.id || Math.random().toString(36).substr(2, 9),
+        certNo: cert.certNo || "N/A",
+        brokerId: cert.brokerId || "N/A",
+        clientId: cert.clientId || "N/A",
+        insCompanyId: cert.insCompanyId || "N/A",
+        insuredName: cert.insuredName || "Unknown",
+        policyNo: cert.policyNo || "N/A",
         transDate: cert.transDate
           ? new Date(cert.transDate).toLocaleDateString("en-GB", {
               day: "2-digit",
               month: "short",
               year: "numeric",
             })
-          : null,
+          : "N/A",
         submitDate: cert.submitDate
           ? new Date(cert.submitDate).toLocaleDateString("en-GB", {
               day: "2-digit",
               month: "short",
               year: "numeric",
             })
-          : null,
+          : "N/A",
         rate:
           typeof cert.rate === "number"
             ? `${(cert.rate * 100).toFixed(2)}%`
-            : cert.rate,
+            : cert.rate || "0%",
         insuredValue:
           typeof cert.insuredValue === "number"
             ? `₦${cert.insuredValue.toLocaleString()}`
-            : cert.insuredValue,
+            : cert.insuredValue || "₦0",
         grossPremium:
-          typeof cert.grossPrenium === "number"
-            ? `₦${cert.grossPrenium.toLocaleString()}`
-            : cert.grossPrenium,
-        status: cert.tag || "PENDING",
-        perDesc: cert.perDesc,
-        fromDesc: cert.fromDesc,
-        toDesc: cert.toDesc,
-        interestDesc: cert.interestDesc,
-        formMno: cert.formMno,
-        remarks: cert.remarks,
+          typeof cert.grossPremium === "number"
+            ? `₦${cert.grossPremium.toLocaleString()}`
+            : cert.grossPremium || "₦0",
+        status: cert.tag || cert.status || "PENDING",
+        perDesc: cert.perDesc || "",
+        fromDesc: cert.fromDesc || "",
+        toDesc: cert.toDesc || "",
+        interestDesc: cert.interestDesc || "",
+        formMno: cert.formMno || "",
+        remarks: cert.remarks || "",
         ...cert,
       }));
+      
       setCertificates(transformedData);
     } catch (err) {
       setError(err.message || "Failed to fetch certificates");
       setCertificates([]);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   // Auto-load certificates when navigating to company section under admin
   useEffect(() => {
-    if (location.pathname.startsWith("/admin-dashboard/company")) {
+    if (location.pathname.startsWith("/admin/company")) {
       fetchCompanyCertificates();
     }
   }, [location.pathname]);
 
   // Check if we're at the root admin dashboard path
   const isRootPath =
-    location.pathname === "/admin-dashboard" ||
-    location.pathname === "/admin-dashboard/";
+    location.pathname === "/admin" ||
+    location.pathname === "/admin/";
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    return null; // Navigation will happen via useEffect
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -259,15 +319,13 @@ const AdminDashboard = () => {
               {/* Company Section */}
               <div className="mb-6">
                 <button
-                  onClick={() =>
-                    setIsCompanyDropdownOpen(!isCompanyDropdownOpen)
-                  }
+                  onClick={() => toggleDropdown("company")}
                   className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors duration-200"
                 >
                   <span>Company Management</span>
                   <svg
                     className={`w-4 h-4 transition-transform duration-200 ${
-                      isCompanyDropdownOpen ? "rotate-180" : ""
+                      activeDropdown === "company" ? "rotate-180" : ""
                     }`}
                     fill="none"
                     stroke="currentColor"
@@ -284,23 +342,24 @@ const AdminDashboard = () => {
 
                 <div
                   className={`overflow-hidden transition-all duration-300 ${
-                    isCompanyDropdownOpen
+                    activeDropdown === "company"
                       ? "max-h-96 opacity-100"
                       : "max-h-0 opacity-0"
                   }`}
                 >
                   <div className="pl-4 space-y-1">
                     <Link
-                      to="/admin-dashboard/company/certificates"
+                      to="/admin/company/certificates"
                       className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActivePath("company/certificates")
+                        isActivePath("/admin/company/certificates")
                           ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                           : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                       }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <div
                         className={`p-1 rounded-md ${
-                          isActivePath("company/certificates")
+                          isActivePath("/admin/company/certificates")
                             ? "bg-blue-100"
                             : "group-hover:bg-blue-50"
                         }`}
@@ -323,16 +382,17 @@ const AdminDashboard = () => {
                     </Link>
 
                     <Link
-                      to="/admin-dashboard/company/agents-brokers"
+                      to="/admin/company/agents-brokers"
                       className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActivePath("company/agents-brokers")
+                        isActivePath("/admin/company/agents-brokers")
                           ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                           : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                       }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <div
                         className={`p-1 rounded-md ${
-                          isActivePath("company/agents-brokers")
+                          isActivePath("/admin/company/agents-brokers")
                             ? "bg-blue-100"
                             : "group-hover:bg-blue-50"
                         }`}
@@ -355,16 +415,17 @@ const AdminDashboard = () => {
                     </Link>
 
                     <Link
-                      to="/admin-dashboard/company/download-certificates"
+                      to="/admin/company/download-certificates"
                       className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActivePath("company/download-certificates")
+                        isActivePath("/admin/company/download-certificates")
                           ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                           : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                       }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <div
                         className={`p-1 rounded-md ${
-                          isActivePath("company/download-certificates")
+                          isActivePath("/admin/company/download-certificates")
                             ? "bg-blue-100"
                             : "group-hover:bg-blue-50"
                         }`}
@@ -392,13 +453,13 @@ const AdminDashboard = () => {
               {/* Broker Section */}
               <div className="mb-6">
                 <button
-                  onClick={() => setIsBrokerDropdownOpen(!isBrokerDropdownOpen)}
+                  onClick={() => toggleDropdown("broker")}
                   className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors duration-200"
                 >
                   <span>Broker Management</span>
                   <svg
                     className={`w-4 h-4 transition-transform duration-200 ${
-                      isBrokerDropdownOpen ? "rotate-180" : ""
+                      activeDropdown === "broker" ? "rotate-180" : ""
                     }`}
                     fill="none"
                     stroke="currentColor"
@@ -415,23 +476,24 @@ const AdminDashboard = () => {
 
                 <div
                   className={`overflow-hidden transition-all duration-300 ${
-                    isBrokerDropdownOpen
+                    activeDropdown === "broker"
                       ? "max-h-96 opacity-100"
                       : "max-h-0 opacity-0"
                   }`}
                 >
                   <div className="pl-4 space-y-1">
                     <Link
-                      to="/admin-dashboard/broker/certificates"
+                      to="/admin/broker/certificates"
                       className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActivePath("broker/certificates")
+                        isActivePath("/admin/broker/certificates")
                           ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                           : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                       }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <div
                         className={`p-1 rounded-md ${
-                          isActivePath("broker/certificates")
+                          isActivePath("/admin/broker/certificates")
                             ? "bg-blue-100"
                             : "group-hover:bg-blue-50"
                         }`}
@@ -454,16 +516,17 @@ const AdminDashboard = () => {
                     </Link>
 
                     <Link
-                      to="/admin-dashboard/broker/client-management"
+                      to="/admin/broker/client-management"
                       className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActivePath("broker/client-management")
+                        isActivePath("/admin/broker/client-management")
                           ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                           : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                       }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <div
                         className={`p-1 rounded-md ${
-                          isActivePath("broker/client-management")
+                          isActivePath("/admin/broker/client-management")
                             ? "bg-blue-100"
                             : "group-hover:bg-blue-50"
                         }`}
@@ -477,7 +540,7 @@ const AdminDashboard = () => {
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            strokeWidth={2}
+                            strokeWidth极速赛车开奖结果={2}
                             d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
                           />
                         </svg>
@@ -486,16 +549,17 @@ const AdminDashboard = () => {
                     </Link>
 
                     <Link
-                      to="/admin-dashboard/broker/view-documents"
+                      to="/admin/broker/view-documents"
                       className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActivePath("broker/view-documents")
+                        isActivePath("/admin/broker/view-documents")
                           ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                           : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                       }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <div
                         className={`p-1 rounded-md ${
-                          isActivePath("broker/view-documents")
+                          isActivePath("/admin/broker/view-documents")
                             ? "bg-blue-100"
                             : "group-hover:bg-blue-50"
                         }`}
@@ -518,16 +582,17 @@ const AdminDashboard = () => {
                     </Link>
 
                     <Link
-                      to="/admin-dashboard/broker/download-certificates"
+                      to="/admin/broker/download-certificates"
                       className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActivePath("broker/download-certificates")
+                        isActivePath("/admin/broker/download-certificates")
                           ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                           : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                       }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <div
                         className={`p-1 rounded-md ${
-                          isActivePath("broker/download-certificates")
+                          isActivePath("/admin/broker/download-certificates")
                             ? "bg-blue-100"
                             : "group-hover:bg-blue-50"
                         }`}
@@ -550,16 +615,17 @@ const AdminDashboard = () => {
                     </Link>
 
                     <Link
-                      to="/admin-dashboard/broker/credit-notes"
+                      to="/admin/broker/credit-notes"
                       className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActivePath("broker/credit-notes")
+                        isActivePath("/admin/broker/credit-notes")
                           ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                           : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                       }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <div
                         className={`p-1 rounded-md ${
-                          isActivePath("broker/credit-notes")
+                          isActivePath("/admin/broker/credit-notes")
                             ? "bg-blue-100"
                             : "group-hover:bg-blue-50"
                         }`}
@@ -582,16 +648,17 @@ const AdminDashboard = () => {
                     </Link>
 
                     <Link
-                      to="/admin-dashboard/broker/view-profile"
+                      to="/admin/broker/view-profile"
                       className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActivePath("broker/view-profile")
+                        isActivePath("/admin/broker/view-profile")
                           ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                           : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                       }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <div
                         className={`p-1 rounded-md ${
-                          isActivePath("broker/view-profile")
+                          isActivePath("/admin/broker/view-profile")
                             ? "bg-blue-100"
                             : "group-hover:bg-blue-50"
                         }`}
@@ -619,13 +686,13 @@ const AdminDashboard = () => {
               {/* Client Section */}
               <div className="mb-6">
                 <button
-                  onClick={() => setIsClientDropdownOpen(!isClientDropdownOpen)}
+                  onClick={() => toggleDropdown("client")}
                   className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors duration-200"
                 >
                   <span>Client Management</span>
                   <svg
                     className={`w-4 h-4 transition-transform duration-200 ${
-                      isClientDropdownOpen ? "rotate-180" : ""
+                      activeDropdown === "client" ? "rotate-180" : ""
                     }`}
                     fill="none"
                     stroke="currentColor"
@@ -642,23 +709,24 @@ const AdminDashboard = () => {
 
                 <div
                   className={`overflow-hidden transition-all duration-300 ${
-                    isClientDropdownOpen
+                    activeDropdown === "client"
                       ? "max-h-96 opacity-100"
                       : "max-h-0 opacity-0"
                   }`}
                 >
                   <div className="pl-4 space-y-1">
                     <Link
-                      to="/admin-dashboard/client/business-proposals"
+                      to="/admin/client/business-proposals"
                       className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActivePath("client/business-proposals")
+                        isActivePath("/admin/client/business-proposals")
                           ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                           : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                       }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <div
                         className={`p-1 rounded-md ${
-                          isActivePath("client/business-proposals")
+                          isActivePath("/admin/client/business-proposals")
                             ? "bg-blue-100"
                             : "group-hover:bg-blue-50"
                         }`}
@@ -681,16 +749,17 @@ const AdminDashboard = () => {
                     </Link>
 
                     <Link
-                      to="/admin-dashboard/client/client-certificate"
+                      to="/admin/client/client-certificate"
                       className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActivePath("client/client-certificate")
+                        isActivePath("/admin/client/client-certificate")
                           ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                           : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                       }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <div
                         className={`p-1 rounded-md ${
-                          isActivePath("client/client-certificate")
+                          isActivePath("/admin/client/client-certificate")
                             ? "bg-blue-100"
                             : "group-hover:bg-blue-50"
                         }`}
@@ -715,6 +784,74 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* Security Section */}
+              <div className="mb-6">
+                <button
+                  onClick={() => toggleDropdown("security")}
+                  className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors duration-200"
+                >
+                  <span>Security Management</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      activeDropdown === "security" ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                <div
+                  className={`overflow-hidden transition-all duration-300 ${
+                    activeDropdown === "security"
+                      ? "max-h-96 opacity-100"
+                      : "max-h-0 opacity-0"
+                  }`}
+                >
+                  <div className="pl-4 space-y-1">
+                    <Link
+                      to="/admin/security"
+                      className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isActivePath("/admin/security")
+                          ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div
+                        className={`p-1 rounded-md ${
+                          isActivePath("/admin/security")
+                            ? "bg-blue-100"
+                            : "group-hover:bg-blue-50"
+                        }`}
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </div>
+                      <span>Security Management</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
               {/* Shared Section */}
               <div className="mb-6">
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-4">
@@ -722,16 +859,17 @@ const AdminDashboard = () => {
                 </h3>
 
                 <Link
-                  to="/admin-dashboard/change-password"
+                  to="/admin/change-password"
                   className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActivePath("change-password")
+                    isActivePath("/admin/change-password")
                       ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
                       : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm"
                   }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <div
                     className={`p-1 rounded-md ${
-                      isActivePath("change-password")
+                      isActivePath("/admin/change-password")
                         ? "bg-blue-100"
                         : "group-hover:bg-blue-50"
                     }`}
@@ -756,9 +894,14 @@ const AdminDashboard = () => {
 
               {/* Logout */}
               <div className="pt-6 mt-6 border-t border-gray-200">
-                <Link
-                  to="/"
-                  className="group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("authToken");
+                    sessionStorage.removeItem("token");
+                    navigate("/");
+                  }}
+                  className="group w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
                 >
                   <div className="p-1 rounded-md group-hover:bg-red-100">
                     <svg
@@ -776,181 +919,18 @@ const AdminDashboard = () => {
                     </svg>
                   </div>
                   <span>Logout</span>
-                </Link>
+                </button>
               </div>
             </nav>
           </div>
         </aside>
+
         {/* Main Content */}
         <main className="flex-1 bg-gray-50 overflow-x-auto lg:ml-64">
           <div className="p-4">
             <div className="max-w-7xl mx-auto">
               {isRootPath ? (
-                // Default dashboard content when at root path
-                <div className="space-y-6">
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                      Welcome to Admin Dashboard
-                    </h2>
-                    <p className="text-gray-600 mb-6">
-                      Select a section from the sidebar to get started with
-                      managing your insurance platform.
-                    </p>
-
-                    {/* Quick Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                      <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                        <div className="flex items-center">
-                          <div className="p-2 bg-blue-100 rounded-lg mr-3">
-                            <svg
-                              className="w-6 h-6 text-blue-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-blue-900">
-                              Companies
-                            </h3>
-                            <p className="text-blue-600">
-                              Manage insurance companies
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                        <div className="flex items-center">
-                          <div className="p-2 bg-green-100 rounded-lg mr-3">
-                            <svg
-                              className="w-6 h-6 text-green-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-green-900">
-                              Brokers
-                            </h3>
-                            <p className="text-green-600">
-                              Manage broker accounts
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                        <div className="flex items-center">
-                          <div className="p-2 bg-purple-100 rounded-lg mr-3">
-                            <svg
-                              className="w-6 h-6 text-purple-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-purple-900">
-                              Clients
-                            </h3>
-                            <p className="text-purple-600">
-                              Manage client services
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Quick Actions */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Quick Actions
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Link
-                          to="/admin-dashboard/company/certificates"
-                          className="flex items-center p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all duration-200"
-                        >
-                          <div className="p-2 bg-blue-50 rounded-lg mr-3">
-                            <svg
-                              className="w-5 h-5 text-blue-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-gray-900">
-                              Review Policies
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              View and manage company policies
-                            </p>
-                          </div>
-                        </Link>
-
-                        <Link
-                          to="/admin-dashboard/broker/client-management"
-                          className="flex items-center p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all duration-200"
-                        >
-                          <div className="p-2 bg-green-50 rounded-lg mr-3">
-                            <svg
-                              className="w-5 h-5 text-green-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-gray-900">
-                              Manage Clients
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              Handle broker client relationships
-                            </p>
-                          </div>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <WelcomeMessage />
               ) : (
                 // Render child routes with company context for admin
                 <Outlet

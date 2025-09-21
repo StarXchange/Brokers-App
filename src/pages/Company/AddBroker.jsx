@@ -3,19 +3,30 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const AddBroker = () => {
-  // State for form fields - will be used by backend
+  // State for form fields - updated to match backend schema
   const [formData, setFormData] = useState({
-    name: "",
-    address: "",
-    mobilePhone: "",
-    contactName: "",
-    email: "",
-    brokerStatus: "ENABLE",
-    identityType: "DIRECT",
-    excess: "",
-    agreedRate: "",
-    transactionLimit: "",
+    username: "",
     password: "",
+    email: "",
+    mobilePhone: "",
+    address: "",
+    contactPerson: "",
+    submitDate: new Date().toISOString(),
+    tag: "",
+    remarks: "",
+    a1: 0,
+    a2: 0,
+    brokerName: "",
+    insCompanyID: "",
+    rate: 0.0,
+    value: "",
+    lStartDate: null,
+    lEndDate: null,
+    a3: 0,
+    a4: 0,
+    a5: 0,
+    field1: "",
+    field2: "",
     confirmPassword: "",
   });
 
@@ -25,9 +36,33 @@ const AddBroker = () => {
     email: false,
   });
 
+  // State for loading and API response
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState(null);
+  const [success, setSuccess] = useState(false);
+
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // Handle numeric fields
+    if (['a1', 'a2', 'a3', 'a4', 'a5', 'rate'].includes(name)) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value === '' ? 0 : parseFloat(value) || 0,
+      }));
+      return;
+    }
+
+    // Handle date fields
+    if (name === 'lStartDate' || name === 'lEndDate') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value === '' ? null : value,
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -39,11 +74,36 @@ const AddBroker = () => {
     }
   };
 
+  // Clean data before sending to API
+  const cleanApiData = (data) => {
+    const cleaned = { ...data };
+    
+    // Remove confirmPassword as it's not needed in API
+    delete cleaned.confirmPassword;
+    
+    // Convert empty strings to null for optional fields
+    const optionalFields = ['mobilePhone', 'address', 'contactPerson', 'tag', 
+                           'remarks', 'value', 'field1', 'field2', 'insCompanyID'];
+    
+    optionalFields.forEach(field => {
+      if (cleaned[field] === "") {
+        cleaned[field] = null;
+      }
+    });
+    
+    // Format submitDate to match API expectations
+    cleaned.submitDate = new Date().toISOString();
+    
+    return cleaned;
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setApiError(null);
+    setSuccess(false);
 
-    // Basic validation - will be enhanced by backend
+    // Basic validation
     if (formData.password !== formData.confirmPassword) {
       setErrors((prev) => ({ ...prev, password: true }));
       return;
@@ -54,27 +114,73 @@ const AddBroker = () => {
       return;
     }
 
-    // Backend API call will go here
+    // Clean and prepare data for API
+    const apiPayload = cleanApiData(formData);
+    const requestData = {
+      request: apiPayload
+    };
+
     try {
-      /* 
-      const response = await fetch('/api/brokers', {
+      setLoading(true);
+      
+      const response = await fetch('https://gibsbrokersapi.newgibsonline.com/api/Auth/create-broker', {
         method: 'POST',
         headers: {
+          'accept': 'application/json',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(requestData)
       });
       
-      if (!response.ok) throw new Error('Registration failed');
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        // Handle validation errors from API
+        if (responseData.errors) {
+          const errorMessages = Object.entries(responseData.errors)
+            .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+            .join('; ');
+          throw new Error(errorMessages);
+        }
+        throw new Error(responseData.title || 'Registration failed');
+      }
       
       // Handle successful registration
+      setSuccess(true);
       console.log('Broker created successfully');
-      */
-
-      console.log("Form data ready for backend:", formData);
+      
+      // Reset form after successful submission
+      setFormData({
+        username: "",
+        password: "",
+        email: "",
+        mobilePhone: "",
+        address: "",
+        contactPerson: "",
+        submitDate: new Date().toISOString(),
+        tag: "",
+        remarks: "",
+        a1: 0,
+        a2: 0,
+        brokerName: "",
+        insCompanyID: "",
+        rate: 0.0,
+        value: "",
+        lStartDate: null,
+        lEndDate: null,
+        a3: 0,
+        a4: 0,
+        a5: 0,
+        field1: "",
+        field2: "",
+        confirmPassword: "",
+      });
+      
     } catch (error) {
       console.error("Registration error:", error);
-      // Backend will provide specific error messages
+      setApiError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,7 +198,7 @@ const AddBroker = () => {
             </p>
           </div>
           <Link
-            to="/company-dashboard/agents-brokers"
+            to="/company/agents-brokers"
             className="inline-flex items-center justify-center px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors w-full sm:w-auto"
           >
             <svg
@@ -125,6 +231,50 @@ const AddBroker = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+          {/* Display API errors */}
+          {apiError && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              <div className="flex items-start">
+                <svg
+                  className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-极速加速器1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div>
+                  <strong>Error:</strong> {apiError}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Display success message */}
+          {success && (
+            <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+              <div className="flex items-start">
+                <svg
+                  className="w-5 h-5 mr极速加速器-3 flex-shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div>
+                  <strong>Success:</strong> Broker account created successfully!
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Contact Information Section */}
           <div className="mb-6 sm:mb-8">
             <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4 flex items-center">
@@ -147,12 +297,27 @@ const AddBroker = () => {
               <div className="space-y-4 sm:space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Broker Name
+                    Username <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
+                    placeholder="Enter username"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Broker Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="brokerName"
+                    value={formData.brokerName}
                     onChange={handleChange}
                     className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     placeholder="Enter broker name"
@@ -171,7 +336,6 @@ const AddBroker = () => {
                     rows={3}
                     className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base resize-y"
                     placeholder="Enter full address"
-                    required
                   />
                 </div>
 
@@ -186,28 +350,26 @@ const AddBroker = () => {
                     onChange={handleChange}
                     className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     placeholder="e.g., 2348024242567"
-                    required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Contact Name
+                    Contact Person
                   </label>
                   <input
                     type="text"
-                    name="contactName"
-                    value={formData.contactName}
+                    name="contactPerson"
+                    value={formData.contactPerson}
                     onChange={handleChange}
                     className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
                     placeholder="Enter contact person name"
-                    required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
+                    Email Address <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -231,7 +393,7 @@ const AddBroker = () => {
                       >
                         <path
                           fillRule="evenodd"
-                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 极速加速器0 102 0V6a1 1 0 00-1-1z"
                           clipRule="evenodd"
                         />
                       </svg>
@@ -245,89 +407,148 @@ const AddBroker = () => {
               <div className="space-y-4 sm:space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Broker Status
-                  </label>
-                  <select
-                    name="brokerStatus"
-                    value={formData.brokerStatus}
-                    onChange={handleChange}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
-                  >
-                    <option value="ENABLE">ENABLED</option>
-                    <option value="DISABLE">DISABLED</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Identity Type
-                  </label>
-                  <select
-                    name="identityType"
-                    value={formData.identityType}
-                    onChange={handleChange}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
-                  >
-                    <option value="DIRECT">DIRECT</option>
-                    <option value="INDIRECT">INDIRECT</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Excess
+                    Insurance Company ID
                   </label>
                   <input
                     type="text"
-                    name="excess"
-                    value={formData.excess}
+                    name="insCompanyID"
+                    value={formData.insCompanyID}
                     onChange={handleChange}
                     className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
-                    placeholder="Enter excess amount"
+                    placeholder="Enter insurance company ID"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Agreed Rate
+                    Rate
                   </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="agreedRate"
-                      value={formData.agreedRate}
-                      onChange={handleChange}
-                      step="0.01"
-                      min="0"
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
-                      placeholder="0.00"
-                    />
-                    <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm font-medium">
-                      %
-                    </span>
-                  </div>
+                  <input
+                    type="text"
+                    name="rate"
+                    value={formData.rate}
+                    onChange={handleChange}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
+                    placeholder="Enter rate"
+                  />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Transaction Limit
+                    Value
                   </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="transactionLimit"
-                      value={formData.transactionLimit}
-                      onChange={handleChange}
-                      step="0.01"
-                      min="0"
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
-                      placeholder="0.00"
-                    />
-                    <span className="absolute right-3 sm:right-4 top-2.5 sm:top-3.5 text-gray-500 text-sm font-medium">
-                      ₦
-                    </span>
-                  </div>
+                  <input
+                    type="text"
+                    name="value"
+                    value={formData.value}
+                    onChange={handleChange}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
+                    placeholder="Enter value"
+                  />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    License Start Date
+                  </label>
+                  <input
+                    type="date"
+                    name="lStartDate"
+                    value={formData.lStartDate || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 sm极速加速器:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    License End Date
+                  </label>
+                  <input
+                    type="date"
+                    name="lEndDate"
+                    value={formData.lEndDate || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tag
+                  </label>
+                  <input
+                    type="text"
+                    name="tag"
+                    value={formData.tag}
+                    onChange={handleChange}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
+                    placeholder="Enter tag"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Remarks
+                  </label>
+                  <textarea
+                    name="remarks"
+                    value={formData.remarks}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base resize-y"
+                    placeholder="Enter remarks"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Fields Section */}
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-sm sm:text-base font-semib极速加速器old text-gray-900 mb-4 flex items-center">
+              <svg
+                className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2极速加速器V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 极速加速器0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              Additional Information
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Custom Field 1
+                </label>
+                <input
+                  type="text"
+                  name="field1"
+                  value={formData.field1}
+                  onChange={handleChange}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
+                  placeholder="Custom field 1"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Custom Field 2
+                </label>
+                <input
+                  type="text"
+                  name="field2"
+                  value={formData.field2}
+                  onChange={handleChange}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base"
+                  placeholder="Custom field 2"
+                />
               </div>
             </div>
           </div>
@@ -353,7 +574,7 @@ const AddBroker = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
+                  Password <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="password"
@@ -372,7 +593,7 @@ const AddBroker = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm Password
+                  Confirm Password <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="password"
@@ -410,7 +631,7 @@ const AddBroker = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 sm:pt-6 border-t border-gray-200 space-y-3 sm:space-y-0">
             <Link
-              to="/company-dashboard/agents-brokers"
+              to="/company/agents-brokers"
               className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors text-sm sm:text-base order-2 sm:order-1"
             >
               <svg
@@ -430,22 +651,50 @@ const AddBroker = () => {
             </Link>
             <button
               type="submit"
-              className="inline-flex items-center justify-center px-6 sm:px-8 py-2 sm:py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm sm:text-base order-1 sm:order-2"
+              disabled={loading}
+              className="inline-flex items-center justify-center px-6 sm:px-8 py-2 sm:py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm sm:text-base order-1 sm:order-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              Create Broker Account
+              {loading ? (
+                <>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                  Create Broker Account
+                </>
+              )}
             </button>
           </div>
         </form>

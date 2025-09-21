@@ -3,9 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 
 const ClientCertificate = () => {
   const location = useLocation();
-  const basePrefix = location.pathname.startsWith("/admin-dashboard")
-    ? "/admin-dashboard/client"
-    : "/client-dashboard";
+  const basePrefix = location.pathname.startsWith("/admin")
+    ? "/admin/customer"
+    : "/customer";
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -329,9 +329,9 @@ const ClientCertificate = () => {
           >
             <path
               strokeLinecap="round"
-              strokeLinejoin极速赛车开奖结果="round"
+              strokeLinejoin="round"
               strokeWidth={2}
-              d="M12 6极速赛车开奖结果v6m0 0v6m0-6h6m-6 0H6"
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
             />
           </svg>
           Create new Certificate

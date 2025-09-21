@@ -1,10 +1,14 @@
 
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import WelcomeMessage from "../../components/WelcomeMessage"; // Import the WelcomeMessage component
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check if we're at the root client dashboard path
+  const isRootPath = location.pathname === "/customer" || location.pathname === "/customer/";
 
   // State for proposals data
   const [proposals, setProposals] = useState([]);
@@ -16,34 +20,9 @@ const ClientDashboard = () => {
   // Mobile responsive state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-
-  /* 
-  BACKEND IMPLEMENTATION (COMMENTED FOR FRONTEND STRUCTURE)
-  
-  useEffect(() => {
-    const fetchProposals = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/client/proposals');
-        if (!response.ok) throw new Error('Failed to fetch proposals');
-        const data = await response.json();
-        setProposals(data);
-      } catch (err) {
-        setError(err.message);
-        console.error('Error fetching proposals:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProposals();
-  }, []);
-  */
-
   // Mock data for frontend display
   useEffect(() => {
     setProposals([
-
       {
         id: 1,
         entryDate: "22 Aug 15",
@@ -64,7 +43,6 @@ const ClientDashboard = () => {
         regNumber: "LAG 987 GH",
         amount: "5000.0000",
       },
-
     ]);
     setLoading(false);
   }, []);
@@ -74,26 +52,7 @@ const ClientDashboard = () => {
     setShowDelete(proposal.id === selectedProposal ? false : true);
   };
 
-  /* 
-  BACKEND IMPLEMENTATION FOR DELETE
-  const handleDelete = async () => {
-    try {
-      const response = await fetch(`/api/proposals/${selectedProposal}`, { 
-        method: 'DELETE' 
-      });
-      if (!response.ok) throw new Error('Failed to delete proposal');
-      setProposals(proposals.filter(p => p.id !== selectedProposal));
-      setSelectedProposal(null);
-      setShowDelete(false);
-    } catch (err) {
-      console.error('Error deleting proposal:', err);
-      setError(err.message);
-    }
-  };
-  */
-
   const handleAddProposal = () => {
-
     navigate("add-proposal");
   };
 
@@ -101,8 +60,8 @@ const ClientDashboard = () => {
   const isActivePath = (path) => {
     if (path === "business-proposals") {
       return (
-        location.pathname === "/client-dashboard" ||
-        location.pathname === "/client-dashboard/business-proposals"
+        location.pathname === "/customer" ||
+        location.pathname === "/customer/business-proposals"
       );
     }
     return location.pathname.includes(path);
@@ -233,7 +192,7 @@ const ClientDashboard = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"
                 />
               </svg>
             </button>
@@ -265,7 +224,7 @@ const ClientDashboard = () => {
           <div className="p-4 pt-8 h-full overflow-y-auto">
             <nav className="space-y-1">
               <Link
-                to="/client-dashboard"
+                to="/customer/business-proposals"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActivePath("business-proposals")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -297,7 +256,7 @@ const ClientDashboard = () => {
               </Link> 
 
               <Link
-                to="/client-dashboard/client-certificate"
+                to="/customer/client-certificate"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActivePath("client-certificate")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -329,7 +288,7 @@ const ClientDashboard = () => {
               </Link>
 
               <Link
-                to="/client-dashboard/change-password"
+                to="/customer/change-password"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActivePath("change-password")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -391,26 +350,28 @@ const ClientDashboard = () => {
         <main className="flex-1 bg-gray-50 overflow-x-auto lg:ml-64">
           <div className="p-4">
             <div className="max-w-7xl mx-auto">
-              <Outlet
-                context={{
-                  proposals,
-                  selectedProposal,
-                  showDelete,
-                  handleRowClick,
-                  handleAddProposal,
-                  setProposals,
-                  setSelectedProposal,
-                  setShowDelete,
-                }}
-              />
+              {isRootPath ? (
+                <WelcomeMessage />
+              ) : (
+                <Outlet
+                  context={{
+                    proposals,
+                    selectedProposal,
+                    showDelete,
+                    handleRowClick,
+                    handleAddProposal,
+                    setProposals,
+                    setSelectedProposal,
+                    setShowDelete,
+                  }}
+                />
+              )}
             </div>
           </div>
         </main>
-
       </div>
     </div>
   );
 };
-
 
 export default ClientDashboard;

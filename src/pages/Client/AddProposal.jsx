@@ -5,9 +5,9 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 export default function AddProposal() {
   const navigate = useNavigate();
   const location = useLocation();
-  const basePrefix = location.pathname.startsWith("/admin-dashboard")
-    ? "/admin-dashboard/client"
-    : "/client-dashboard";
+  const basePrefix = location.pathname.startsWith("/admin")
+    ? "/admin"
+    : "/customer";
   const [insuredType, setInsuredType] = useState("Individual");
   const [formData, setFormData] = useState({
     // Common fields

@@ -9,8 +9,8 @@ const DownloadCertificates = ({
 }) => {
   const location = useLocation();
   const basePrefix = location.pathname.startsWith("/admin-dashboard")
-    ? "/admin-dashboard/company"
-    : "/company-dashboard";
+    ? "/admin/company"
+    : "/company";
   const [showCalendar1, setShowCalendar1] = useState(false);
   const [showCalendar2, setShowCalendar2] = useState(false);
   const [date1, setDate1] = useState(null);

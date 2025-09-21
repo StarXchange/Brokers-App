@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
+import WelcomeMessage from "../../components/WelcomeMessage"; // Import the WelcomeMessage component
 
 const CompanyDashboard = () => {
   // State that will connect to backend
@@ -11,6 +12,12 @@ const CompanyDashboard = () => {
   // Mobile responsive state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+
+  // Check if we're at the root company dashboard path
+const isRootPath = location.pathname === "/company" || 
+                   location.pathname === "/company/" ||
+                   location.pathname.startsWith("/company/dashboard") ||
+                   location.pathname === "/company-dashboard";
 
   const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
 
@@ -274,8 +281,6 @@ const CompanyDashboard = () => {
         </div>
       </div>
     );
-
-  return (
     <div className="min-h-screen bg-gray-50">
       {/* Error Alert */}
       {error && (
@@ -426,7 +431,7 @@ const CompanyDashboard = () => {
           <div className="p-4 pt-8 h-full overflow-y-auto">
             <nav className="space-y-1">
               <Link
-                to="certificates"
+                to="/company/certificates"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActivePath("certificates")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -458,7 +463,7 @@ const CompanyDashboard = () => {
               </Link>
 
               <Link
-                to="agents-brokers"
+                to="/company/agents-brokers"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActivePath("agents-brokers")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -490,7 +495,7 @@ const CompanyDashboard = () => {
               </Link>
 
               <Link
-                to="download-certificates"
+                to="/company/download-certificates"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActivePath("download-certificates")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -522,7 +527,7 @@ const CompanyDashboard = () => {
               </Link>
 
               <Link
-                to="change-password"
+                to="/company/change-password"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActivePath("change-password")
                     ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -555,7 +560,7 @@ const CompanyDashboard = () => {
 
               <div className="pt-6 mt-6 border-t border-gray-200">
                 <Link
-                  to="/company"
+                  to="/home"
                   className="group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
                 >
                   <div className="p-1 rounded-md group-hover:bg-red-100">
@@ -582,26 +587,34 @@ const CompanyDashboard = () => {
 
         {/* Main Content */}
         <main className="flex-1 bg-gray-50 overflow-x-auto lg:ml-64">
-          <div style={{ minWidth: "max-content" }}>
-            <Outlet
-              context={{
-                certificates,
-                selectedCerts,
-                toggleCertificateSelection,
-                handleApprove,
-                handleReject,
-                handleDelete,
-                isProcessing,
-                error,
-                setError,
-                fetchCertificates,
-              }}
-            />
+          <div className="p-4">
+            <div className="max-w-7xl mx-auto">
+              {isRootPath ? (
+                <WelcomeMessage />
+              ) : (
+                <div style={{ minWidth: "max-content" }}>
+                  <Outlet
+                    context={{
+                      certificates,
+                      selectedCerts,
+                      toggleCertificateSelection,
+                      handleApprove,
+                      handleReject,
+                      handleDelete,
+                      isProcessing,
+                      error,
+                      setError,
+                      fetchCertificates,
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>
     </div>
-  );
+  
 };
 
 export default CompanyDashboard;

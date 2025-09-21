@@ -4,9 +4,9 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function ClientList() {
   const location = useLocation();
-  const basePrefix = location.pathname.startsWith("/admin-dashboard")
-    ? "/admin-dashboard/broker"
-    : "/brokers-dashboard";
+  const basePrefix = location.pathname.startsWith("/admin")
+    ? "/admin/brokers"
+    : "/brokers";
   const { user } = useAuth();
   const [clients, setClients] = useState([]);
   const [selectedClients, setSelectedClients] = useState([]);
@@ -508,7 +508,7 @@ export default function ClientList() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <Link
-                        to={`/brokers-dashboard/client-management/edit/${client.id}`}
+                        to={`/brokers/client-management/edit/${client.id}`}
                         className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
                       >
                         Edit
@@ -625,25 +625,7 @@ export default function ClientList() {
             <p className="text-sm text-gray-600 text-center sm:text-left">
               {clients.length} client{clients.length !== 1 ? "s" : ""} total
             </p>
-            <Link
-              to={`${basePrefix}/client-management/add-client`}
-              className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-            >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              Add a new client
-            </Link>
+            
           </div>
         </div>
       </div>

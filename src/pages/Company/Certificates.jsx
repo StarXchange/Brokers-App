@@ -5,9 +5,9 @@ import { useState } from "react";
 
 const Certificates = () => {
   const location = useLocation();
-  const basePrefix = location.pathname.startsWith("/admin-dashboard")
-    ? "/admin-dashboard/company"
-    : "/company-dashboard";
+  const basePrefix = location.pathname.startsWith("/admin")
+    ? "/admin/company"
+    : "/company";
   // Read context from parent dashboard (Company or Admin)
   const outletContext = useOutletContext();
   const {

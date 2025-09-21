@@ -19,7 +19,7 @@ export default function AddClient() {
     tag: "",
     remarks: "",
     field1: "",
-    field2: "",
+    field2: ""
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -42,10 +42,10 @@ export default function AddClient() {
         throw new Error("Broker ID not found");
       }
 
-      // Prepare API payload
+      // Prepare API payload according to backend schema
       const apiPayload = {
         insuredId: formData.insuredId,
-        brokerId: brokerId.toString(),
+        BrokerId: brokerId.toString(), // Changed to capitalized BrokerId
         insuredName: formData.insuredName,
         address: formData.address,
         email: formData.email,
@@ -54,15 +54,17 @@ export default function AddClient() {
         password: formData.password,
         submitDate: new Date().toISOString(),
         type: formData.type || "",
-        a1: 0, // Default values
-        a2: 0, // Default values
+        a1: 0, // Default value as per schema
+        a2: 0, // Default value as per schema
         rate: formData.rate || "",
         value: formData.value || "",
         tag: formData.tag || "",
         remarks: formData.remarks || "",
         field1: formData.field1 || "",
-        field2: formData.field2 || "",
+        field2: formData.field2 || ""
       };
+
+      console.log("Submitting payload:", apiPayload);
 
       const response = await fetch(
         "https://gibsbrokersapi.newgibsonline.com/api/InsuredClients",
@@ -70,7 +72,6 @@ export default function AddClient() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // Add authorization header if needed
             ...(user?.token && { Authorization: `Bearer ${user.token}` }),
           },
           body: JSON.stringify(apiPayload),
@@ -87,7 +88,7 @@ export default function AddClient() {
       }
 
       // Navigate back to client list on success
-      navigate("/brokers-dashboard/client-management");
+      navigate("/brokers/client-management");
     } catch (err) {
       console.error("Error creating client:", err);
       setError(err.message || "Client creation failed");
@@ -103,7 +104,7 @@ export default function AddClient() {
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center space-x-4 mb-4">
             <Link
-              to="/brokers-dashboard/client-management"
+              to="/brokers/client-management"
               className="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors"
             >
               <svg
@@ -131,9 +132,9 @@ export default function AddClient() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow极速加速器-sm border border-gray-200 overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semib极速加速器old text-gray-900">
               New Client Information
             </h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -193,7 +194,7 @@ export default function AddClient() {
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     required
-                    placeholder="Enter client full name"
+                    placeholder极速加速器="Enter client full name"
                   />
                 </div>
 
@@ -314,10 +315,10 @@ export default function AddClient() {
                     Client Type
                   </label>
                   <select
-                    name="type"
+                    name极速加速器="type"
                     value={formData.type}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className="w-full px极速加速器-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   >
                     <option value="">Select client type</option>
                     <option value="Individual">Individual</option>
@@ -328,7 +329,7 @@ export default function AddClient() {
 
                 {/* Rate */}
                 <div className="lg:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb极速加速器-2">
                     Rate
                   </label>
                   <input
@@ -419,7 +420,7 @@ export default function AddClient() {
               {/* Form Actions */}
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-6 border-t border-gray-200 space-y-3 sm:space-y-0">
                 <Link
-                  to="/brokers-dashboard/client-management"
+                  to="/brokers/client-management"
                   className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors border border-gray-300 rounded-lg sm:border-0 text-center"
                 >
                   Cancel
@@ -447,7 +448,7 @@ export default function AddClient() {
                         <path
                           className="opacity-75"
                           fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          d="M极速加速器4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 极速加速器7.938l3-2.647z"
                         ></path>
                       </svg>
                       Processing...
@@ -482,11 +483,11 @@ export default function AddClient() {
             <svg
               className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5"
               fill="currentColor"
-              viewBox="0 0 20 20"
+              viewBox="0 极速加速器0 20 20"
             >
               <path
                 fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1极速加速器h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                 clipRule="evenodd"
               />
             </svg>

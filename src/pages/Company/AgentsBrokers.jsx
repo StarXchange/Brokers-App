@@ -4,15 +4,27 @@ import { useState, useEffect } from "react";
 
 const AgentsBrokers = () => {
   const location = useLocation();
-  const basePrefix = location.pathname.startsWith("/admin-dashboard")
-    ? "/admin-dashboard/company"
-    : "/company-dashboard";
+  const basePrefix = location.pathname.startsWith("/admin")
+    ? "/admin/company"
+    : "/company";
   const [brokers, setBrokers] = useState([]);
   const [selectedBroker, setSelectedBroker] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedRows, setExpandedRows] = useState(new Set());
 
   const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
+
+  // Toggle row expansion
+  const toggleRowExpansion = (brokerId) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(brokerId)) {
+      newExpandedRows.delete(brokerId);
+    } else {
+      newExpandedRows.add(brokerId);
+    }
+    setExpandedRows(newExpandedRows);
+  };
 
   // Fetch brokers from real API
   const fetchBrokers = async () => {
@@ -111,6 +123,15 @@ const AgentsBrokers = () => {
         submitDate: broker.submitDate,
         rate: broker.rate,
         value: broker.value,
+        a1: broker.a1,
+        a2: broker.a2,
+        a3: broker.a3,
+        a4: broker.a4,
+        a5: broker.a5,
+        lstartDate: broker.lstartDate,
+        lendDate: broker.lendDate,
+        field1: broker.field1,
+        field2: broker.field2,
         remarks: broker.remarks,
         tag: broker.tag,
         ...broker,
@@ -273,11 +294,7 @@ const AgentsBrokers = () => {
               >
                 <div
                   className="p-4 space-y-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() =>
-                    setSelectedBroker(
-                      selectedBroker === broker.id ? null : broker.id
-                    )
-                  }
+                  onClick={() => toggleRowExpansion(broker.id)}
                 >
                   {/* Header with ID and Company Code */}
                   <div className="flex items-center justify-between">
@@ -289,7 +306,7 @@ const AgentsBrokers = () => {
                         {broker.companyCode}
                       </span>
                     </div>
-                    {selectedBroker === broker.id && (
+                    <div className="flex items-center space-x-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -312,7 +329,22 @@ const AgentsBrokers = () => {
                         </svg>
                         DELETE
                       </button>
-                    )}
+                      <svg
+                        className={`w-4 h-4 text-gray-500 transition-transform ${
+                          expandedRows.has(broker.id) ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
                   </div>
 
                   {/* Broker Name */}
@@ -384,6 +416,110 @@ const AgentsBrokers = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Expanded Details */}
+                  {expandedRows.has(broker.id) && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 space-y-3 text-xs">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-gray-500 font-medium">
+                            Email:
+                          </span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.email || "N/A"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">
+                            Address:
+                          </span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.address || "N/A"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">
+                            Rate:
+                          </span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.rate || "N/A"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">
+                            Value:
+                          </span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.value || "N/A"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">A1:</span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.a1 || "N/A"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">A2:</span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.a2 || "N/A"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">A3:</span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.a3 || "N/A"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">A4:</span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.a4 || "N/A"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">A5:</span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.a5 || "N/A"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">
+                            Field 1:
+                          </span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.field1 || "N/A"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">
+                            Field 2:
+                          </span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.field2 || "N/A"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">
+                            Tag:
+                          </span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.tag || "N/A"}
+                          </div>
+                        </div>
+                      </div>
+                      {broker.remarks && (
+                        <div>
+                          <span className="text-gray-500 font-medium">
+                            Remarks:
+                          </span>
+                          <div className="text-gray-900 mt-1">
+                            {broker.remarks}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))
@@ -418,22 +554,22 @@ const AgentsBrokers = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Broker Id
+                  ID
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Company Code
+                  Company
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Broker Name
+                  Name
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Mobile Phone
+                  Contact
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Phone
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Date
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Contact Person
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Actions
@@ -443,84 +579,38 @@ const AgentsBrokers = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {brokers.length > 0 ? (
                 brokers.map((broker) => (
-                  <tr
-                    key={broker.id}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() =>
-                      setSelectedBroker(
-                        selectedBroker === broker.id ? null : broker.id
-                      )
-                    }
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {broker.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-md">
-                        {broker.companyCode}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Link
-                        to={`/company-dashboard/agents-brokers/edit/${encodeURIComponent(
-                          broker.id
-                        )}`}
-                        className="text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {broker.name}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      <div className="flex items-center">
-                        <svg
-                          className="w-4 h-4 text-gray-400 mr-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                  <>
+                    <tr
+                      key={broker.id}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => toggleRowExpansion(broker.id)}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {broker.id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-md">
+                          {broker.companyCode}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <Link
+                          to={`${basePrefix}/agents-brokers/edit/${encodeURIComponent(
+                            broker.id
+                          )}`}
+                          className="text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                          />
-                        </svg>
-                        {broker.mobile || "N/A"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      <div className="flex items-center">
-                        <svg
-                          className="w-4 h-4 text-gray-400 mr-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        {broker.date}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {broker.contactPerson || "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {selectedBroker === broker.id && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(broker.id);
-                          }}
-                          className="inline-flex items-center px-3 py-1 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                        >
+                          {broker.name}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {broker.contactPerson || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <div className="flex items-center">
                           <svg
-                            className="w-3 h-3 mr-1"
+                            className="w-4 h-4 text-gray-400 mr-2"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -529,14 +619,179 @@ const AgentsBrokers = () => {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                             />
                           </svg>
-                          DELETE
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                          {broker.mobile || "N/A"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <svg
+                            className="w-4 h-4 text-gray-400 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          {broker.date}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(broker.id);
+                            }}
+                            className="inline-flex items-center px-3 py-1 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                          >
+                            <svg
+                              className="w-3 h-3 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                            DELETE
+                          </button>
+                          <svg
+                            className={`w-4 h-4 text-gray-500 transition-transform ${
+                              expandedRows.has(broker.id) ? "rotate-180" : ""
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      </td>
+                    </tr>
+                    {expandedRows.has(broker.id) && (
+                      <tr key={`${broker.id}-details`} className="bg-gray-50">
+                        <td colSpan="7" className="px-6 py-4">
+                          <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-500 font-medium">
+                                Email:
+                              </span>
+                              <div className="text-gray-900 mt-1">
+                                {broker.email || "N/A"}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-medium">
+                                Address:
+                              </span>
+                              <div className="text-gray-900 mt-1">
+                                {broker.address || "N/A"}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-medium">
+                                Rate:
+                              </span>
+                              <div className="text-gray-900 mt-1">
+                                {broker.rate || "N/A"}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-medium">
+                                Value:
+                              </span>
+                              <div className="text-gray-900 mt-1">
+                                {broker.value || "N/A"}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-medium">
+                                A1:
+                              </span>
+                              <div className="text-gray-900 mt-1">
+                                {broker.a1 || "N/A"}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-medium">
+                                A3:
+                              </span>
+                              <div className="text-gray-900 mt-1">
+                                {broker.a3 || "N/A"}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-medium">
+                                A4:
+                              </span>
+                              <div className="text-gray-900 mt-1">
+                                {broker.a4 || "N/A"}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-medium">
+                                A5:
+                              </span>
+                              <div className="text-gray-900 mt-1">
+                                {broker.a5 || "N/A"}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-medium">
+                                Field 1:
+                              </span>
+                              <div className="text-gray-900 mt-1">
+                                {broker.field1 || "N/A"}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-medium">
+                                Field 2:
+                              </span>
+                              <div className="text-gray-900 mt-1">
+                                {broker.field2 || "N/A"}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-medium">
+                                Tag:
+                              </span>
+                              <div className="text-gray-900 mt-1">
+                                {broker.tag || "N/A"}
+                              </div>
+                            </div>
+                            {broker.remarks && (
+                              <div className="col-span-3">
+                                <span className="text-gray-500 font-medium">
+                                  Remarks:
+                                </span>
+                                <div className="text-gray-900 mt-1">
+                                  {broker.remarks}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))
               ) : (
                 <tr>
@@ -573,25 +828,6 @@ const AgentsBrokers = () => {
             <p className="text-sm text-gray-600 text-center sm:text-left">
               {brokers.length} broker{brokers.length !== 1 ? "s" : ""} total
             </p>
-            <Link
-              to={`${basePrefix}/add-broker`}
-              className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full sm:w-auto"
-            >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              Add a new broker
-            </Link>
           </div>
         </div>
       </div>
@@ -614,8 +850,7 @@ const AgentsBrokers = () => {
               />
             </svg>
             <span className="text-sm font-medium text-yellow-800">
-              Click on a broker row to select it, then use the DELETE action to
-              remove the broker
+              Click on a broker row to expand/collapse details
             </span>
           </div>
         </div>

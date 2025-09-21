@@ -1,8 +1,10 @@
 // src/pages/brokers/BrokersDashboard.jsx
 
 import { Outlet, Link, useLocation } from "react-router-dom";
+import WelcomeMessage from "../../components/WelcomeMessage";
+import { useState } from "react";
 
-import React, { useState } from "react";
+
 const BrokersDashboard = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -11,6 +13,9 @@ const BrokersDashboard = () => {
   const isActivePath = (path) => {
     return location.pathname.includes(path);
   };
+  // Check if the current path is the brokers dashboard root
+  const isRootPath = location.pathname === "/brokers" || location.pathname === "/brokers/";
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -134,7 +139,7 @@ const BrokersDashboard = () => {
   <div className="p-4 pt-8 h-full overflow-y-auto">
     <nav className="space-y-1">
       <Link
-        to="/brokers-dashboard/certificates"
+        to="/brokers/certificates"
         className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
           isActivePath("certificates")
             ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -166,7 +171,7 @@ const BrokersDashboard = () => {
       </Link>
 
       <Link
-        to="/brokers-dashboard/credit-notes"
+        to="/brokers/credit-notes"
         className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
           isActivePath("credit-notes")
             ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -198,7 +203,7 @@ const BrokersDashboard = () => {
       </Link>
       
       <Link
-        to="/brokers-dashboard/client-management"
+        to="/brokers/client-management"
         className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
           isActivePath("client-management")
             ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -230,7 +235,7 @@ const BrokersDashboard = () => {
       </Link>
 
       <Link
-        to="/brokers-dashboard/download-certificates"
+        to="/brokers/download-certificates"
         className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
           isActivePath("download-certificates")
             ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -262,7 +267,7 @@ const BrokersDashboard = () => {
       </Link>
 
       <Link
-        to="/brokers-dashboard/view-documents"
+        to="/brokers/view-documents"
         className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
           isActivePath("view-documents")
             ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -294,7 +299,7 @@ const BrokersDashboard = () => {
       </Link>
 
       <Link
-        to="/brokers-dashboard/view-profile"
+        to="/brokers/view-profile"
         className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
           isActivePath("view-profile")
             ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -326,7 +331,7 @@ const BrokersDashboard = () => {
       </Link>
 
       <Link
-        to="/brokers-dashboard/change-password"
+        to="/brokers/change-password"
         className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
           isActivePath("change-password")
             ? "bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm"
@@ -359,7 +364,7 @@ const BrokersDashboard = () => {
 
       <div className="pt-6 mt-6 border-t border-gray-200">
         <Link
-          to="/brokers"
+          to="/login"
           className="group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
         >
           <div className="p-1 rounded-md group-hover:bg-red-100">
@@ -388,7 +393,12 @@ const BrokersDashboard = () => {
         <main className="flex-1 bg-gray-50 overflow-x-auto lg:ml-64">
           <div className="p-4">
             <div className="max-w-7xl mx-auto">
-              <Outlet />
+               {isRootPath ? (
+                <WelcomeMessage />
+              ) : (
+                <Outlet />
+              )}
+
             </div>
           </div>
         </main>
