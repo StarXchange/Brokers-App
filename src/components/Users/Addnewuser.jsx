@@ -1,65 +1,107 @@
-import React, { useState } from 'react';
-import { FiX, FiUserPlus, FiCheck, FiEye, FiEyeOff } from 'react-icons/fi';
+import React, { useEffect, useState } from "react";
+import { FiX, FiUserPlus, FiCheck, FiEye, FiEyeOff } from "react-icons/fi";
 
 const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    email: '',
-    mobilePhone: '',
-    address: '',
-    contactPerson: '',
+    username: "",
+    password: "",
+    email: "",
+    mobilePhone: "",
+    address: "",
+    contactPerson: "",
     submitDate: new Date().toISOString(),
-    tag: '',
-    remarks: '',
+    tag: "",
+    remarks: "",
     a1: 0,
     a2: 0,
     roleIds: [0],
-    title: '',
-    insured_name: '',
-    location: '',
-    identification: '',
-    id_number: '',
-    phone: '',
-    occupation: '',
-    field01: '',
-    field02: '',
-    field03: '',
-    field04: '',
-    field05: ''
+    title: "",
+    insured_name: "",
+    location: "",
+    identification: "",
+    id_number: "",
+    phone: "",
+    occupation: "",
+    field01: "",
+    field02: "",
+    field03: "",
+    field04: "",
+    field05: "",
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const API_URL = 'https://gibsbrokersapi.newgibsonline.com/api/Auth/create-system-user';
+  const [roles, setRoles] = useState([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
+  const [rolesError, setRolesError] = useState(null);
+
+  const API_URL =
+    "https://gibsbrokersapi.newgibsonline.com/api/Auth/create-system-user";
+  const ROLES_API_URL =
+    "https://gibsbrokersapi.newgibsonline.com/api/Auth/roles";
+
+  const fetchRoles = async () => {
+    setRolesLoading(true);
+    setRolesError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found.");
+      }
+
+      const response = await fetch(ROLES_API_URL, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const bodyText = await response.text().catch(() => "");
+        throw new Error(bodyText || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const rolesData = Array.isArray(data) ? data : data?.data || [];
+      setRoles(Array.isArray(rolesData) ? rolesData : []);
+    } catch (err) {
+      console.error("Error fetching roles:", err);
+      setRolesError(err.message || "Failed to load roles");
+      setRoles([]);
+    } finally {
+      setRolesLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleNumberChange = (e, fieldName) => {
     const value = e.target.value;
     // Only allow numbers
-    if (value === '' || /^\d+$/.test(value)) {
+    if (value === "" || /^\d+$/.test(value)) {
       // For a1 and a2 fields, ensure they're numbers (not strings)
-      if (fieldName === 'a1' || fieldName === 'a2') {
+      if (fieldName === "a1" || fieldName === "a2") {
         // Convert to number and ensure it's not too large
-        const numValue = value === '' ? 0 : parseInt(value, 10);
-        setFormData(prev => ({
+        const numValue = value === "" ? 0 : parseInt(value, 10);
+        setFormData((prev) => ({
           ...prev,
-          [fieldName]: numValue
+          [fieldName]: numValue,
         }));
       } else {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          [fieldName]: value
+          [fieldName]: value,
         }));
       }
     }
@@ -68,21 +110,38 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
   const handleRoleIdsChange = (e) => {
     const value = e.target.value;
     // Allow only numbers and commas
-    if (value === '' || /^[\d,]*$/.test(value)) {
-      const roleIdsArray = value.split(',')
-        .map(id => id.trim())
-        .filter(id => id !== '')
-        .map(id => parseInt(id, 10))
-        .filter(id => !isNaN(id));
-      
+    if (value === "" || /^[\d,]*$/.test(value)) {
+      const roleIdsArray = value
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => id !== "")
+        .map((id) => parseInt(id, 10))
+        .filter((id) => !isNaN(id));
+
       // Ensure at least one role ID (default to [0] if empty)
       const finalRoleIds = roleIdsArray.length > 0 ? roleIdsArray : [0];
-      
-      setFormData(prev => ({
+
+      setFormData((prev) => ({
         ...prev,
-        roleIds: finalRoleIds
+        roleIds: finalRoleIds,
       }));
     }
+  };
+
+  const toggleRoleId = (roleID) => {
+    setFormData((prev) => {
+      const current = Array.isArray(prev.roleIds) ? prev.roleIds : [];
+      const normalized = current.length ? current.filter((id) => id !== 0) : [];
+      const exists = normalized.includes(roleID);
+      const next = exists
+        ? normalized.filter((id) => id !== roleID)
+        : [...normalized, roleID];
+
+      return {
+        ...prev,
+        roleIds: next.length ? next : [0],
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -92,31 +151,37 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
     setSuccess(false);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('No authentication token found.');
+        throw new Error("No authentication token found.");
       }
 
       // Prepare the data to send
       const dataToSend = {
         ...formData,
         // Ensure a1 and a2 are numbers
-        a1: typeof formData.a1 === 'string' ? parseFloat(formData.a1) || 0 : formData.a1,
-        a2: typeof formData.a2 === 'string' ? parseFloat(formData.a2) || 0 : formData.a2,
+        a1:
+          typeof formData.a1 === "string"
+            ? parseFloat(formData.a1) || 0
+            : formData.a1,
+        a2:
+          typeof formData.a2 === "string"
+            ? parseFloat(formData.a2) || 0
+            : formData.a2,
         // Ensure roleIds is always an array with at least one element
-        roleIds: formData.roleIds.length > 0 ? formData.roleIds : [0]
+        roleIds: formData.roleIds.length > 0 ? formData.roleIds : [0],
       };
 
-      console.log('Sending data:', dataToSend); // For debugging
+      console.log("Sending data:", dataToSend); // For debugging
 
       const response = await fetch(API_URL, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'accept': '*/*'
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          accept: "*/*",
         },
-        body: JSON.stringify(dataToSend)
+        body: JSON.stringify(dataToSend),
       });
 
       if (!response.ok) {
@@ -125,59 +190,58 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
         try {
           errorData = JSON.parse(errorText);
         } catch {
-          console.log('Could not parse error as JSON');
+          console.log("Could not parse error as JSON");
         }
         throw new Error(
           errorData.message ||
-          errorData.error ||
-          errorText ||
-          `HTTP error! status: ${response.status}`
+            errorData.error ||
+            errorText ||
+            `HTTP error! status: ${response.status}`
         );
       }
 
       const result = await response.json();
-      console.log('User created successfully:', result);
-      
+      console.log("User created successfully:", result);
+
       setSuccess(true);
       if (onUserAdded) {
         onUserAdded(result);
       }
-      
+
       // Reset form after successful creation
       setTimeout(() => {
         setFormData({
-          username: '',
-          password: '',
-          email: '',
-          mobilePhone: '',
-          address: '',
-          contactPerson: '',
+          username: "",
+          password: "",
+          email: "",
+          mobilePhone: "",
+          address: "",
+          contactPerson: "",
           submitDate: new Date().toISOString(),
-          tag: '',
-          remarks: '',
+          tag: "",
+          remarks: "",
           a1: 0,
           a2: 0,
           roleIds: [0],
-          title: '',
-          insured_name: '',
-          location: '',
-          identification: '',
-          id_number: '',
-          phone: '',
-          occupation: '',
-          field01: '',
-          field02: '',
-          field03: '',
-          field04: '',
-          field05: ''
+          title: "",
+          insured_name: "",
+          location: "",
+          identification: "",
+          id_number: "",
+          phone: "",
+          occupation: "",
+          field01: "",
+          field02: "",
+          field03: "",
+          field04: "",
+          field05: "",
         });
         setShowPassword(false);
         onClose();
       }, 1500);
-
     } catch (err) {
       setError(err.message);
-      console.error('Error creating user:', err);
+      console.error("Error creating user:", err);
     } finally {
       setLoading(false);
     }
@@ -186,6 +250,12 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+
+  // Load roles when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    fetchRoles();
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -231,7 +301,9 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
               <div className="flex items-center">
                 <FiCheck className="mr-2" />
-                <span>User created successfully! The modal will close shortly.</span>
+                <span>
+                  User created successfully! The modal will close shortly.
+                </span>
               </div>
             </div>
           )}
@@ -279,12 +351,18 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                     onClick={togglePasswordVisibility}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
                   >
-                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    {showPassword ? (
+                      <FiEyeOff size={18} />
+                    ) : (
+                      <FiEye size={18} />
+                    )}
                   </button>
                 </div>
                 {formData.password && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Password strength: {formData.password.length >= 8 ? 'Strong' : 'Weak'} ({formData.password.length} characters)
+                    Password strength:{" "}
+                    {formData.password.length >= 8 ? "Strong" : "Weak"} (
+                    {formData.password.length} characters)
                   </p>
                 )}
               </div>
@@ -333,7 +411,7 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   type="tel"
                   name="mobilePhone"
                   value={formData.mobilePhone}
-                  onChange={(e) => handleNumberChange(e, 'mobilePhone')}
+                  onChange={(e) => handleNumberChange(e, "mobilePhone")}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="2348000000000"
                   inputMode="numeric"
@@ -348,7 +426,7 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   type="tel"
                   name="contactPerson"
                   value={formData.contactPerson}
-                  onChange={(e) => handleNumberChange(e, 'contactPerson')}
+                  onChange={(e) => handleNumberChange(e, "contactPerson")}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="2348000000000"
                   inputMode="numeric"
@@ -359,25 +437,104 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Role IDs
                 </label>
-                <input
-                  type="text"
-                  name="roleIds"
-                  value={formData.roleIds.join(', ')}
-                  onChange={handleRoleIdsChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0, 1, 2"
-                  inputMode="numeric"
-                  required
-                />
-                {formData.roleIds.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {formData.roleIds.map((roleId, index) => (
-                      <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Role ID: {roleId}
-                      </span>
-                    ))}
+                <div className="border border-gray-300 rounded-lg overflow-hidden">
+                  <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b">
+                    <span className="text-xs text-gray-600">
+                      Select one or more roles
+                    </span>
+                    <button
+                      type="button"
+                      onClick={fetchRoles}
+                      className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-white disabled:opacity-60"
+                      disabled={rolesLoading || loading}
+                      title="Reload roles"
+                    >
+                      {rolesLoading ? "Loading..." : "Reload"}
+                    </button>
                   </div>
-                )}
+
+                  <div className="max-h-48 overflow-y-auto">
+                    {rolesError ? (
+                      <div className="p-3 text-sm text-red-600">
+                        {rolesError}
+                      </div>
+                    ) : rolesLoading ? (
+                      <div className="p-3 text-sm text-gray-500">
+                        Loading roles...
+                      </div>
+                    ) : roles.length === 0 ? (
+                      <div className="p-3 text-sm text-gray-500">
+                        No roles available.
+                      </div>
+                    ) : (
+                      roles
+                        .filter((r) => r?.isActive !== false)
+                        .sort((a, b) =>
+                          String(a.roleName || "").localeCompare(
+                            String(b.roleName || "")
+                          )
+                        )
+                        .map((r) => {
+                          const selectedIds = Array.isArray(formData.roleIds)
+                            ? formData.roleIds
+                            : [];
+                          const normalized = selectedIds.filter(
+                            (id) => id !== 0
+                          );
+                          const checked = normalized.includes(r.roleID);
+                          return (
+                            <label
+                              key={r.roleID}
+                              className="flex items-start gap-3 px-3 py-2 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                className="mt-1"
+                                checked={checked}
+                                onChange={() => toggleRoleId(r.roleID)}
+                                disabled={loading}
+                              />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {r.roleName}
+                                </div>
+                                {r.description ? (
+                                  <div className="text-xs text-gray-500">
+                                    {r.description}
+                                  </div>
+                                ) : null}
+                              </div>
+                              <div className="text-[11px] text-gray-500 font-mono">
+                                ID: {r.roleID}
+                              </div>
+                            </label>
+                          );
+                        })
+                    )}
+                  </div>
+                </div>
+
+                {/* Keep the old manual roleIds parser as a hidden fallback for edge cases */}
+                <input
+                  type="hidden"
+                  name="roleIds"
+                  value={
+                    Array.isArray(formData.roleIds)
+                      ? formData.roleIds.join(",")
+                      : ""
+                  }
+                  onChange={handleRoleIdsChange}
+                />
+
+                <div className="mt-2 text-xs text-gray-600">
+                  Selected IDs:{" "}
+                  <span className="font-mono">
+                    {Array.isArray(formData.roleIds) && formData.roleIds.length
+                      ? formData.roleIds.filter((id) => id !== 0).join(", ") ||
+                        "0"
+                      : "0"}
+                  </span>
+                </div>
               </div>
 
               <div className="md:col-span-2">
@@ -451,7 +608,7 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   type="text"
                   name="id_number"
                   value={formData.id_number}
-                onChange={handleChange}
+                  onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Identification number"
                 />
@@ -465,13 +622,15 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   type="text"
                   name="a1"
                   value={formData.a1}
-                  onChange={(e) => handleNumberChange(e, 'a1')}
+                  onChange={(e) => handleNumberChange(e, "a1")}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0"
                   inputMode="numeric"
                   maxLength={10}
                 />
-                <p className="text-xs text-gray-500 mt-1">Numbers only (max 10 digits)</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Numbers only (max 10 digits)
+                </p>
               </div>
 
               <div>
@@ -482,15 +641,16 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   type="text"
                   name="a2"
                   value={formData.a2}
-                  onChange={(e) => handleNumberChange(e, 'a2')}
+                  onChange={(e) => handleNumberChange(e, "a2")}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0"
                   inputMode="numeric"
                   maxLength={10}
                 />
-                <p className="text-xs text-gray-500 mt-1">Numbers only (max 10 digits)</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Numbers only (max 10 digits)
+                </p>
               </div>
-
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -554,7 +714,13 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
               </button>
               <button
                 type="submit"
-                disabled={loading || !formData.username || !formData.password || !formData.email || formData.roleIds.length === 0}
+                disabled={
+                  loading ||
+                  !formData.username ||
+                  !formData.password ||
+                  !formData.email ||
+                  formData.roleIds.length === 0
+                }
                 className="px-6 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 {loading ? (

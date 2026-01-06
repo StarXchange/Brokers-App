@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import CryptoJS from "crypto-js";
+import { FaLock, FaArrowLeft } from "react-icons/fa";
 
 // Constants
 const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
@@ -34,6 +36,31 @@ const getInitials = (name) => {
   if (!name) return "?";
   return name.charAt(0).toUpperCase();
 };
+
+// AccessDenied Component
+const AccessDenied = () => (
+  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-4">
+    <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border-t-4 border-red-500 overflow-hidden">
+      <div className="p-8 text-center">
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-red-50 rounded-full mb-6">
+          <FaLock className="text-red-500 text-3xl" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-3">Access Denied</h2>
+        <p className="text-gray-600 mb-8">
+          You do not have permission to view this page. Please contact your
+          administrator if you believe this is an error.
+        </p>
+        <button
+          onClick={() => window.history.back()}
+          className="inline-flex items-center space-x-2 bg-gradient-to-r from-slate-600 to-slate-700 text-white px-6 py-3 rounded-lg hover:from-slate-700 hover:to-slate-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium"
+        >
+          <FaArrowLeft />
+          <span>Go Back</span>
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
 // Sub-components
 const LoadingState = () => (
@@ -369,6 +396,10 @@ const ManageClients = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Permission check states
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
+
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTag, setFilterTag] = useState("");
@@ -431,13 +462,100 @@ const ManageClients = () => {
       }
     } catch (err) {
       console.error("Error fetching clients:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to fetch clients"
-      );
+
+      // Handle 403 Forbidden
+      if (err.response?.status === 403) {
+        setHasAccess(false);
+        setError(
+          "Access Denied: You do not have permission to view this page."
+        );
+      } else {
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            "Failed to fetch clients"
+        );
+      }
     } finally {
       setLoading(false);
     }
   }, [transformClientData]);
+
+  // Permission check on mount
+  useEffect(() => {
+    const checkPermission = () => {
+      try {
+        const rawUser = localStorage.getItem("user");
+        if (!rawUser) {
+          setHasAccess(false);
+          setCheckingAccess(false);
+          return;
+        }
+
+        let permissions = [];
+
+        // Try parsing as plain JSON first
+        if (rawUser.startsWith("{")) {
+          try {
+            const user = JSON.parse(rawUser);
+            permissions = user.permissions || [];
+          } catch (e) {
+            console.error("JSON parse failed:", e);
+          }
+        }
+
+        // If no permissions yet, try decrypting
+        if (permissions.length === 0) {
+          try {
+            const decryptedBytes = CryptoJS.AES.decrypt(
+              rawUser,
+              "your-secret-key"
+            );
+            const decryptedUser = JSON.parse(
+              decryptedBytes.toString(CryptoJS.enc.Utf8)
+            );
+            permissions = decryptedUser.permissions || [];
+          } catch (e) {
+            console.error("Decryption failed:", e);
+          }
+        }
+
+        // Fallback to other storage locations
+        if (permissions.length === 0) {
+          const userPerms = localStorage.getItem("userPermissions");
+          const perms = localStorage.getItem("permissions");
+
+          if (userPerms) {
+            try {
+              permissions = JSON.parse(userPerms);
+            } catch (e) {
+              console.error("Failed to parse userPermissions:", e);
+            }
+          } else if (perms) {
+            try {
+              permissions = JSON.parse(perms);
+            } catch (e) {
+              console.error("Failed to parse permissions:", e);
+            }
+          }
+        }
+
+        // Check if user has any of the required permissions
+        const hasRequiredPermission = permissions.some(
+          (perm) => perm === "Customer.View" || perm === "SubAgent.View"
+        );
+
+        setHasAccess(hasRequiredPermission);
+      } catch (error) {
+        console.error("Permission check error:", error);
+        setHasAccess(false);
+      } finally {
+        setCheckingAccess(false);
+      }
+    };
+
+    checkPermission();
+  }, []);
 
   // Initial data fetch
   useEffect(() => {
@@ -492,7 +610,22 @@ const ManageClients = () => {
     return [...new Set(clients.map((c) => c.tag).filter(Boolean))];
   }, [clients]);
 
-  // Render states
+  // Render states - Permission check first
+  if (checkingAccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600 font-medium">Checking permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    return <AccessDenied />;
+  }
+
   if (loading) return <LoadingState />;
   if (error) return <ErrorState error={error} onRetry={fetchClients} />;
 

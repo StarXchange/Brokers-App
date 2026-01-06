@@ -1,6 +1,126 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+
+import { FaLock, FaArrowLeft } from "react-icons/fa";
+
+const AccessDenied = ({ title, message }) => {
+  return (
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-2xl">
+        <div className="relative overflow-hidden bg-white rounded-2xl shadow-xl border border-gray-200">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500" />
+
+          <div className="p-8 sm:p-10">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center">
+                  <FaLock className="w-7 h-7 text-red-600" />
+                </div>
+              </div>
+
+              <div className="flex-1">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
+                  {title || "Access denied"}
+                </h2>
+                <p className="text-gray-600 mt-3">
+                  {message ||
+                    "You don't have permission to view this page. Please contact your administrator."}
+                </p>
+
+                <div className="mt-8">
+                  <button
+                    type="button"
+                    onClick={() => window.history.back()}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium"
+                  >
+                    <FaArrowLeft />
+                    Go back
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const readStoredPermissions = () => {
+  const add = (target, value) => {
+    if (!value) return;
+    if (Array.isArray(value)) {
+      value.forEach((v) => add(target, v));
+      return;
+    }
+    if (typeof value === "string") {
+      if (value.trim()) target.add(value.trim());
+      return;
+    }
+    if (typeof value === "object") {
+      // handle shapes like { permissionName }, { name }
+      add(target, value.permissionName);
+      add(target, value.name);
+    }
+  };
+
+  const perms = new Set();
+
+  // try localStorage.userPermissions first
+  try {
+    const raw = localStorage.getItem("userPermissions");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      add(perms, parsed);
+    }
+  } catch {
+    // ignore
+  }
+
+  // try encrypted user blob from AuthContext
+  try {
+    const rawUser = localStorage.getItem("user");
+    if (rawUser) {
+      // Note: in this app, "user" may be stored as an encrypted string.
+      // We intentionally DON'T decrypt here (to avoid duplicating CryptoJS key logic).
+      // If it's JSON, parse it; otherwise ignore and let the backend (403) be the source of truth.
+      if (rawUser.trim().startsWith("{")) {
+        const parsedUser = JSON.parse(rawUser);
+        add(perms, parsedUser.permissions);
+        add(perms, parsedUser.userPermissions);
+        add(perms, parsedUser.Permissions);
+        if (Array.isArray(parsedUser.roles)) {
+          parsedUser.roles.forEach((r) => add(perms, r?.permissions));
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  return Array.from(perms);
+};
+
+const hasAnyPermission = (userPermissions, requiredPermissions) => {
+  if (!Array.isArray(userPermissions) || userPermissions.length === 0)
+    return false;
+  const set = new Set(userPermissions);
+  return requiredPermissions.some((p) => set.has(p));
+};
+
+const canDeterminePermissions = () => {
+  // If we have userPermissions stored, we can safely decide locally.
+  // If not, we should NOT block access locally (because permissions may only exist in encrypted user blob).
+  try {
+    const raw = localStorage.getItem("userPermissions");
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0;
+  } catch {
+    return false;
+  }
+};
 
 const ManageAgentsBrokers = () => {
   const navigate = useNavigate();
@@ -8,6 +128,8 @@ const ManageAgentsBrokers = () => {
   const [filteredAgentsBrokers, setFilteredAgentsBrokers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hasAccess, setHasAccess] = useState(true);
+  const [accessError, setAccessError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [startDate, setStartDate] = useState("");
@@ -34,6 +156,27 @@ const ManageAgentsBrokers = () => {
         setLoading(true);
         setError(null);
 
+        // Check local permissions first *only if* we can reliably read them.
+        // (In this app, permissions may be stored only inside an encrypted user blob.)
+        const requiredPermissions = ["SuperAgent.View", "Broker.View"];
+        const storedPermissions = readStoredPermissions();
+        if (canDeterminePermissions()) {
+          const hasPermission = hasAnyPermission(
+            storedPermissions,
+            requiredPermissions
+          );
+          if (!hasPermission) {
+            setHasAccess(false);
+            setAccessError(
+              "You don't have permission to view Super Agents. Please request access from an administrator."
+            );
+            return;
+          }
+        }
+
+        setHasAccess(true);
+        setAccessError("");
+
         const token = localStorage.getItem("token");
 
         const response = await axios.get(
@@ -54,6 +197,15 @@ const ManageAgentsBrokers = () => {
       } catch (err) {
         console.error("Fetch error:", err);
         console.error("Error response:", err.response);
+
+        if (err?.response?.status === 403) {
+          setHasAccess(false);
+          setAccessError(
+            "Access Denied. You don't have permission to view Super Agents."
+          );
+          return;
+        }
+
         setError(
           err.response?.data?.message ||
             err.message ||
@@ -216,6 +368,10 @@ const ManageAgentsBrokers = () => {
         </div>
       </div>
     );
+  }
+
+  if (hasAccess === false) {
+    return <AccessDenied title="Manage Super Agents" message={accessError} />;
   }
 
   if (error) {

@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import axios from "axios";
 import CryptoJS from "crypto-js";
 
@@ -29,28 +35,29 @@ export function AuthProvider({ children }) {
   };
 
   // Update last activity timestamp
-  const updateLastActivity = () => {
+  const updateLastActivity = useCallback(() => {
     setLastActivity(Date.now());
     // Reset warning when user is active
     if (showTimeoutWarning) {
       setShowTimeoutWarning(false);
     }
-  };
+  }, [showTimeoutWarning]);
 
   // Logout function
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("role");
+    localStorage.removeItem("entityType");
     localStorage.removeItem("lastActivity");
     setUser(null);
     setToken(null);
     setShowTimeoutWarning(false);
     return { success: true };
-  };
+  }, []);
 
   // Check session timeout
-  const checkSessionTimeout = () => {
+  const checkSessionTimeout = useCallback(() => {
     if (!token) return;
 
     const currentTime = Date.now();
@@ -58,7 +65,11 @@ export function AuthProvider({ children }) {
     const timeRemaining = SESSION_TIMEOUT - timeSinceLastActivity;
 
     // Show warning 1 minute before timeout
-    if (timeRemaining <= WARNING_TIME && timeRemaining > 0 && !showTimeoutWarning) {
+    if (
+      timeRemaining <= WARNING_TIME &&
+      timeRemaining > 0 &&
+      !showTimeoutWarning
+    ) {
       setShowTimeoutWarning(true);
     }
 
@@ -70,7 +81,14 @@ export function AuthProvider({ children }) {
         window.location.href = "/login?timeout=true";
       }
     }
-  };
+  }, [
+    token,
+    lastActivity,
+    SESSION_TIMEOUT,
+    WARNING_TIME,
+    showTimeoutWarning,
+    logout,
+  ]);
 
   // Initialize user and token from localStorage on mount
   useEffect(() => {
@@ -101,7 +119,7 @@ export function AuthProvider({ children }) {
 
     initializeAuth();
     setLoading(false);
-  }, []);
+  }, [logout]);
 
   // Save last activity to localStorage whenever it changes
   useEffect(() => {
@@ -119,7 +137,12 @@ export function AuthProvider({ children }) {
 
     // Event listeners for user activity
     const activityEvents = [
-      'mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'
+      "mousedown",
+      "mousemove",
+      "keypress",
+      "scroll",
+      "touchstart",
+      "click",
     ];
 
     const handleActivity = () => {
@@ -127,132 +150,103 @@ export function AuthProvider({ children }) {
     };
 
     // Add event listeners
-    activityEvents.forEach(event => {
+    activityEvents.forEach((event) => {
       document.addEventListener(event, handleActivity);
     });
 
     // Cleanup function
     return () => {
       clearInterval(timeoutInterval);
-      activityEvents.forEach(event => {
+      activityEvents.forEach((event) => {
         document.removeEventListener(event, handleActivity);
       });
     };
-  }, [token, lastActivity]);
+  }, [token, lastActivity, checkSessionTimeout, updateLastActivity]);
 
-const login = async ({ username, password, role }) => {
-  // Use capital letters for field names as required by the API
-  const requestBody = {
-    Username: username, // Capital U
-    Password: password, // Capital P
-    Role: role, // Capital R (if needed)
-  };
+  const login = async ({ username, password }) => {
+    // Use capital letters for field names as required by the API
+    const requestBody = {
+      Username: username, // Capital U
+      Password: password, // Capital P
+    };
 
-  try {
-    const response = await fetch(
-      "https://gibsbrokersapi.newgibsonline.com/api/Auth/login",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      }
-    );
-
-    if (!response.ok) {
-      // Try to get the actual error message from the server
-      const errorText = await response.text();
-      let errorData = {};
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        console.log("Could not parse error as JSON");
-      }
-      throw new Error(
-        errorData.message ||
-          errorText ||
-          `HTTP error! status: ${response.status}`
+    try {
+      const response = await fetch(
+        "https://gibsbrokersapi.newgibsonline.com/api/Auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        }
       );
+
+      if (!response.ok) {
+        // Try to get the actual error message from the server
+        const errorText = await response.text();
+        let errorData = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          console.log("Could not parse error as JSON");
+        }
+        throw new Error(
+          errorData.message ||
+            errorText ||
+            `HTTP error! status: ${response.status}`
+        );
+      }
+
+      // Parse the successful JSON response
+      const responseData = await response.json();
+
+      // Extract token and user data from response
+      const authToken = responseData.token;
+
+      // Align to API shape from Swagger login response
+      const authenticatedUser = {
+        userId: responseData.userId || responseData.userID || "",
+        username: responseData.userName || responseData.username || username,
+        email: responseData.email || "",
+        entityType: responseData.entityType || "User",
+        permissions: responseData.permissions || responseData.permission || [],
+        roles: responseData.roles || [],
+        token: authToken,
+      };
+
+      // Encrypt before storing
+      const userString = JSON.stringify(authenticatedUser);
+      const encryptedUser = CryptoJS.AES.encrypt(
+        userString,
+        "your-secret-key"
+      ).toString();
+
+      // Store encrypted data
+      localStorage.setItem("token", authToken);
+      localStorage.setItem("user", encryptedUser);
+      // Keep entityType for routing/guards
+      localStorage.setItem("entityType", authenticatedUser.entityType);
+      localStorage.setItem("lastActivity", Date.now().toString());
+
+      // Update state
+      setToken(authToken);
+      setUser(authenticatedUser);
+      setLastActivity(Date.now());
+      setShowTimeoutWarning(false);
+
+      return {
+        success: true,
+        user: authenticatedUser,
+      };
+    } catch (error) {
+      console.error("Login error:", error.message);
+      return {
+        success: false,
+        error: error.message || "Login failed",
+      };
     }
-
-    // Parse the successful JSON response
-    const responseData = await response.json();
-   
-
-    // Extract token and user data from response
-    const authToken = responseData.token;
-    
-   // In AuthContext.jsx login function:
-// After getting responseData, fix the role assignment:
-const userData = {
-  userId: responseData.userId || responseData.userName,
-  username: responseData.userName || username,
-  email: responseData.email || "",
-  entityType: responseData.entityType || responseData.role || "User",
-  role: responseData.entityType || responseData.role || "User", // Use entityType as role
-  permissions: responseData.permissions || [],
-  roles: responseData.roles || [],
-  token: authToken
-};
-
-    // Determine if user is admin - based on multiple factors
-    const lowerRole = userData.role?.toLowerCase();
-    const lowerEntityType = userData.entityType?.toLowerCase();
-    
-    const isAdmin = 
-      lowerRole === "admin" || 
-      lowerRole.includes("admin") ||
-      lowerEntityType === "admin" ||
-      lowerEntityType.includes("admin") ||
-      userData.userId?.toLowerCase().includes("admin") ||
-      userData.username?.toLowerCase().includes("admin");
-
-    console.log("User role determination:", {
-      role: userData.role,
-      entityType: userData.entityType,
-      isAdmin: isAdmin,
-      userId: userData.userId
-    });
-
-    // Add admin flag to user object
-    const authenticatedUser = {
-      ...userData,
-      isAdmin: isAdmin
-    };
-
-    // Encrypt before storing
-    const userString = JSON.stringify(authenticatedUser);
-    const encryptedUser = CryptoJS.AES.encrypt(
-      userString,
-      "your-secret-key"
-    ).toString();
-
-    // Store encrypted data
-    localStorage.setItem("token", authToken);
-    localStorage.setItem("user", encryptedUser);
-    localStorage.setItem("role", userData.role);
-    localStorage.setItem("entityType", userData.entityType);
-    localStorage.setItem("lastActivity", Date.now().toString());
-
-    // Update state
-    setToken(authToken);
-    setUser(authenticatedUser);
-    setLastActivity(Date.now());
-    setShowTimeoutWarning(false);
-
-    return {
-      success: true,
-      user: authenticatedUser,
-    };
-  } catch (error) {
-    console.error("Login error:", error.message);
-    return {
-      success: false,
-      error: error.message || "Login failed",
-    };
-  }
-};
+  };
   const updatePassword = async ({ oldPassword, newPassword }) => {
     try {
       await axios.post(
@@ -303,6 +297,7 @@ const userData = {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

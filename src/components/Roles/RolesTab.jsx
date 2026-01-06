@@ -11,65 +11,360 @@ import {
   FiKey,
 } from "react-icons/fi";
 
+const ROLES_API_URL = "https://gibsbrokersapi.newgibsonline.com/api/Auth/roles";
+const PERMISSIONS_API_URL =
+  "https://gibsbrokersapi.newgibsonline.com/api/Auth/permissions";
+
+const readResponseBodySafely = async (response) => {
+  try {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return await response.json();
+    }
+    return await response.text();
+  } catch {
+    return "";
+  }
+};
+
+// Normalizes fetch failures so we don't always show the generic "Failed to fetch".
+// Common causes:
+// - CORS blocked (browser won't give a status)
+// - Network error / SSL / DNS
+// - API unreachable
+const requestJson = async (url, options = {}) => {
+  try {
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      const body = await readResponseBodySafely(response);
+
+      // Prefer backend message if available
+      const backendMessage =
+        body && typeof body === "object"
+          ? body.message || body.error || JSON.stringify(body)
+          : String(body || "");
+
+      if (response.status === 403) {
+        throw new Error("Access Denied");
+      }
+      throw new Error(
+        backendMessage?.trim() || `HTTP error! status: ${response.status}`
+      );
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return await response.json();
+    }
+    // Some endpoints return empty body on success (DELETE)
+    return null;
+  } catch (err) {
+    // When fetch throws, there's usually *no HTTP response*.
+    // Make it clearer than "Failed to fetch".
+    if (
+      err instanceof TypeError &&
+      String(err.message).includes("Failed to fetch")
+    ) {
+      throw new Error(
+        "Network/CORS error: the browser couldn't reach the API (check API availability, HTTPS, and CORS)."
+      );
+    }
+    throw err;
+  }
+};
+
 const RolesTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [roles, setRoles] = useState([]);
+  const [permissions, setPermissions] = useState([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(false);
+  const [permissionsError, setPermissionsError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [selectedRole, setSelectedRole] = useState(null);
   const [showRoleDetails, setShowRoleDetails] = useState(false);
+  const [showCreateRoleModal, setShowCreateRoleModal] = useState(false);
+  const [creatingRole, setCreatingRole] = useState(false);
+  const [showEditRoleModal, setShowEditRoleModal] = useState(false);
+  const [editingRole, setEditingRole] = useState(false);
+  const [editRoleTarget, setEditRoleTarget] = useState(null);
+  const [editRoleForm, setEditRoleForm] = useState({
+    roleName: "",
+    description: "",
+    isActive: true,
+    permissionIds: [],
+  });
+  const [createRoleForm, setCreateRoleForm] = useState({
+    roleName: "",
+    description: "",
+    permissionIds: [],
+  });
+
   const rolesPerPage = 10;
 
-const fetchRoles = async () => {
-  setLoading(true);
-  setError(null);
+  const fetchPermissions = async () => {
+    setPermissionsLoading(true);
+    setPermissionsError(null);
 
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("No authentication token found.");
-    }
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found.");
+      }
 
-    const response = await fetch(
-      "https://gibsbrokersapi.newgibsonline.com/api/Auth/roles",
-      {
+      const data = await requestJson(PERMISSIONS_API_URL, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      });
+      const permissionsData = Array.isArray(data) ? data : data.data || [];
+      setPermissions(permissionsData);
+    } catch (err) {
+      setPermissionsError(err.message);
+      console.error("Error fetching permissions:", err);
+    } finally {
+      setPermissionsLoading(false);
     }
+  };
 
-    const data = await response.json();
-    
-    // Extract roles from data.data if it exists, otherwise use data directly
-    const rolesData = data.data || data;
-    setRoles(rolesData);
-    
-  } catch (err) {
-    setError(err.message);
-    console.error("Error fetching roles:", err);
-  } finally {
-    setLoading(false);
-  }
-};
+  const fetchRoles = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found.");
+      }
+
+      const data = await requestJson(ROLES_API_URL, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Extract roles from data.data if it exists, otherwise use data directly
+      const rolesData = data.data || data;
+      setRoles(rolesData);
+    } catch (err) {
+      setError(err.message);
+      console.error("Error fetching roles:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fetch roles on component mount
   useEffect(() => {
     fetchRoles();
+    fetchPermissions();
   }, []);
 
   // View role details
   const handleViewRole = (role) => {
     setSelectedRole(role);
     setShowRoleDetails(true);
+  };
+
+  const openCreateRoleModal = () => {
+    setCreateRoleForm({ roleName: "", description: "", permissionIds: [] });
+    setError(null);
+    setSuccess(null);
+    setShowCreateRoleModal(true);
+  };
+
+  const closeCreateRoleModal = () => {
+    if (creatingRole) return;
+    setShowCreateRoleModal(false);
+  };
+
+  const togglePermissionId = (permissionID) => {
+    setCreateRoleForm((prev) => {
+      const exists = prev.permissionIds.includes(permissionID);
+      return {
+        ...prev,
+        permissionIds: exists
+          ? prev.permissionIds.filter((id) => id !== permissionID)
+          : [...prev.permissionIds, permissionID],
+      };
+    });
+  };
+
+  const toggleEditPermissionId = (permissionID) => {
+    setEditRoleForm((prev) => {
+      const exists = prev.permissionIds.includes(permissionID);
+      return {
+        ...prev,
+        permissionIds: exists
+          ? prev.permissionIds.filter((id) => id !== permissionID)
+          : [...prev.permissionIds, permissionID],
+      };
+    });
+  };
+
+  const handleCreateRole = async (e) => {
+    e.preventDefault();
+    setCreatingRole(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found.");
+      }
+
+      const payload = {
+        roleName: createRoleForm.roleName.trim(),
+        description: createRoleForm.description.trim(),
+        permissionIds: Array.isArray(createRoleForm.permissionIds)
+          ? createRoleForm.permissionIds
+          : [],
+      };
+
+      if (!payload.roleName) {
+        throw new Error("Role Name is required.");
+      }
+
+      await requestJson(ROLES_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      setSuccess("Role created successfully.");
+      window.alert("Role created successfully.");
+      setShowCreateRoleModal(false);
+      await fetchRoles();
+    } catch (err) {
+      console.error("Error creating role:", err);
+      setError(err.message);
+    } finally {
+      setCreatingRole(false);
+    }
+  };
+
+  const openEditRoleModal = (role) => {
+    if (!role || role?.isSystemRole) return;
+
+    // Convert existing permissions to IDs
+    const existingPermissionIds = Array.isArray(role?.permissions)
+      ? role.permissions
+          .map((p) => p?.permissionID)
+          .filter((id) => typeof id === "number")
+      : [];
+
+    setEditRoleTarget(role);
+    setEditRoleForm({
+      roleName: role.roleName || "",
+      description: role.description || "",
+      isActive: role.isActive ?? true,
+      permissionIds: existingPermissionIds,
+    });
+    setError(null);
+    setSuccess(null);
+    setShowEditRoleModal(true);
+  };
+
+  const closeEditRoleModal = () => {
+    if (editingRole) return;
+    setShowEditRoleModal(false);
+    setEditRoleTarget(null);
+  };
+
+  const handleEditRole = (role) => {
+    openEditRoleModal(role);
+  };
+
+  const handleUpdateRole = async (e) => {
+    e.preventDefault();
+    if (!editRoleTarget?.roleID) return;
+
+    setEditingRole(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found.");
+      }
+
+      const payload = {
+        roleName: editRoleForm.roleName.trim(),
+        description: editRoleForm.description.trim(),
+        isActive: Boolean(editRoleForm.isActive),
+        permissionIds: Array.isArray(editRoleForm.permissionIds)
+          ? editRoleForm.permissionIds
+          : [],
+      };
+
+      if (!payload.roleName) {
+        throw new Error("Role Name is required.");
+      }
+
+      await requestJson(`${ROLES_API_URL}/${editRoleTarget.roleID}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      setSuccess("Role updated successfully.");
+      window.alert("Role updated successfully.");
+      setShowEditRoleModal(false);
+      setEditRoleTarget(null);
+      await fetchRoles();
+    } catch (err) {
+      console.error("Error updating role:", err);
+      setError(err.message);
+    } finally {
+      setEditingRole(false);
+    }
+  };
+
+  const handleDeleteRole = async (role) => {
+    if (role?.isSystemRole) return;
+    const ok = window.confirm(
+      `Are you sure you want to delete "${getRoleDisplayName(role.roleName)}"?`
+    );
+    if (!ok) return;
+
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found.");
+      }
+
+      await requestJson(`${ROLES_API_URL}/${role.roleID}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setSuccess("Role deleted successfully.");
+      window.alert("Role deleted successfully.");
+      await fetchRoles();
+    } catch (err) {
+      console.error("Error deleting role:", err);
+      setError(err.message);
+    }
   };
 
   // Close role details modal
@@ -99,14 +394,14 @@ const fetchRoles = async () => {
       .replace(/Insured Client/gi, "Sub Agent");
   };
 
- // Update line 102 to be safe:
-const filteredRoles = (Array.isArray(roles) ? roles : [])
-  .filter((role) => !["Company", "CompanyAdmin"].includes(role.roleName))
-  .filter(
-    (role) =>
-      role.roleName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      role.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Update line 102 to be safe:
+  const filteredRoles = (Array.isArray(roles) ? roles : [])
+    .filter((role) => !["Company", "CompanyAdmin"].includes(role.roleName))
+    .filter(
+      (role) =>
+        role.roleName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        role.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   // Pagination logic
   const totalPages = Math.ceil(filteredRoles.length / rolesPerPage);
@@ -154,6 +449,18 @@ const filteredRoles = (Array.isArray(roles) ? roles : [])
         </div>
       )}
 
+      {permissionsError && (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-4">
+          Permissions Warning: {permissionsError}
+          <button
+            onClick={() => setPermissionsError(null)}
+            className="float-right font-bold"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Search and Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="relative w-full sm:w-96">
@@ -171,6 +478,14 @@ const filteredRoles = (Array.isArray(roles) ? roles : [])
 
         <div className="flex space-x-2 flex-wrap gap-2">
           <button
+            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg"
+            onClick={openCreateRoleModal}
+            type="button"
+          >
+            <FiPlus className="mr-2" />
+            Add Role
+          </button>
+          <button
             className="flex items-center bg-gray-600 hover:bg-gray-700 text-white font-medium py-2.5 px-4 rounded-lg"
             onClick={fetchRoles}
             disabled={loading}
@@ -180,6 +495,362 @@ const filteredRoles = (Array.isArray(roles) ? roles : [])
           </button>
         </div>
       </div>
+
+      {/* Create Role Modal */}
+      {showCreateRoleModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg overflow-hidden">
+            <div className="flex justify-between items-center p-5 border-b">
+              <h3 className="text-lg font-semibold text-gray-800">Add Role</h3>
+              <button
+                onClick={closeCreateRoleModal}
+                className="text-gray-500 hover:text-gray-700"
+                type="button"
+                disabled={creatingRole}
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateRole} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Role Name <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={createRoleForm.roleName}
+                  onChange={(e) =>
+                    setCreateRoleForm((prev) => ({
+                      ...prev,
+                      roleName: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="e.g. Claims Officer"
+                  required
+                  disabled={creatingRole}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={createRoleForm.description}
+                  onChange={(e) =>
+                    setCreateRoleForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="Short description..."
+                  rows={3}
+                  disabled={creatingRole}
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-4 mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Permissions
+                  </label>
+                  <button
+                    type="button"
+                    onClick={fetchPermissions}
+                    className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
+                    disabled={permissionsLoading}
+                    title="Reload permissions"
+                  >
+                    {permissionsLoading ? "Loading..." : "Reload"}
+                  </button>
+                </div>
+
+                <div className="border border-gray-300 rounded-lg overflow-hidden">
+                  <div className="max-h-56 overflow-y-auto">
+                    {permissionsLoading ? (
+                      <div className="p-3 text-sm text-gray-500">
+                        Loading permissions...
+                      </div>
+                    ) : permissions.length === 0 ? (
+                      <div className="p-3 text-sm text-gray-500">
+                        No permissions available.
+                      </div>
+                    ) : (
+                      permissions
+                        .filter((p) => p?.isActive !== false)
+                        .sort((a, b) =>
+                          String(a.permissionName || "").localeCompare(
+                            String(b.permissionName || "")
+                          )
+                        )
+                        .map((p) => {
+                          const checked = createRoleForm.permissionIds.includes(
+                            p.permissionID
+                          );
+                          return (
+                            <label
+                              key={p.permissionID}
+                              className="flex items-start gap-3 px-3 py-2 border-b last:border-b-0 cursor-pointer hover:bg-gray-50"
+                            >
+                              <input
+                                type="checkbox"
+                                className="mt-1"
+                                checked={checked}
+                                onChange={() =>
+                                  togglePermissionId(p.permissionID)
+                                }
+                                disabled={creatingRole}
+                              />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {p.permissionName}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {p.module} •{" "}
+                                  {String(p.action || "").toUpperCase()}
+                                  {p.endpoint ? ` • ${p.endpoint}` : ""}
+                                </div>
+                                {p.description ? (
+                                  <div className="text-xs text-gray-500 mt-0.5">
+                                    {p.description}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </label>
+                          );
+                        })
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-2 text-xs text-gray-600">
+                  Selected:{" "}
+                  <span className="font-medium">
+                    {createRoleForm.permissionIds.length}
+                  </span>
+                  {createRoleForm.permissionIds.length > 0 ? (
+                    <>
+                      {" "}
+                      • IDs:{" "}
+                      <span className="font-mono">
+                        {createRoleForm.permissionIds.join(", ")}
+                      </span>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={closeCreateRoleModal}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  disabled={creatingRole}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-60"
+                  disabled={creatingRole}
+                >
+                  {creatingRole ? "Creating..." : "Create Role"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Role Modal */}
+      {showEditRoleModal && editRoleTarget && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg overflow-hidden">
+            <div className="flex justify-between items-center p-5 border-b">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Edit Role: {getRoleDisplayName(editRoleTarget.roleName)}
+              </h3>
+              <button
+                onClick={closeEditRoleModal}
+                className="text-gray-500 hover:text-gray-700"
+                type="button"
+                disabled={editingRole}
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateRole} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Role Name <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editRoleForm.roleName}
+                  onChange={(e) =>
+                    setEditRoleForm((prev) => ({
+                      ...prev,
+                      roleName: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="e.g. Finance"
+                  required
+                  disabled={editingRole}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={editRoleForm.description}
+                  onChange={(e) =>
+                    setEditRoleForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="Short description..."
+                  rows={3}
+                  disabled={editingRole}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  id="editRoleIsActive"
+                  type="checkbox"
+                  checked={Boolean(editRoleForm.isActive)}
+                  onChange={(e) =>
+                    setEditRoleForm((prev) => ({
+                      ...prev,
+                      isActive: e.target.checked,
+                    }))
+                  }
+                  disabled={editingRole}
+                />
+                <label
+                  htmlFor="editRoleIsActive"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Active
+                </label>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-4 mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Permissions
+                  </label>
+                  <button
+                    type="button"
+                    onClick={fetchPermissions}
+                    className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
+                    disabled={permissionsLoading}
+                    title="Reload permissions"
+                  >
+                    {permissionsLoading ? "Loading..." : "Reload"}
+                  </button>
+                </div>
+
+                <div className="border border-gray-300 rounded-lg overflow-hidden">
+                  <div className="max-h-56 overflow-y-auto">
+                    {permissionsLoading ? (
+                      <div className="p-3 text-sm text-gray-500">
+                        Loading permissions...
+                      </div>
+                    ) : permissions.length === 0 ? (
+                      <div className="p-3 text-sm text-gray-500">
+                        No permissions available.
+                      </div>
+                    ) : (
+                      permissions
+                        .filter((p) => p?.isActive !== false)
+                        .sort((a, b) =>
+                          String(a.permissionName || "").localeCompare(
+                            String(b.permissionName || "")
+                          )
+                        )
+                        .map((p) => {
+                          const checked = editRoleForm.permissionIds.includes(
+                            p.permissionID
+                          );
+                          return (
+                            <label
+                              key={p.permissionID}
+                              className="flex items-start gap-3 px-3 py-2 border-b last:border-b-0 cursor-pointer hover:bg-gray-50"
+                            >
+                              <input
+                                type="checkbox"
+                                className="mt-1"
+                                checked={checked}
+                                onChange={() =>
+                                  toggleEditPermissionId(p.permissionID)
+                                }
+                                disabled={editingRole}
+                              />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {p.permissionName}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {p.module} •{" "}
+                                  {String(p.action || "").toUpperCase()}
+                                  {p.endpoint ? ` • ${p.endpoint}` : ""}
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-2 text-xs text-gray-600">
+                  Selected:{" "}
+                  <span className="font-medium">
+                    {editRoleForm.permissionIds.length}
+                  </span>
+                  {editRoleForm.permissionIds.length > 0 ? (
+                    <>
+                      {" "}
+                      • IDs:{" "}
+                      <span className="font-mono">
+                        {editRoleForm.permissionIds.join(", ")}
+                      </span>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={closeEditRoleModal}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  disabled={editingRole}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-60"
+                  disabled={editingRole}
+                >
+                  {editingRole ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Loading State */}
       {loading && (
@@ -208,6 +879,9 @@ const filteredRoles = (Array.isArray(roles) ? roles : [])
                     Permissions Count
                   </th>
                   <th scope="col" className="px-4 py-3">
+                    Type
+                  </th>
+                  <th scope="col" className="px-4 py-3">
                     Status
                   </th>
                   <th scope="col" className="px-4 py-3">
@@ -231,7 +905,7 @@ const filteredRoles = (Array.isArray(roles) ? roles : [])
                       <td className="px-4 py-3 font-medium text-gray-900">
                         <div className="flex items-center">
                           <FiKey className="mr-2 text-blue-500" size={16} />
-                          {getRoleDisplayName(role.roleName)}
+                          <span>{getRoleDisplayName(role.roleName)}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -240,6 +914,17 @@ const filteredRoles = (Array.isArray(roles) ? roles : [])
                       <td className="px-4 py-3">
                         <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">
                           {role.permissions?.length || 0} permissions
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            role.isSystemRole
+                              ? "bg-gray-200 text-gray-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          {role.isSystemRole ? "System" : "Custom"}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -265,6 +950,40 @@ const filteredRoles = (Array.isArray(roles) ? roles : [])
                           >
                             <FiEye size={16} />
                           </button>
+
+                          <button
+                            className={
+                              role.isSystemRole
+                                ? "text-gray-300 cursor-not-allowed"
+                                : "text-green-600 hover:text-green-900"
+                            }
+                            onClick={() => handleEditRole(role)}
+                            title={
+                              role.isSystemRole
+                                ? "System roles can't be edited"
+                                : "Edit Role"
+                            }
+                            disabled={role.isSystemRole}
+                          >
+                            <FiEdit2 size={16} />
+                          </button>
+
+                          <button
+                            className={
+                              role.isSystemRole
+                                ? "text-gray-300 cursor-not-allowed"
+                                : "text-red-600 hover:text-red-900"
+                            }
+                            onClick={() => handleDeleteRole(role)}
+                            title={
+                              role.isSystemRole
+                                ? "System roles can't be deleted"
+                                : "Delete Role"
+                            }
+                            disabled={role.isSystemRole}
+                          >
+                            <FiTrash2 size={16} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -272,7 +991,7 @@ const filteredRoles = (Array.isArray(roles) ? roles : [])
                 ) : (
                   <tr>
                     <td
-                      colSpan="7"
+                      colSpan="8"
                       className="px-4 py-8 text-center text-gray-500"
                     >
                       {searchQuery
