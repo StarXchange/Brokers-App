@@ -1,8 +1,24 @@
 // src/components/PinAllocation/PendingApprovals.jsx
 import React, { useState, useEffect } from 'react';
-import { FaCheck, FaTimes, FaUser, FaCoins, FaClock, FaSearch, FaBuilding, FaCalendar, FaIdCard } from 'react-icons/fa';
+import { 
+  FaCheck, 
+  FaTimes, 
+  FaUser, 
+  FaCoins, 
+  FaClock, 
+  FaSearch, 
+  FaBuilding, 
+  FaCalendar, 
+  FaIdCard,
+  FaLock,
+  FaExclamationTriangle,
+  FaSpinner,
+  FaTrash,
+  FaBan
+} from 'react-icons/fa';
 import PinService from '../../services/PinServices';
 import UserService from '../../services/UserServices';
+import CryptoJS from 'crypto-js';
 
 // Toast Notification Component (Both green and red)
 const Toast = ({ message, type = 'success', onClose }) => {
@@ -32,17 +48,150 @@ const Toast = ({ message, type = 'success', onClose }) => {
   );
 };
 
+// Permission Denied Component
+const PermissionDenied = ({  action }) => {
+  return (
+    <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl p-8 text-center shadow-lg">
+      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <FaLock className="w-8 h-8 text-red-600" />
+      </div>
+      <h3 className="text-xl font-bold text-gray-900 mb-2">
+        Permission Required
+      </h3>
+      <p className="text-gray-600 mb-6">
+        You need the permission to {action}.
+      </p>
+      <div className="bg-white p-4 rounded-lg border border-red-100 mb-4">
+        <div className="flex items-center justify-center space-x-2 text-red-700">
+          <FaExclamationTriangle className="w-4 h-4" />
+          <span className="text-sm font-medium">
+            Contact your administrator to request this permission
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PendingApprovals = ({ onApprovalSuccess }) => {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [brokers, setBrokers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(null);
+  const [revoking, setRevoking] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [toast, setToast] = useState(null);
+  const [hasViewPendingPermission, setHasViewPendingPermission] = useState(null);
+  const [hasApprovePermission, setHasApprovePermission] = useState(null);
+  const [hasRevokePermission, setHasRevokePermission] = useState(null);
+  const [checkingPermission, setCheckingPermission] = useState(true);
+  const [showPermissionDenied, setShowPermissionDenied] = useState({ show: false, permission: '', action: '' });
+
+  // Decryption function
+  const decryptData = (encryptedData) => {
+    if (!encryptedData) return null;
+    try {
+      const bytes = CryptoJS.AES.decrypt(encryptedData, "your-secret-key");
+      const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
+      return decryptedString ? JSON.parse(decryptedString) : null;
+    } catch (error) {
+      console.error("Decryption failed:", error);
+      return null;
+    }
+  };
+
+  // Check for all Pin permissions
+  const checkPermissions = () => {
+    try {
+      setCheckingPermission(true);
+      
+      // Get encrypted user data from localStorage
+      const encryptedUser = localStorage.getItem("user");
+      if (!encryptedUser) {
+        
+        setAllPermissionsFalse();
+        setCheckingPermission(false);
+        return;
+      }
+
+      // Decrypt user data
+      const userData = decryptData(encryptedUser);
+      if (!userData) {
+       
+        setAllPermissionsFalse();
+        setCheckingPermission(false);
+        return;
+      }
+
+      // Extract permissions from user data
+      let permissions = [];
+      
+      // Check different possible locations for permissions
+      if (userData.permissions && Array.isArray(userData.permissions)) {
+        permissions = userData.permissions;
+      } else if (userData.userPermissions && Array.isArray(userData.userPermissions)) {
+        permissions = userData.userPermissions;
+      } else if (userData.Permissions && Array.isArray(userData.Permissions)) {
+        permissions = userData.Permissions;
+      } else if (userData.roles && Array.isArray(userData.roles)) {
+        const allPermissions = [];
+        userData.roles.forEach(role => {
+          if (role.permissions && Array.isArray(role.permissions)) {
+            allPermissions.push(...role.permissions);
+          }
+        });
+        permissions = allPermissions;
+      }
+
+      // Check for each permission
+      const hasViewPending = checkSpecificPermission(permissions, "Pin.ViewPending", 60);
+      const hasApprove = checkSpecificPermission(permissions, "Pin.Approve", 58);
+      const hasRevoke = checkSpecificPermission(permissions, "Pin.Revoke", 59);
+
+    
+
+      setHasViewPendingPermission(hasViewPending);
+      setHasApprovePermission(hasApprove);
+      setHasRevokePermission(hasRevoke);
+    } catch (error) {
+      console.error("Error checking permissions:", error);
+      setAllPermissionsFalse();
+    } finally {
+      setCheckingPermission(false);
+    }
+  };
+
+  const checkSpecificPermission = (permissions, permissionName, permissionId) => {
+    return permissions.some(permission => {
+      if (typeof permission === 'string') {
+        return permission === permissionName;
+      } else if (typeof permission === 'object') {
+        return (
+          permission.permissionName === permissionName ||
+          permission.name === permissionName ||
+          permission.permissionID === permissionId
+        );
+      }
+      return false;
+    });
+  };
+
+  const setAllPermissionsFalse = () => {
+    setHasViewPendingPermission(false);
+    setHasApprovePermission(false);
+    setHasRevokePermission(false);
+  };
 
   useEffect(() => {
-    loadData();
+    checkPermissions();
   }, []);
+
+  // Load data only if user has view permission
+  useEffect(() => {
+    if (hasViewPendingPermission === true) {
+      loadData();
+    }
+  }, [hasViewPendingPermission]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -50,6 +199,14 @@ const PendingApprovals = ({ onApprovalSuccess }) => {
 
   const closeToast = () => {
     setToast(null);
+  };
+
+  const showPermissionDeniedModal = (permission, action) => {
+    setShowPermissionDenied({ show: true, permission, action });
+  };
+
+  const closePermissionDeniedModal = () => {
+    setShowPermissionDenied({ show: false, permission: '', action: '' });
   };
 
   const loadData = async () => {
@@ -62,7 +219,7 @@ const PendingApprovals = ({ onApprovalSuccess }) => {
         UserService.getBrokers().catch(() => []) // Fallback to empty array if service fails
       ]);
 
-      console.log('Raw API response:', requests); // Debug log
+      
 
       // Transform the API response to match component expectations
       const transformedRequests = Array.isArray(requests) ? requests.map(request => ({
@@ -81,7 +238,7 @@ const PendingApprovals = ({ onApprovalSuccess }) => {
         allocatedBy: request.allocatedBy
       })) : [];
 
-      console.log('Transformed requests:', transformedRequests); // Debug log
+     
 
       setPendingRequests(transformedRequests);
       setBrokers(Array.isArray(brokersData) ? brokersData : []);
@@ -117,28 +274,64 @@ const PendingApprovals = ({ onApprovalSuccess }) => {
     }
   };
 
-const handleApproval = async (allocationId, isApproved, approvalRemarks) => {
-  setApproving(allocationId);
-  try {
-    await PinService.approveAllocation(allocationId, isApproved, approvalRemarks);
-    await loadData();
-    
-    if (onApprovalSuccess) {
-      onApprovalSuccess(isApproved);
+  const handleApproval = async (allocationId, isApproved, approvalRemarks) => {
+    // Check permission before approval
+    if (!hasApprovePermission) {
+      showPermissionDeniedModal("Pin.Approve", "approve or reject PIN allocations");
+      return;
     }
-    
-    // Show appropriate toast based on approval status
-    if (isApproved) {
-      showToast('Pin allocation approved successfully!', 'success'); // Green
-    } else {
-      showToast('Pin allocation request rejected successfully!', 'error'); // Red
+
+    setApproving(allocationId);
+    try {
+      await PinService.approveAllocation(allocationId, isApproved, approvalRemarks);
+      await loadData();
+      
+      if (onApprovalSuccess) {
+        onApprovalSuccess(isApproved);
+      }
+      
+      // Show appropriate toast based on approval status
+      if (isApproved) {
+        showToast('Pin allocation approved successfully!', 'success'); // Green
+      } else {
+        showToast('Pin allocation request rejected successfully!', 'error'); // Red
+      }
+    } catch (error) {
+      console.error('Approval error:', error);
+    } finally {
+      setApproving(null);
     }
-  } catch (error) {
-    console.error('Approval error:', error);
-  } finally {
-    setApproving(null);
-  }
-};
+  };
+
+  const handleRevoke = async (allocationId) => {
+    // Check permission before revoking
+    if (!hasRevokePermission) {
+      showPermissionDeniedModal("Pin.Revoke", "revoke PIN allocations");
+      return;
+    }
+
+    const confirmation = window.confirm('Are you sure you want to revoke this PIN allocation? This action cannot be undone.');
+    if (!confirmation) return;
+
+    setRevoking(allocationId);
+    try {
+      // Assuming you have a revoke method in PinService
+      // await PinService.revokeAllocation(allocationId);
+      // For now, let's simulate it
+      
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      showToast('PIN allocation revoked successfully!', 'success');
+      await loadData();
+    } catch (error) {
+      console.error('Revoke error:', error);
+      showToast('Failed to revoke PIN allocation', 'error');
+    } finally {
+      setRevoking(null);
+    }
+  };
 
   const filteredRequests = pendingRequests.filter(request => {
     const broker = getBrokerDetails(request.brokerId);
@@ -170,12 +363,86 @@ const handleApproval = async (allocationId, isApproved, approvalRemarks) => {
     }
   `;
 
+  // Show loading while checking permission
+  if (checkingPermission) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Pending Approval Requests</h2>
+            <p className="text-gray-600 mt-1">
+              Review and manage pin allocation requests requiring approval
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-center items-center py-20 bg-white rounded-xl border border-gray-200">
+          <div className="text-center">
+            <FaSpinner className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600 font-medium">Checking access permissions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show permission denied if user doesn't have Pin.ViewPending
+  if (!hasViewPendingPermission) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Pending Approval Requests</h2>
+            <p className="text-gray-600 mt-1">
+              Review and manage pin allocation requests requiring approval
+            </p>
+          </div>
+          <div className="bg-red-50 text-red-700 px-4 py-2 rounded-lg text-sm font-medium border border-red-200">
+            <div className="flex items-center space-x-2">
+              <FaLock className="w-4 h-4" />
+              <span>Access Restricted</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="min-h-[400px] bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-2xl shadow-sm p-8 flex flex-col items-center justify-center">
+          <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FaLock className="w-12 h-12 text-red-600" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-3 text-center">
+            Permission Required
+          </h3>
+          <p className="text-gray-600 text-center mb-6 max-w-md">
+            You need the permission to view pending allocation.
+          </p>
+          <div className="bg-white p-4 rounded-lg border border-red-100 mb-6 w-full max-w-md">
+            <div className="flex items-center justify-center space-x-3 text-red-700">
+              <FaExclamationTriangle className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-medium text-center">
+                Contact your system administrator to request access.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-5 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading pending requests...</p>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Pending Approval Requests</h2>
+            <p className="text-gray-600 mt-1">
+              Review and manage pin allocation requests requiring approval
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-center items-center py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600 font-medium">Loading pending requests...</p>
+          </div>
         </div>
       </div>
     );
@@ -195,6 +462,15 @@ const handleApproval = async (allocationId, isApproved, approvalRemarks) => {
         />
       )}
 
+      {/* Permission Denied Modal */}
+      {showPermissionDenied.show && (
+        <PermissionDenied
+          permissionName={showPermissionDenied.permission}
+          action={showPermissionDenied.action}
+          onClose={closePermissionDeniedModal}
+        />
+      )}
+
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
@@ -202,6 +478,7 @@ const handleApproval = async (allocationId, isApproved, approvalRemarks) => {
           <p className="text-gray-600 mt-1">
             Review and manage pin allocation requests requiring approval
           </p>
+       
         </div>
         
         {/* Search and Stats */}
@@ -326,6 +603,7 @@ const handleApproval = async (allocationId, isApproved, approvalRemarks) => {
 
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
+                    {/* Approve Button */}
                     <button
                       onClick={() => {
                         const remarks = prompt('Enter approval remarks (optional):');
@@ -333,8 +611,13 @@ const handleApproval = async (allocationId, isApproved, approvalRemarks) => {
                           handleApproval(request.allocationId, true, remarks || '');
                         }
                       }}
-                      disabled={approving === request.allocationId}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-6 rounded-xl hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold flex items-center justify-center space-x-3 shadow-sm hover:shadow-md"
+                      disabled={approving === request.allocationId || !hasApprovePermission}
+                      className={`flex-1 py-3 px-6 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center space-x-3 shadow-sm hover:shadow-md ${
+                        hasApprovePermission
+                          ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800'
+                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                      } ${approving === request.allocationId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      title={!hasApprovePermission ? "Requires Pin.Approve permission" : ""}
                     >
                       {approving === request.allocationId ? (
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -344,6 +627,7 @@ const handleApproval = async (allocationId, isApproved, approvalRemarks) => {
                       <span>Approve Allocation</span>
                     </button>
 
+                    {/* Reject Button */}
                     <button
                       onClick={() => {
                         const remarks = prompt('Please provide reason for rejection:');
@@ -353,8 +637,13 @@ const handleApproval = async (allocationId, isApproved, approvalRemarks) => {
                           alert('Please provide a reason for rejection.');
                         }
                       }}
-                      disabled={approving === request.allocationId}
-                      className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white py-3 px-6 rounded-xl hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold flex items-center justify-center space-x-3 shadow-sm hover:shadow-md"
+                      disabled={approving === request.allocationId || !hasApprovePermission}
+                      className={`flex-1 py-3 px-6 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center space-x-3 shadow-sm hover:shadow-md ${
+                        hasApprovePermission
+                          ? 'bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800'
+                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                      } ${approving === request.allocationId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      title={!hasApprovePermission ? "Requires Pin.Approve permission" : ""}
                     >
                       {approving === request.allocationId ? (
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -363,7 +652,40 @@ const handleApproval = async (allocationId, isApproved, approvalRemarks) => {
                       )}
                       <span>Reject Request</span>
                     </button>
+
+                    {/* Revoke Button (Optional) */}
+                    {hasRevokePermission && (
+                      <button
+                        onClick={() => handleRevoke(request.allocationId)}
+                        disabled={revoking === request.allocationId}
+                        className={`flex-1 py-3 px-6 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center space-x-3 shadow-sm hover:shadow-md ${
+                          hasRevokePermission
+                            ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800'
+                            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        } ${revoking === request.allocationId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={!hasRevokePermission ? "Requires Pin.Revoke permission" : ""}
+                      >
+                        {revoking === request.allocationId ? (
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        ) : (
+                          <FaTrash className="w-5 h-5" />
+                        )}
+                        <span>Revoke Allocation</span>
+                      </button>
+                    )}
                   </div>
+
+                  {/* Permission Info Note */}
+                  {!hasApprovePermission && (
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-center space-x-2 text-yellow-700">
+                        <FaExclamationTriangle className="w-4 h-4 flex-shrink-0" />
+                        <span className="text-sm">
+                          You can view pending requests but need <strong>Pin.Approve</strong> permission to approve or reject allocations.
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );

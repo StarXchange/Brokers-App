@@ -1,7 +1,41 @@
 import React, { useState, useEffect } from "react";
-import { FaCoins, FaUser, FaSearch, FaTimes, FaBuilding } from "react-icons/fa";
+import { 
+  FaCoins, 
+  FaUser, 
+  FaSearch, 
+  FaTimes, 
+  FaBuilding,
+  FaLock,
+  FaExclamationTriangle 
+} from "react-icons/fa";
 import PinService from "../../services/PinServices";
 import UserService from "../../services/UserServices";
+import CryptoJS from "crypto-js";
+
+// Permission Denied Component
+const PermissionDenied = ({  action }) => {
+  return (
+    <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl p-8 text-center shadow-lg">
+      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <FaLock className="w-8 h-8 text-red-600" />
+      </div>
+      <h3 className="text-xl font-bold text-gray-900 mb-2">
+        Permission Required
+      </h3>
+      <p className="text-gray-600 mb-6">
+        You need the  permission to {action}.
+      </p>
+      <div className="bg-white p-4 rounded-lg border  border-red-100 mb-6 ">
+        <div className="flex items-center justify-center space-x-2 text-red-700">
+          <FaExclamationTriangle className="w-4 h-4" />
+          <span className="text-sm font-medium">
+              Contact your system administrator to request access.
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AllocatePinsModal = ({ onAllocationSuccess }) => {
   const [selectedBroker, setSelectedBroker] = useState("");
@@ -13,13 +47,100 @@ const AllocatePinsModal = ({ onAllocationSuccess }) => {
   const [fetchingBrokers, setFetchingBrokers] = useState(false);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [hasAllocatePermission, setHasAllocatePermission] = useState(null);
+  const [checkingPermission, setCheckingPermission] = useState(true);
 
-  // Fetch brokers when modal opens
+  // Decryption function
+  const decryptData = (encryptedData) => {
+    if (!encryptedData) return null;
+    try {
+      const bytes = CryptoJS.AES.decrypt(encryptedData, "your-secret-key");
+      const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
+      return decryptedString ? JSON.parse(decryptedString) : null;
+    } catch (error) {
+      console.error("Decryption failed:", error);
+      return null;
+    }
+  };
+
+  // Check for Pin.ViewAllocations permission
+  const checkAllocatePermission = () => {
+    try {
+      setCheckingPermission(true);
+      
+      // Get encrypted user data from localStorage
+      const encryptedUser = localStorage.getItem("user");
+      if (!encryptedUser) {
+      
+        setHasAllocatePermission(false);
+        setCheckingPermission(false);
+        return;
+      }
+
+      // Decrypt user data
+      const userData = decryptData(encryptedUser);
+      if (!userData) {
+        
+        setHasAllocatePermission(false);
+        setCheckingPermission(false);
+        return;
+      }
+
+      // Extract permissions from user data
+      let permissions = [];
+      
+      // Check different possible locations for permissions
+      if (userData.permissions && Array.isArray(userData.permissions)) {
+        permissions = userData.permissions;
+      } else if (userData.userPermissions && Array.isArray(userData.userPermissions)) {
+        permissions = userData.userPermissions;
+      } else if (userData.Permissions && Array.isArray(userData.Permissions)) {
+        permissions = userData.Permissions;
+      } else if (userData.roles && Array.isArray(userData.roles)) {
+        const allPermissions = [];
+        userData.roles.forEach(role => {
+          if (role.permissions && Array.isArray(role.permissions)) {
+            allPermissions.push(...role.permissions);
+          }
+        });
+        permissions = allPermissions;
+      }
+
+      // Check for Pin.ViewAllocations permission
+      const hasPermission = permissions.some(permission => {
+        if (typeof permission === 'string') {
+          return permission === "Pin.ViewAllocations";
+        } else if (typeof permission === 'object') {
+          return (
+            permission.permissionName === "Pin.ViewAllocations" ||
+            permission.name === "Pin.ViewAllocations" ||
+            permission.permissionID === 36 // Pin.ViewAllocations ID from your list
+          );
+        }
+        return false;
+      });
+
+      
+      setHasAllocatePermission(hasPermission);
+    } catch (error) {
+      console.error("Error checking permission:", error);
+      setHasAllocatePermission(false);
+    } finally {
+      setCheckingPermission(false);
+    }
+  };
+
+  // Check permission when component mounts
   useEffect(() => {
-    if (showModal) {
+    checkAllocatePermission();
+  }, []);
+
+  // Fetch brokers when modal opens (only if user has permission)
+  useEffect(() => {
+    if (showModal && hasAllocatePermission) {
       fetchBrokers();
     }
-  }, [showModal]);
+  }, [showModal, hasAllocatePermission]);
 
   const fetchBrokers = async () => {
     try {
@@ -64,13 +185,15 @@ const AllocatePinsModal = ({ onAllocationSuccess }) => {
       return;
     }
 
+    // Double-check permission before proceeding
+    if (!hasAllocatePermission) {
+      alert("You don't have permission to allocate pins.");
+      return;
+    }
+
     setLoading(true);
     try {
-      console.log("Starting allocation with:", {
-        brokerId: selectedBroker,
-        pinAmount: pinAmount,
-        remarks: remarks,
-      });
+     
 
       const result = await PinService.allocatePins(
         selectedBroker,
@@ -78,7 +201,7 @@ const AllocatePinsModal = ({ onAllocationSuccess }) => {
         remarks
       );
 
-      console.log("Allocation successful:", result);
+      ( result);
 
       alert("Pins allocated successfully! Waiting for approval.");
       setSelectedBroker("");
@@ -110,6 +233,59 @@ const AllocatePinsModal = ({ onAllocationSuccess }) => {
     setSelectedBroker(brokerId);
     setSearchTerm(""); // Clear search when broker is selected
   };
+
+  // Show loading while checking permission
+  if (checkingPermission) {
+    return (
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Super Agent Pin Allocation
+          </h2>
+          <p className="text-gray-600 mt-1">
+            Allocate pins to super agents (requires administrative approval)
+          </p>
+        </div>
+        <div className="animate-pulse bg-gray-200 text-gray-200 px-6 py-3 rounded-xl font-medium flex items-center space-x-3">
+          <FaCoins className="w-5 h-5" />
+          <span>Allocate Pins</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show permission denied if user doesn't have Pin.ViewAllocations
+  if (!hasAllocatePermission) {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Super Agent Pin Allocation
+            </h2>
+            <p className="text-gray-600 mt-1">
+              Allocate pins to super agents (requires administrative approval)
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              alert("You need the permission to allocate pins.");
+            }}
+            className="bg-gray-300 text-gray-500 cursor-not-allowed px-6 py-3 rounded-xl font-medium flex items-center space-x-3 shadow"
+            disabled
+          >
+            <FaLock className="w-5 h-5" />
+            <span>Allocate Pins</span>
+          </button>
+        </div>
+        
+        <PermissionDenied 
+          permissionName="Pin.ViewAllocations"
+          action="allocate pins to super agents"
+        />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -144,6 +320,10 @@ const AllocatePinsModal = ({ onAllocationSuccess }) => {
                 <p className="text-gray-600 text-sm mt-1">
                   Select a super agent and specify pin allocation details
                 </p>
+                <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2">
+                  <FaLock className="w-3 h-3 mr-1" />
+                  Pin.ViewAllocations Permission ✓
+                </div>
               </div>
               <button
                 onClick={handleCloseModal}
