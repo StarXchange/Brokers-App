@@ -3,17 +3,21 @@ import {
   FaCoins,
   FaUserCheck,
   FaHistory,
-  FaUsers,
   FaShare,
   FaUserTie,
   FaClock,
   FaCheck,
   FaTimes,
+  FaLock,
+  FaSpinner,
 } from "react-icons/fa";
 import PinService from "../../services/PinServices";
 import AllocatePinsModal from "./AllocatePinsModal";
 import PendingApprovals from "./PendingApprovals";
 import AllocationHistory from "./AllocationHistory";
+
+// Import CryptoJS for decryption
+import CryptoJS from "crypto-js";
 
 // Toast Notification Component
 const Toast = ({ message, type = "success", onClose }) => {
@@ -53,18 +57,270 @@ const Toast = ({ message, type = "success", onClose }) => {
   );
 };
 
+// Access Denied Component
+const AccessDenied = ({ errorMessage, permissionName }) => {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="max-w-md w-full">
+        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FaLock className="w-10 h-10 text-red-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            Access Denied
+          </h2>
+          <p className="text-gray-600 mb-6">
+            {errorMessage || "You don't have permission to access the Pin Allocation System."}
+            Please contact your administrator to request the necessary permissions.
+          </p>
+         
+          <button
+            onClick={() => window.history.back()}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PinAllocationSystem = () => {
   const [activeTab, setActiveTab] = useState("allocate");
   const [balance, setBalance] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [brokers, setBrokers] = useState([]);
-  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
   const [toast, setToast] = useState(null);
+  const [hasAccess, setHasAccess] = useState(null);
+  const [accessError, setAccessError] = useState(null);
+  const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    loadInitialData();
+    checkAccessAndLoadData();
   }, []);
+
+  // Function to decrypt user data (same as in AuthContext)
+  const decryptData = (encryptedData) => {
+    if (!encryptedData) return null;
+    try {
+      const bytes = CryptoJS.AES.decrypt(encryptedData, "your-secret-key");
+      const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
+      return decryptedString ? JSON.parse(decryptedString) : null;
+    } catch (error) {
+      console.error("Decryption failed:", error);
+      return null;
+    }
+  };
+
+ // Function to check if user has ANY Pin-related permission
+const hasAnyPinPermission = (permissions) => {
+  if (!permissions || !Array.isArray(permissions)) {
+    return false;
+  }
+
+
+  // Define all Pin-related permission names
+  const pinPermissions = [
+    "Pin.ViewPending",
+    "Pin.Share",
+    "Pin.ViewBalance",
+    "Pin.ViewAllocations",
+    "Pin.ViewAudit",
+    "Pin.ViewSummary",
+    "Pin.ViewAllocations",
+    "Pin.Approve",
+    "Pin.Revoke"
+  ];
+
+  // Check if it's an array of permission names or objects
+  if (permissions.length > 0) {
+    // If first item is a string, it's an array of permission names
+    if (typeof permissions[0] === 'string') {
+      
+      // Check if ANY of the user's permissions starts with "Pin."
+      const hasPinPermission = permissions.some(permission => 
+        permission.startsWith("Pin.")
+      );
+      
+      if (hasPinPermission) {
+        // Also check which specific Pin permissions were found
+        const foundPinPermissions = permissions.filter(p => pinPermissions.includes(p));
+        ( foundPinPermissions);
+      }
+      
+      return hasPinPermission;
+    }
+    
+    // If first item is an object, look for permissionName
+    else if (typeof permissions[0] === 'object' && permissions[0] !== null) {
+     
+      
+      // Look for ANY Pin permission
+      const hasPinPermission = permissions.some(permission => {
+        // Check permissionName
+        if (permission.permissionName && permission.permissionName.startsWith("Pin.")) {
+          return true;
+        }
+        
+        // Check name property
+        if (permission.name && permission.name.startsWith("Pin.")) {
+        
+          return true;
+        }
+        
+        // Check specific Pin permission IDs (optional - you can add IDs if needed)
+        const pinPermissionIds = [29, 30, 32, 33, 34, 35, 36, 61, 62];
+        if (permission.permissionID && pinPermissionIds.includes(permission.permissionID)) {
+         
+          return true;
+        }
+        
+        return false;
+      });
+      
+      if (hasPinPermission) {
+       
+        // Log which specific Pin permissions were found
+        const foundPermissions = permissions.filter(p => 
+          (p.permissionName && p.permissionName.startsWith("Pin.")) ||
+          (p.name && p.name.startsWith("Pin."))
+        );
+       ( foundPermissions);
+      }
+      
+      return hasPinPermission;
+    }
+  }
+
+  
+  return false;
+};
+
+  // Function to get decrypted user data from localStorage
+  const getDecryptedUserData = () => {
+    try {
+      // Get encrypted user data from localStorage
+      const encryptedUser = localStorage.getItem("user");
+      
+      
+      if (!encryptedUser) {
+     
+        return null;
+      }
+
+      // Decrypt the user data
+      const userData = decryptData(encryptedUser);
+      
+      
+      return userData;
+    } catch (error) {
+      console.error("Error getting decrypted user data:", error);
+      return null;
+    }
+  };
+
+  // Main function to check access and load data
+const checkAccessAndLoadData = async () => {
+  try {
+    setLoading(true);
+    
+  
+
+    // Get token and check authentication
+    const token = localStorage.getItem("token");
+    if (!token) {
+     
+      setHasAccess(false);
+      setAccessError("Authentication required. Please login.");
+      setLoading(false);
+      return;
+    }
+
+    // Get user role from localStorage
+    const storedRole = localStorage.getItem("role");
+
+    setUserRole(storedRole || "user");
+
+    // Get decrypted user data
+    const userData = getDecryptedUserData();
+    
+    if (!userData) {
+
+      setHasAccess(false);
+      setAccessError("Could not retrieve user information. Please login again.");
+      setLoading(false);
+      return;
+    }
+
+    
+    // Extract permissions from user data
+    let permissions = [];
+    
+    // Check different possible locations for permissions in user data
+    if (userData.permissions && Array.isArray(userData.permissions)) {
+      permissions = userData.permissions;
+      
+    } else if (userData.userPermissions && Array.isArray(userData.userPermissions)) {
+      permissions = userData.userPermissions;
+     
+    } else if (userData.Permissions && Array.isArray(userData.Permissions)) {
+      permissions = userData.Permissions;
+      
+    } else if (userData.roles && Array.isArray(userData.roles)) {
+      // If roles contain permissions
+      const allPermissions = [];
+      userData.roles.forEach(role => {
+        if (role.permissions && Array.isArray(role.permissions)) {
+          allPermissions.push(...role.permissions);
+        }
+      });
+      permissions = allPermissions;
+     
+    }
+
+  
+
+    // Check if user has ANY Pin-related permission
+    const hasPinPermission = hasAnyPinPermission(permissions);
+    
+    if (!hasPinPermission) {
+      
+      setHasAccess(false);
+      setAccessError("You don't have any Pin-related permissions to access the Pin Allocation System.");
+      setLoading(false);
+      return;
+    }
+
+    // User has at least one Pin permission, load data
+    
+    setHasAccess(true);
+    
+    try {
+      const [balanceData, pendingData] = await Promise.all([
+        PinService.getBalance().catch(() => ({ balance: 0, availablePins: 0 })),
+        PinService.getPendingAllocations().catch(() => []),
+      ]);
+
+     
+
+      setBalance(balanceData.balance || balanceData.availablePins || 0);
+      setPendingCount(Array.isArray(pendingData) ? pendingData.length : 0);
+    } catch (error) {
+      console.error("Failed to load data:", error);
+      // Set default values even if loading fails
+      setBalance(0);
+      setPendingCount(0);
+    }
+    
+  } catch (error) {
+    console.error("Failed to check access:", error);
+    setHasAccess(false);
+    setAccessError("Failed to verify access permissions. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -74,33 +330,15 @@ const PinAllocationSystem = () => {
     setToast(null);
   };
 
-  const loadInitialData = async () => {
-    try {
-      setLoading(true);
-      const [balanceData, pendingData] = await Promise.all([
-        PinService.getBalance(),
-        PinService.getPendingAllocations().catch(() => []),
-      ]);
-
-      setBalance(balanceData.balance || balanceData.availablePins || 0);
-
-      setPendingCount(Array.isArray(pendingData) ? pendingData.length : 0);
-    } catch (error) {
-      console.error("Failed to load initial data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleAllocationSuccess = () => {
-    loadInitialData();
+    checkAccessAndLoadData();
     showToast(
       "Pin allocation request submitted successfully! Awaiting approval."
     );
   };
 
   const handleApprovalSuccess = (isApproved = true) => {
-    loadInitialData();
+    checkAccessAndLoadData();
     if (isApproved) {
       showToast("Pin allocation approved successfully!");
     } else {
@@ -108,7 +346,7 @@ const PinAllocationSystem = () => {
     }
   };
 
-  // Update tabs to only show working components
+  // Update tabs
   const tabs = [
     {
       id: "allocate",
@@ -130,8 +368,6 @@ const PinAllocationSystem = () => {
       description: "View allocation records",
     },
   ];
-
-  const userRole = localStorage.getItem("userRole") || "admin";
 
   // Add CSS animations for the toast
   const toastStyles = `
@@ -166,6 +402,34 @@ const PinAllocationSystem = () => {
     }
   `;
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+        <div className="text-center">
+          <FaSpinner className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-700 mb-2">
+            Checking Access
+          </h3>
+          <p className="text-gray-500">
+            Verifying your access to Pin Allocation System...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if user doesn't have permission
+  if (hasAccess === false) {
+    return (
+     <AccessDenied 
+  errorMessage="You don't have any Pin-related permissions to access this system."
+  permissionName="Pin.* (Any Pin permission)"
+/>
+    );
+  }
+
+  // Show the main interface if user has access
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Toast Styles */}
@@ -182,7 +446,8 @@ const PinAllocationSystem = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Pin Management{" "}
+                Pin Allocation System
+                
               </h1>
               <p className="text-gray-600 mt-1">
                 Complete pin allocation and approval workflow
@@ -190,12 +455,13 @@ const PinAllocationSystem = () => {
               <div className="flex items-center space-x-4 mt-2">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   <FaUserTie className="w-3 h-3 mr-1" />
-                  {userRole === "admin" ? "Administrator" : "Approver"}
+                  {userRole || "User"}
                 </span>
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                   <FaCoins className="w-3 h-3 mr-1" />
                   Balance: {balance} pins
                 </span>
+              
               </div>
             </div>
             <div className="text-right">
@@ -276,26 +542,17 @@ const PinAllocationSystem = () => {
 
           {/* Tab Content */}
           <div className="p-6">
-            {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-              </div>
-            ) : (
-              <>
-                {activeTab === "allocate" && (
-                  <AllocatePinsModal
-                    brokers={brokers}
-                    onAllocationSuccess={handleAllocationSuccess}
-                  />
-                )}
-                {activeTab === "approvals" && (
-                  <PendingApprovals
-                    onApprovalSuccess={() => handleApprovalSuccess(true)}
-                  />
-                )}
-                {activeTab === "history" && <AllocationHistory />}
-              </>
+            {activeTab === "allocate" && (
+              <AllocatePinsModal
+                onAllocationSuccess={handleAllocationSuccess}
+              />
             )}
+            {activeTab === "approvals" && (
+              <PendingApprovals
+                onApprovalSuccess={() => handleApprovalSuccess(true)}
+              />
+            )}
+            {activeTab === "history" && <AllocationHistory />}
           </div>
         </div>
       </div>
