@@ -1,6 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import CryptoJS from "crypto-js";
+
+import { FaArrowLeft, FaLock } from "react-icons/fa";
+
+const AccessDenied = ({ title, message }) => {
+  return (
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-2xl">
+        <div className="relative overflow-hidden bg-white rounded-2xl shadow-xl border border-gray-200">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500" />
+
+          <div className="p-8 sm:p-10">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center">
+                  <FaLock className="w-7 h-7 text-red-600" />
+                </div>
+              </div>
+
+              <div className="flex-1">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
+                  {title || "Access denied"}
+                </h2>
+                <p className="text-gray-600 mt-3">
+                  {message ||
+                    "You don't have permission to view this page. Please contact your administrator."}
+                </p>
+
+                <div className="mt-8">
+                  <button
+                    type="button"
+                    onClick={() => window.history.back()}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium"
+                  >
+                    <FaArrowLeft />
+                    Go back
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const initialState = {
   username: "",
@@ -26,6 +72,112 @@ const AddSuperAgent = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // Permission check state
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
+
+  // Check permission on mount
+  useEffect(() => {
+    const checkPermission = () => {
+      try {
+        const rawUser = localStorage.getItem("user");
+        if (rawUser) {
+          let userData = null;
+
+          // Try parsing as plain JSON first
+          if (rawUser.trim().startsWith("{")) {
+            try {
+              userData = JSON.parse(rawUser);
+            } catch {
+              // Not plain JSON
+            }
+          }
+
+          // If not plain JSON, try decrypting (AuthContext stores encrypted)
+          if (!userData) {
+            try {
+              const bytes = CryptoJS.AES.decrypt(rawUser, "your-secret-key");
+              const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
+              if (decryptedString) {
+                userData = JSON.parse(decryptedString);
+              }
+            } catch {
+              // Decrypt failed
+            }
+          }
+
+          // Check permissions array
+          if (userData && Array.isArray(userData.permissions)) {
+            if (userData.permissions.includes("SuperAgent.Create")) {
+              setHasAccess(true);
+              setCheckingAccess(false);
+              return;
+            }
+          }
+        }
+
+        // Fallback: check userPermissions in localStorage
+        const permsStr = localStorage.getItem("userPermissions");
+        if (permsStr) {
+          try {
+            const perms = JSON.parse(permsStr);
+            if (Array.isArray(perms) && perms.includes("SuperAgent.Create")) {
+              setHasAccess(true);
+              setCheckingAccess(false);
+              return;
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        // Fallback: check permissions in localStorage
+        const permsStr2 = localStorage.getItem("permissions");
+        if (permsStr2) {
+          try {
+            const perms = JSON.parse(permsStr2);
+            if (Array.isArray(perms) && perms.includes("SuperAgent.Create")) {
+              setHasAccess(true);
+              setCheckingAccess(false);
+              return;
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        // No permission found
+        setHasAccess(false);
+      } catch (e) {
+        console.error("Permission check error:", e);
+        setHasAccess(false);
+      } finally {
+        setCheckingAccess(false);
+      }
+    };
+
+    checkPermission();
+  }, []);
+
+  // Show loading while checking
+  if (checkingAccess) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Show Access Denied immediately if no permission
+  if (!hasAccess) {
+    return (
+      <AccessDenied
+        title="Access Denied"
+        message="You don't have permission to create a Super Agent."
+      />
+    );
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -42,10 +194,31 @@ const AddSuperAgent = () => {
     const token = localStorage.getItem("token");
 
     const payload = {
-      ...form,
+      username: form.username,
+      password: form.password,
+      email: form.email,
+      mobilePhone: form.mobilePhone,
+      address: form.address || "",
+      contactPerson: form.contactPerson || "",
       submitDate: new Date().toISOString(),
-      lStartDate: form.lStartDate || null,
-      lEndDate: form.lEndDate || null,
+      tag: form.tag || "",
+      remarks: form.remarks || "",
+      a1: 0,
+      a2: 0,
+      roleIds: [4],
+      brokerName: form.brokerName,
+      insCompanyID: form.insCompanyID || "",
+      rate: form.rate || "",
+      value: form.value || "",
+      lStartDate: form.lStartDate
+        ? new Date(form.lStartDate).toISOString()
+        : null,
+      lEndDate: form.lEndDate ? new Date(form.lEndDate).toISOString() : null,
+      a3: 0,
+      a4: 0,
+      a5: 0,
+      field1: "",
+      field2: "",
     };
 
     try {
@@ -66,12 +239,21 @@ const AddSuperAgent = () => {
       setTimeout(() => navigate("/admin/users/agents-brokers"), 800);
     } catch (err) {
       console.error("Create broker error", err);
+
+      // If 403 Forbidden, show error message (shouldn't happen if local check passed)
+      if (err?.response?.status === 403) {
+        setError(
+          "Access Denied. You don't have permission to create a Super Agent."
+        );
+        return;
+      }
+
       const message =
         err?.response?.data?.message ||
         err?.response?.data ||
         err?.message ||
         "Failed to create Super Agent";
-      setError(message);
+      setError(typeof message === "string" ? message : JSON.stringify(message));
     } finally {
       setSubmitting(false);
     }

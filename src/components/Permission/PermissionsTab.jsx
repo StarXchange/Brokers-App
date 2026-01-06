@@ -35,7 +35,6 @@ const PermissionsTab = () => {
   });
   const [selectedUser, setSelectedUser] = useState(null);
   const permissionsPerPage = 10;
-  const [message, setMessage] = useState({ type: "", text: "" });
   const [showRevokeForm, setShowRevokeForm] = useState(false);
   const [revokeForm, setRevokeForm] = useState({
     userId: "",
@@ -80,64 +79,66 @@ const PermissionsTab = () => {
     }
   };
 
- const fetchUsers = async () => {
-  setLoadingUsers(true);
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("No authentication token found.");
-    }
-
-    // Using the correct users endpoint
-    const response = await fetch(
-      "https://gibsbrokersapi.newgibsonline.com/api/Auth/users",
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found.");
       }
-    );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+      // Using the correct users endpoint
+      const response = await fetch(
+        "https://gibsbrokersapi.newgibsonline.com/api/Auth/users",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    const data = await response.json();
-    
-    
-    // Extract the data array from the response
-    if (data.success && data.data) {
-      // Map entityType to userType for compatibility
-      const usersWithUserType = data.data.map(user => ({
-        ...user,
-        userType: user.entityType, // Add userType based on entityType
-        entityRole: user.entityType // Keep original entityType as entityRole
-      }));
-      
-      setUsers(usersWithUserType);
-   
-    } else if (Array.isArray(data)) {
-      // Fallback: if response is already an array
-      const usersWithUserType = data.map(user => ({
-        ...user,
-        userType: user.entityType,
-        entityRole: user.entityType
-      }));
-      setUsers(usersWithUserType);
-      console.log("Users loaded (fallback):", usersWithUserType.length, "users");
-    } else {
-      throw new Error("Invalid response format from users API");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Extract the data array from the response
+      if (data.success && data.data) {
+        // Map entityType to userType for compatibility
+        const usersWithUserType = data.data.map((user) => ({
+          ...user,
+          userType: user.entityType, // Add userType based on entityType
+          entityRole: user.entityType, // Keep original entityType as entityRole
+        }));
+
+        setUsers(usersWithUserType);
+      } else if (Array.isArray(data)) {
+        // Fallback: if response is already an array
+        const usersWithUserType = data.map((user) => ({
+          ...user,
+          userType: user.entityType,
+          entityRole: user.entityType,
+        }));
+        setUsers(usersWithUserType);
+        console.log(
+          "Users loaded (fallback):",
+          usersWithUserType.length,
+          "users"
+        );
+      } else {
+        throw new Error("Invalid response format from users API");
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error("Error fetching users:", err);
+      setUsers([]);
+    } finally {
+      setLoadingUsers(false);
     }
-  } catch (err) {
-    setError(err.message);
-    console.error("Error fetching users:", err);
-    setUsers([]);
-  } finally {
-    setLoadingUsers(false);
-  }
-};
+  };
   // Fetch user permissions
   const fetchUserPermissions = async (userId) => {
     try {
@@ -181,88 +182,101 @@ const PermissionsTab = () => {
     fetchUsers();
   }, []);
 
-const assignPermission = async () => {
-  try {
-    console.log('=== Starting assignPermission ===');
-    const token = localStorage.getItem("token");
-    console.log('Token exists:', !!token);
-    
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-
-    console.log('Form data:', assignmentForm);
-    
-    if (!assignmentForm.userId || !assignmentForm.permissionId) {
-      throw new Error('Please select both user and permission');
-    }
-
-    // Format data exactly as backend expects
-    const requestBody = {
-      userId: assignmentForm.userId.toString(),
-      userType: assignmentForm.userType || 'User',
-      permissionId: parseInt(assignmentForm.permissionId)
-    };
-
-    console.log('Request body being sent:', requestBody);
-
-    // Log the exact URL and headers
-    console.log('Making request to: https://gibsbrokersapi.newgibsonline.com/api/Auth/assign-permission');
-    console.log('Headers:', {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token.substring(0, 20)}...` // Log partial token for security
-    });
-
-    const response = await fetch('https://gibsbrokersapi.newgibsonline.com/api/Auth/assign-permission', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    console.log('Response status:', response.status);
-    console.log('Response ok:', response.ok);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-    // Try to read the response text first
-    const responseText = await response.text();
-    console.log('Raw response text:', responseText);
-
-    let parsedResponse;
+  const assignPermission = async () => {
+    setError(null);
+    setSuccess(null);
     try {
-      parsedResponse = JSON.parse(responseText);
-      console.log('Parsed response:', parsedResponse);
-    } catch (e) {
-      console.log('Response is not JSON:', e.message);
-    }
+      console.log("=== Starting assignPermission ===");
+      const token = localStorage.getItem("token");
+      console.log("Token exists:", !!token);
 
-    if (!response.ok) {
-      const errorMessage = parsedResponse?.message || 
-                          parsedResponse?.Message || 
-                          parsedResponse?.error || 
-                          `HTTP error! status: ${response.status}`;
-      throw new Error(errorMessage);
-    }
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
 
-    console.log('Success! Permission assigned');
-    
-    setSuccess('Permission assigned successfully!');
-    closeAssignmentForm();
-    
-    // Refresh user permissions if viewing a specific user
-    if (selectedUser) {
-      console.log('Refreshing user permissions for:', selectedUser.userId);
-      fetchUserPermissions(selectedUser.userId);
+      console.log("Form data:", assignmentForm);
+
+      if (!assignmentForm.userId || !assignmentForm.permissionId) {
+        throw new Error("Please select both user and permission");
+      }
+
+      // Format data exactly as backend expects
+      const requestBody = {
+        userId: assignmentForm.userId.toString(),
+        userType: assignmentForm.userType || "User",
+        permissionId: parseInt(assignmentForm.permissionId),
+      };
+
+      console.log("Request body being sent:", requestBody);
+
+      // Log the exact URL and headers
+      console.log(
+        "Making request to: https://gibsbrokersapi.newgibsonline.com/api/Auth/assign-permission"
+      );
+      console.log("Headers:", {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token.substring(0, 20)}...`, // Log partial token for security
+      });
+
+      const response = await fetch(
+        "https://gibsbrokersapi.newgibsonline.com/api/Auth/assign-permission",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
+      // Try to read the response text first
+      const responseText = await response.text();
+      console.log("Raw response text:", responseText);
+
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(responseText);
+        console.log("Parsed response:", parsedResponse);
+      } catch (e) {
+        console.log("Response is not JSON:", e.message);
+      }
+
+      if (!response.ok) {
+        const errorMessage =
+          parsedResponse?.message ||
+          parsedResponse?.Message ||
+          parsedResponse?.error ||
+          `HTTP error! status: ${response.status}`;
+        throw new Error(errorMessage);
+      }
+
+      console.log("Success! Permission assigned");
+
+      setSuccess("Permission assigned successfully!");
+
+      // Refresh user permissions if viewing a specific user
+      if (selectedUser) {
+        console.log("Refreshing user permissions for:", selectedUser.userId);
+        fetchUserPermissions(selectedUser.userId);
+      }
+    } catch (err) {
+      console.error("=== Error in assignPermission ===");
+      console.error("Error message:", err.message);
+      console.error("Full error:", err);
+      setError(err.message);
+    } finally {
+      // Always close the modal so the user can see the page-level error/success
+      closeAssignmentForm();
     }
-  } catch (err) {
-    console.error('=== Error in assignPermission ===');
-    console.error('Error message:', err.message);
-    console.error('Full error:', err);
-    setError(err.message);
-  }
-};
+  };
 
   // REVOKE PERMISSION FUNCTION
   const openRevokeForm = () => {
@@ -287,51 +301,60 @@ const assignPermission = async () => {
   };
 
   const handleRevokePermission = async () => {
+    setError(null);
+    setSuccess(null);
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('No authentication token found');
+        throw new Error("No authentication token found");
       }
 
       if (!revokeForm.userId || !revokeForm.permissionId) {
-        throw new Error('Please select both user and permission');
+        throw new Error("Please select both user and permission");
       }
 
-      if (!window.confirm('Are you sure you want to revoke this permission?')) {
+      if (!window.confirm("Are you sure you want to revoke this permission?")) {
         return;
       }
 
       const requestBody = {
         userId: revokeForm.userId.toString(),
-        userType: revokeForm.userType || 'User',
-        permissionId: parseInt(revokeForm.permissionId)
+        userType: revokeForm.userType || "User",
+        permissionId: parseInt(revokeForm.permissionId),
       };
 
-      console.log('Revoking permission with data:', requestBody);
+      console.log("Revoking permission with data:", requestBody);
 
-      const response = await fetch('https://gibsbrokersapi.newgibsonline.com/api/Auth/revoke-permission', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(requestBody)
-      });
+      const response = await fetch(
+        "https://gibsbrokersapi.newgibsonline.com/api/Auth/revoke-permission",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
       }
 
-      setSuccess('Permission revoked successfully!');
-      closeRevokeForm();
-      
+      setSuccess("Permission revoked successfully!");
+
       if (selectedUser) {
         fetchUserPermissions(selectedUser.userId);
       }
     } catch (err) {
       setError(err.message);
-      console.error('Error revoking permission:', err);
+      console.error("Error revoking permission:", err);
+    } finally {
+      // Always close the modal so the user can see the page-level error/success
+      closeRevokeForm();
     }
   };
 
@@ -571,7 +594,6 @@ const assignPermission = async () => {
             <FiUserX className="mr-2" />
             Revoke Permission
           </button>
-         
         </div>
       </div>
 
@@ -936,20 +958,21 @@ const assignPermission = async () => {
                       Select User *
                     </label>
                     <select
-  name="userId"
-  value={assignmentForm.userId}
-  onChange={handleAssignmentChange}
-  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-  required
->
-  <option value="">Choose a user</option>
-  {users.map((user) => (
-    <option key={user.userId} value={user.userId}>
-      {user.fullName || user.username} 
-      {user.email ? ` (${user.email})` : ''} - {user.entityType || user.userType}
-    </option>
-  ))}
-</select>
+                      name="userId"
+                      value={assignmentForm.userId}
+                      onChange={handleAssignmentChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Choose a user</option>
+                      {users.map((user) => (
+                        <option key={user.userId} value={user.userId}>
+                          {user.fullName || user.username}
+                          {user.email ? ` (${user.email})` : ""} -{" "}
+                          {user.entityType || user.userType}
+                        </option>
+                      ))}
+                    </select>
                     <p className="text-xs text-gray-500 mt-1">
                       {users.length} user(s) found
                     </p>
@@ -987,8 +1010,12 @@ const assignPermission = async () => {
                     >
                       <option value="">Choose a permission</option>
                       {permissions.map((permission) => (
-                        <option key={permission.permissionID} value={permission.permissionID}>
-                          {permission.permissionName} ({permission.module}.{permission.action})
+                        <option
+                          key={permission.permissionID}
+                          value={permission.permissionID}
+                        >
+                          {permission.permissionName} ({permission.module}.
+                          {permission.action})
                         </option>
                       ))}
                     </select>
@@ -1008,7 +1035,9 @@ const assignPermission = async () => {
                   type="button"
                   onClick={assignPermission}
                   className="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700 flex items-center"
-                  disabled={!assignmentForm.userId || !assignmentForm.permissionId}
+                  disabled={
+                    !assignmentForm.userId || !assignmentForm.permissionId
+                  }
                 >
                   <FiUserCheck className="mr-2" />
                   Assign Permission
@@ -1047,24 +1076,23 @@ const assignPermission = async () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Select User *
                     </label>
-                   <select
-  name="userId"
-  value={revokeForm.userId}
-  onChange={handleRevokeFormChange}
-  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-  required
->
-  <option value="">Choose a user</option>
-  {users.map((user) => (
-    <option key={user.userId} value={user.userId}>
-      {user.fullName || user.username} 
-      {user.email ? ` (${user.email})` : ''} - {user.entityType || user.userType}
-    </option>
-  ))}
-</select>
+                    <select
+                      name="userId"
+                      value={revokeForm.userId}
+                      onChange={handleRevokeFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Choose a user</option>
+                      {users.map((user) => (
+                        <option key={user.userId} value={user.userId}>
+                          {user.fullName || user.username}
+                          {user.email ? ` (${user.email})` : ""} -{" "}
+                          {user.entityType || user.userType}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-
-                 
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1079,8 +1107,12 @@ const assignPermission = async () => {
                     >
                       <option value="">Choose a permission to revoke</option>
                       {permissions.map((permission) => (
-                        <option key={permission.permissionID} value={permission.permissionID}>
-                          {permission.permissionName} ({permission.module}.{permission.action})
+                        <option
+                          key={permission.permissionID}
+                          value={permission.permissionID}
+                        >
+                          {permission.permissionName} ({permission.module}.
+                          {permission.action})
                         </option>
                       ))}
                     </select>
@@ -1118,7 +1150,9 @@ const assignPermission = async () => {
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-xl font-semibold text-gray-800">
                 {selectedUser
-                  ? `Permissions for ${selectedUser.fullName || selectedUser.username}`
+                  ? `Permissions for ${
+                      selectedUser.fullName || selectedUser.username
+                    }`
                   : "User Permissions"}
               </h3>
               <button
@@ -1149,8 +1183,12 @@ const assignPermission = async () => {
                           onClick={() => handleViewUserPermissions(user)}
                         >
                           <div>
-                            <h5 className="font-medium">{user.fullName || user.username}</h5>
-                            <p className="text-sm text-gray-600">{user.email || 'No email'}</p>
+                            <h5 className="font-medium">
+                              {user.fullName || user.username}
+                            </h5>
+                            <p className="text-sm text-gray-600">
+                              {user.email || "No email"}
+                            </p>
                             <p className="text-xs text-gray-500">
                               Type: {user.userType}
                             </p>
