@@ -317,7 +317,7 @@ const CreateMotorPolicy = ({ userRole = "broker" }) => {
                     Mobile Number <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="tel"
+                    type="number"
                     name="mobileNo"
                     value={formData.mobileNo}
                     onChange={handleChange}

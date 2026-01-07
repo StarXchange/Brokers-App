@@ -36,10 +36,10 @@ const ClientPinDashboard = () => {
     const getUserClientId = () => {
       // Get the ENCRYPTED user data from localStorage
       const encryptedUserData = localStorage.getItem("user");
-      console.log("Encrypted user data from storage:", encryptedUserData);
+      
 
       if (!encryptedUserData) {
-        console.log("No user data found in localStorage");
+     
         return "";
       }
 
@@ -80,7 +80,7 @@ const ClientPinDashboard = () => {
             typeof user[field] === "string" &&
             user[field].trim()
           ) {
-            console.log(`Found client ID in field "${field}":`, user[field]);
+            
             return user[field];
           }
         }
@@ -97,7 +97,7 @@ const ClientPinDashboard = () => {
     };
 
     const foundClientId = getUserClientId();
-    console.log("Final clientId to be used:", foundClientId);
+
     setClientId(foundClientId);
   }, []);
 
@@ -116,7 +116,7 @@ const ClientPinDashboard = () => {
       // Load balance
       try {
         const balanceData = await PinService.getBalance(clientId);
-        console.log("Balance API response:", balanceData);
+       
 
         // Use currentBalance for client view
         setBalance(balanceData.currentBalance || balanceData.balance || 0);
@@ -128,7 +128,7 @@ const ClientPinDashboard = () => {
       // Load recent activity - filter to show only allocations where client received pins
       try {
         const activityData = await PinService.getMyAllocations();
-        console.log("All allocations data:", activityData);
+        
 
         // Filter to show only allocations where this client received pins
         const clientActivities = Array.isArray(activityData)
@@ -138,7 +138,6 @@ const ClientPinDashboard = () => {
             )
           : [];
 
-        console.log("Filtered client activities:", clientActivities);
         setRecentActivity(clientActivities);
       } catch (activityError) {
         console.warn("Failed to load activity:", activityError);

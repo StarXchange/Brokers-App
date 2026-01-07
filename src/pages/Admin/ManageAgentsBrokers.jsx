@@ -522,7 +522,7 @@ const ManageAgentsBrokers = () => {
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Brokers</p>
@@ -548,7 +548,7 @@ const ManageAgentsBrokers = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Filtered Results</p>

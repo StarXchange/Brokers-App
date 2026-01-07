@@ -483,11 +483,7 @@ const PendingApprovals = ({ onApprovalSuccess }) => {
         
         {/* Search and Stats */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          {filteredRequests.length > 0 && (
-            <div className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium">
-              {filteredRequests.length} request{filteredRequests.length !== 1 ? 's' : ''} pending
-            </div>
-          )}
+         
           
           <div className="relative">
             <FaSearch className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -526,167 +522,146 @@ const PendingApprovals = ({ onApprovalSuccess }) => {
 
             return (
               <div key={request.allocationId} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
-                <div className="p-6">
-                  {/* Header Section */}
-                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-                    <div className="flex items-start space-x-4 flex-1">
-                      <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-3 shadow-sm">
-                        <FaUser className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate">
-                          {brokerName}
-                        </h3>
-                        <p className="text-gray-600 text-sm mt-1">
-                          Requested by: {request.requestedBy || request.fromUserId}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2 mt-2">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            <FaIdCard className="w-3 h-3 mr-1" />
-                            ID: {request.brokerId}
-                          </span>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            <FaBuilding className="w-3 h-3 mr-1" />
-                            {brokerCompany}
-                          </span>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                            Status: {request.status}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Pin Amount */}
-                    <div className="text-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 min-w-32">
-                      <div className="text-2xl font-bold text-blue-600">{request.pinAmount}</div>
-                      <div className="text-sm font-medium text-blue-700">Pins Requested</div>
-                    </div>
-                  </div>
+               <div className="p-5">
+  {/* Header Section - More Compact */}
+  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
+    <div className="flex items-start space-x-3 flex-1">
+      <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-2.5 shadow-sm">
+        <FaUser className="w-5 h-5 text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-base font-semibold text-gray-900 truncate">
+          {brokerName}
+        </h3>
+        <p className="text-gray-600 text-xs mt-0.5">
+          Requested by: {request.requestedBy || request.fromUserId}
+        </p>
+        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <FaIdCard className="w-2.5 h-2.5 mr-1" />
+            ID: {request.brokerId}
+          </span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <FaBuilding className="w-2.5 h-2.5 mr-1" />
+            {brokerCompany}
+          </span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+            Status: {request.status}
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    {/* Pin Amount - Compact */}
+    <div className="text-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 min-w-28">
+      <div className="text-xl font-bold text-blue-600">{request.pinAmount}</div>
+      <div className="text-xs font-medium text-blue-700">Pins Requested</div>
+    </div>
+  </div>
 
-                  {/* Details Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    {/* Allocation Remarks */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                        <FaCoins className="w-4 h-4 mr-2 text-gray-500" />
-                        Allocation Remarks
-                      </label>
-                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <p className="text-gray-700 text-sm leading-relaxed">
-                          {request.remarks || 'No remarks provided'}
-                        </p>
-                      </div>
-                    </div>
+  {/* Details Grid - More Compact */}
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+    {/* Allocation Remarks */}
+    <div>
+      <label className="block text-xs font-semibold text-gray-700 mb-2 flex items-center">
+        <FaCoins className="w-3.5 h-3.5 mr-1.5 text-gray-500" />
+        Allocation Remarks
+      </label>
+      <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
+        <p className="text-gray-700 text-xs leading-relaxed">
+          {request.remarks || 'No remarks provided'}
+        </p>
+      </div>
+    </div>
 
-                    {/* Request Metadata */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                        <FaCalendar className="w-4 h-4 mr-2 text-gray-500" />
-                        Request Details
-                      </label>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Requested By:</span>
-                          <span className="text-sm text-gray-900 font-semibold">{request.requestedBy || request.fromUserId}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Submission Date:</span>
-                          <span className="text-sm text-gray-900 font-semibold">{formatDate(request.requestDate)}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-2">
-                          <span className="text-sm font-medium text-gray-600">Allocation ID:</span>
-                          <span className="text-sm text-gray-900 font-semibold">#{request.allocationId}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+    {/* Request Metadata */}
+    <div>
+      <label className="block text-xs font-semibold text-gray-700 mb-2 flex items-center">
+        <FaCalendar className="w-3.5 h-3.5 mr-1.5 text-gray-500" />
+        Request Details
+      </label>
+      <div className="space-y-2">
+        <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+          <span className="text-xs font-medium text-gray-600">Requested By:</span>
+          <span className="text-xs text-gray-900 font-semibold">{request.requestedBy || request.fromUserId}</span>
+        </div>
+        <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+          <span className="text-xs font-medium text-gray-600">Submission Date:</span>
+          <span className="text-xs text-gray-900 font-semibold">{formatDate(request.requestDate)}</span>
+        </div>
+        <div className="flex justify-between items-center py-1.5">
+          <span className="text-xs font-medium text-gray-600">Allocation ID:</span>
+          <span className="text-xs text-gray-900 font-semibold">#{request.allocationId}</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
-                    {/* Approve Button */}
-                    <button
-                      onClick={() => {
-                        const remarks = prompt('Enter approval remarks (optional):');
-                        if (remarks !== null) {
-                          handleApproval(request.allocationId, true, remarks || '');
-                        }
-                      }}
-                      disabled={approving === request.allocationId || !hasApprovePermission}
-                      className={`flex-1 py-3 px-6 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center space-x-3 shadow-sm hover:shadow-md ${
-                        hasApprovePermission
-                          ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800'
-                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                      } ${approving === request.allocationId ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title={!hasApprovePermission ? "Requires Pin.Approve permission" : ""}
-                    >
-                      {approving === request.allocationId ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      ) : (
-                        <FaCheck className="w-5 h-5" />
-                      )}
-                      <span>Approve Allocation</span>
-                    </button>
+  {/* Action Buttons - Compact and Modern */}
+  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">
+    {/* Approve Button */}
+    <button
+      onClick={() => {
+        const remarks = prompt('Enter approval remarks (optional):');
+        if (remarks !== null) {
+          handleApproval(request.allocationId, true, remarks || '');
+        }
+      }}
+      disabled={approving === request.allocationId || !hasApprovePermission}
+      className={`flex-1 py-2.5 px-5 rounded-lg transition-all duration-200 font-medium flex items-center justify-center space-x-2 shadow-sm hover:shadow ${
+        hasApprovePermission
+          ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
+          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+      } ${approving === request.allocationId ? 'opacity-50 cursor-not-allowed' : ''}`}
+      title={!hasApprovePermission ? "Requires Pin.Approve permission" : ""}
+    >
+      {approving === request.allocationId ? (
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+      ) : (
+        <FaCheck className="w-4 h-4" />
+      )}
+      <span className="text-sm">Approve</span>
+    </button>
 
-                    {/* Reject Button */}
-                    <button
-                      onClick={() => {
-                        const remarks = prompt('Please provide reason for rejection:');
-                        if (remarks !== null && remarks.trim()) {
-                          handleApproval(request.allocationId, false, remarks);
-                        } else if (remarks !== null) {
-                          alert('Please provide a reason for rejection.');
-                        }
-                      }}
-                      disabled={approving === request.allocationId || !hasApprovePermission}
-                      className={`flex-1 py-3 px-6 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center space-x-3 shadow-sm hover:shadow-md ${
-                        hasApprovePermission
-                          ? 'bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800'
-                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                      } ${approving === request.allocationId ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title={!hasApprovePermission ? "Requires Pin.Approve permission" : ""}
-                    >
-                      {approving === request.allocationId ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      ) : (
-                        <FaTimes className="w-5 h-5" />
-                      )}
-                      <span>Reject Request</span>
-                    </button>
+    {/* Reject Button */}
+    <button
+      onClick={() => {
+        const remarks = prompt('Please provide reason for rejection:');
+        if (remarks !== null && remarks.trim()) {
+          handleApproval(request.allocationId, false, remarks);
+        } else if (remarks !== null) {
+          alert('Please provide a reason for rejection.');
+        }
+      }}
+      disabled={approving === request.allocationId || !hasApprovePermission}
+      className={`flex-1 py-2.5 px-5 rounded-lg transition-all duration-200 font-medium flex items-center justify-center space-x-2 shadow-sm hover:shadow ${
+        hasApprovePermission
+          ? 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700'
+          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+      } ${approving === request.allocationId ? 'opacity-50 cursor-not-allowed' : ''}`}
+      title={!hasApprovePermission ? "Requires Pin.Approve permission" : ""}
+    >
+      {approving === request.allocationId ? (
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+      ) : (
+        <FaTimes className="w-4 h-4" />
+      )}
+      <span className="text-sm">Reject</span>
+    </button>
+  </div>
 
-                    {/* Revoke Button (Optional) */}
-                    {hasRevokePermission && (
-                      <button
-                        onClick={() => handleRevoke(request.allocationId)}
-                        disabled={revoking === request.allocationId}
-                        className={`flex-1 py-3 px-6 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center space-x-3 shadow-sm hover:shadow-md ${
-                          hasRevokePermission
-                            ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800'
-                            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        } ${revoking === request.allocationId ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        title={!hasRevokePermission ? "Requires Pin.Revoke permission" : ""}
-                      >
-                        {revoking === request.allocationId ? (
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        ) : (
-                          <FaTrash className="w-5 h-5" />
-                        )}
-                        <span>Revoke Allocation</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Permission Info Note */}
-                  {!hasApprovePermission && (
-                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div className="flex items-center space-x-2 text-yellow-700">
-                        <FaExclamationTriangle className="w-4 h-4 flex-shrink-0" />
-                        <span className="text-sm">
-                          You can view pending requests but need <strong>Pin.Approve</strong> permission to approve or reject allocations.
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+  {/* Permission Info Note - More Compact */}
+  {!hasApprovePermission && (
+    <div className="mt-3 p-2.5 bg-yellow-50 border border-yellow-100 rounded-md">
+      <div className="flex items-center space-x-1.5 text-yellow-700">
+        <FaExclamationTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+        <span className="text-xs">
+          View only. Need <strong>Pin.Approve</strong> permission to take action.
+        </span>
+      </div>
+    </div>
+  )}
+</div>
               </div>
             );
           })}
