@@ -78,193 +78,68 @@ const ViewCertificate = () => {
     navigate(-1);
   };
 
-  const handleDownloadPdf = async () => {
-    console.log("Download button clicked");
+  const handleDownloadCertificate = async () => {
+    console.log("Downloading certificate document...");
 
-    if (!certRef.current) {
-      console.error("certRef.current is null");
-      alert("Certificate content not found. Please try refreshing the page.");
+    if (!certNo) {
+      alert("Certificate number not found");
       return;
     }
 
-    console.log("Starting PDF generation...");
-
     try {
-      // Capture certificate area
-      console.log("Capturing canvas...");
-      const canvas = await html2canvas(certRef.current, {
-        scale: 2,
-        useCORS: true,
-        scrollX: 0,
-        scrollY: -window.scrollY,
-        backgroundColor: "#ffffff",
-        ignoreElements: (element) => {
-          // Skip elements with print:hidden class
-          return element.classList?.contains("print:hidden");
-        },
-        onclone: (clonedDoc) => {
-          // 1. Sanitize all style tags to replace oklch/oklab with safe RGB
-          const styles = clonedDoc.querySelectorAll("style");
-          styles.forEach((style) => {
-            if (
-              style.textContent.includes("oklch") ||
-              style.textContent.includes("oklab")
-            ) {
-              style.textContent = style.textContent
-                .replace(/oklch\([^)]+\)/g, "#3b82f6")
-                .replace(/oklab\([^)]+\)/g, "#3b82f6");
-            }
-          });
-
-          // 2. Map original computed styles to cloned elements
-          const capture = clonedDoc.querySelector('[data-cert-capture="true"]');
-          if (capture && certRef.current) {
-            const clonedEls = [capture, ...capture.querySelectorAll("*")];
-            const originalEls = [
-              certRef.current,
-              ...certRef.current.querySelectorAll("*"),
-            ];
-
-            clonedEls.forEach((el, i) => {
-              const orig = originalEls[i];
-              if (!orig) return;
-
-              const cs = clonedDoc.defaultView.getComputedStyle(orig);
-
-              // Force colors to RGB/Hex fallbacks for both oklch and oklab
-              const sanitizeColor = (val) => {
-                if (!val) return val;
-                if (val.includes("oklch") || val.includes("oklab"))
-                  return "#1e3a8a";
-                return val;
-              };
-
-              const bgColor = sanitizeColor(cs.backgroundColor);
-
-              // Determine if background is dark by checking RGB values
-              const isDarkBackground = (color) => {
-                if (
-                  !color ||
-                  color === "transparent" ||
-                  color === "rgba(0, 0, 0, 0)"
-                )
-                  return false;
-                const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-                if (match) {
-                  const r = parseInt(match[1]);
-                  const g = parseInt(match[2]);
-                  const b = parseInt(match[3]);
-                  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-                  return brightness < 128;
-                }
-                return false;
-              };
-
-              // Check if parent or element has dark background
-              const hasDarkBg =
-                isDarkBackground(bgColor) ||
-                orig.classList.contains("bg-blue-900") ||
-                orig.classList.contains("bg-slate-900") ||
-                orig.closest(".bg-blue-900") ||
-                orig.closest(".bg-slate-900") ||
-                orig.closest(".bg-gradient-to-r");
-
-              // Force white text on dark backgrounds, very dark text on light backgrounds
-              if (hasDarkBg) {
-                el.style.color = "#ffffff";
-              } else {
-                // Force white text for body content sections
-                el.style.color = "#ffffff";
-              }
-
-              el.style.backgroundColor = bgColor || "transparent";
-              el.style.borderColor =
-                sanitizeColor(cs.borderColor) || "transparent";
-              el.style.outlineColor =
-                sanitizeColor(cs.outlineColor) || "transparent";
-
-              if (
-                (cs.backgroundImage && cs.backgroundImage.includes("oklch")) ||
-                (cs.backgroundImage && cs.backgroundImage.includes("oklab"))
-              ) {
-                el.style.backgroundImage = "none";
-                // If this element or ancestor uses dark header/background utility, keep dark base; else default dark blue fallback
-                if (
-                  orig.classList.contains("bg-blue-900") ||
-                  orig.closest(".bg-blue-900") ||
-                  orig.classList.contains("bg-gradient-to-r") ||
-                  orig.closest(".bg-gradient-to-r")
-                ) {
-                  el.style.backgroundColor = "#0f172a";
-                } else {
-                  el.style.backgroundColor = "#1e3a8a";
-                }
-              }
-
-              // Clean inline style attributes that may contain oklch/oklab
-              const inlineStyle = el.getAttribute("style");
-              if (
-                inlineStyle &&
-                (inlineStyle.includes("oklch") || inlineStyle.includes("oklab"))
-              ) {
-                el.setAttribute(
-                  "style",
-                  inlineStyle
-                    .replace(/oklch\([^)]+\)/g, "#3b82f6")
-                    .replace(/oklab\([^)]+\)/g, "#3b82f6")
-                );
-              }
-
-              el.style.boxShadow = "none";
-              el.style.textShadow = "none";
-            });
-          }
-        },
-      });
-
-      console.log("Canvas captured successfully");
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      const margin = 10; // mm
-      const availableWidth = pageWidth - margin * 2;
-      const availableHeight = pageHeight - margin * 2;
-
-      let imgWidth = availableWidth;
-      let imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      // If taller than a page, scale down to fit one page
-      if (imgHeight > availableHeight) {
-        imgHeight = availableHeight;
-        imgWidth = (canvas.width * imgHeight) / canvas.height;
-      }
-
-      const x = (pageWidth - imgWidth) / 2;
-      const y = margin;
-
-      console.log("Adding image to PDF...");
-      pdf.addImage(
-        imgData,
-        "PNG",
-        x,
-        y,
-        imgWidth,
-        imgHeight,
-        undefined,
-        "FAST"
+      const token = localStorage.getItem("token");
+      
+      // Call the Word document download API
+      const response = await fetch(
+        `https://gibsbrokersapi.newgibsonline.com/api/CertificateDocument/download/${certNo}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': '*/*',
+          },
+        }
       );
 
-      const fileName = `certificate-${certNo || "motor"}.pdf`;
-      console.log("Saving PDF:", fileName);
-      pdf.save(fileName);
-      console.log("PDF saved successfully!");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Get the filename from content-disposition header
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = `Certificate_${certNo}.pdf`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Convert response to blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      
+      // Trigger download
+      link.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      console.log("Certificate document downloaded successfully!");
+      
     } catch (err) {
-      console.error("PDF generation failed", err);
-      alert(`Failed to generate PDF: ${err.message}`);
+      console.error("Certificate download failed", err);
+      alert(`Failed to download certificate: ${err.message}`);
     }
   };
 
@@ -333,7 +208,7 @@ const ViewCertificate = () => {
 
           <div className="flex gap-3">
             <button
-              onClick={handleDownloadPdf}
+              onClick={handleDownloadCertificate}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
             >
               <svg
@@ -704,7 +579,7 @@ const ViewCertificate = () => {
                 </span>
               </div>
               <button
-                onClick={handleDownloadPdf}
+                onClick={handleDownloadCertificate}
                 className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-bold uppercase tracking-wider transition-all hover:underline"
               >
                 <svg

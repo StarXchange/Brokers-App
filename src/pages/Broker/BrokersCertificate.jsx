@@ -16,10 +16,19 @@ const BrokerCertificates = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [uploadingNiid, setUploadingNiid] = useState(null);
+  const [downloadingCerts, setDownloadingCerts] = useState([]);
+  const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminContext = location.pathname.startsWith("/admin-dashboard");
+
+  // Show toast message
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
+  };
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -283,6 +292,151 @@ const BrokerCertificates = () => {
     }
   };
 
+  // Download single certificate
+  const handleDownloadCertificate = async (certNo) => {
+    if (!certNo) {
+      showToast("Certificate number not found", "error");
+      return;
+    }
+
+    try {
+      setDownloadingCerts((prev) => [...prev, certNo]);
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(
+        `https://gibsbrokersapi.newgibsonline.com/api/CertificateDocument/download/${certNo}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': '*/*',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Get the filename from content-disposition header
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = `Certificate_${certNo}.pdf`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Convert response to blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      
+      // Trigger download
+      link.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      showToast(`Certificate ${certNo} downloaded successfully!`);
+      
+    } catch (err) {
+      console.error("Certificate download failed", err);
+      showToast(`Failed to download certificate: ${err.message}`, "error");
+    } finally {
+      setDownloadingCerts((prev) => prev.filter(cert => cert !== certNo));
+    }
+  };
+
+  // Download multiple certificates
+  const handleDownloadMultipleCertificates = async () => {
+    if (selectedCerts.length === 0) {
+      showToast("Please select certificates to download", "warning");
+      return;
+    }
+
+    try {
+      setDownloadingCerts(selectedCerts);
+      showToast(`Downloading ${selectedCerts.length} certificate(s)...`, "info");
+
+      const token = localStorage.getItem("token");
+      
+      // Download certificates sequentially
+      for (const certNo of selectedCerts) {
+        try {
+          const response = await fetch(
+            `https://gibsbrokersapi.newgibsonline.com/api/CertificateDocument/download/${certNo}`,
+            {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': '*/*',
+              },
+            }
+          );
+
+          if (!response.ok) {
+            console.error(`Failed to download certificate ${certNo}: ${response.status}`);
+            continue;
+          }
+
+          // Get the filename from content-disposition header
+          const contentDisposition = response.headers.get('content-disposition');
+          let filename = `Certificate_${certNo}.pdf`;
+          
+          if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (filenameMatch && filenameMatch[1]) {
+              filename = filenameMatch[1];
+            }
+          }
+
+          // Convert response to blob
+          const blob = await response.blob();
+          
+          // Create download link
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          
+          // Trigger download
+          link.click();
+          
+          // Clean up
+          setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          }, 100);
+
+        } catch (err) {
+          console.error(`Error downloading certificate ${certNo}:`, err);
+        }
+      }
+
+      showToast(`Successfully downloaded ${selectedCerts.length} certificate(s)!`);
+      setSelectedCerts([]);
+      setShowDownloadDropdown(false);
+      
+    } catch (err) {
+      console.error("Batch download failed", err);
+      showToast("Failed to download certificates", "error");
+    } finally {
+      setDownloadingCerts([]);
+    }
+  };
+
   // Get create certificate link based on active tab
   const getCreateCertificateLink = () => {
     // Determine base path based on context
@@ -300,15 +454,14 @@ const BrokerCertificates = () => {
     }
   };
 
-  // Get certificate view link
-  const getCertificateViewLink = (certificate) => {
+ const getCertificateViewLink = (certificate) => {
     const basePath = isAdminContext ? "/admin-dashboard/brokers" : "/brokers";
     return `${basePath}/certificates/view/${certificate.certNo}`;
   };
 
   // Get unique certificate identifier
   const getCertId = (certificate) => {
-    return certificate.id || certificate.certNo || Math.random().toString();
+    return certificate.certNo || Math.random().toString();
   };
 
   // Get tab label for display
@@ -324,7 +477,7 @@ const BrokerCertificates = () => {
   // Handle select all certificates
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedCerts(filteredCertificates.map((c) => getCertId(c)));
+      setSelectedCerts(paginatedCertificates.map((c) => getCertId(c)));
     } else {
       setSelectedCerts([]);
     }
@@ -374,6 +527,30 @@ const BrokerCertificates = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg animate-slide-in ${
+          toast.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+          toast.type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+          toast.type === 'warning' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+          'bg-blue-100 text-blue-800 border border-blue-200'
+        }`}>
+          <div className="flex items-center">
+            {toast.type === 'success' && (
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            )}
+            {toast.type === 'error' && (
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            )}
+            <span className="font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
@@ -599,8 +776,8 @@ const BrokerCertificates = () => {
           </div>
 
           {/* Action Buttons Section - Mobile Responsive */}
-          <div className="mb-6">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <div className="mb-6 flex flex-col sm:flex-row gap-3">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 flex-1">
               <Link
                 to={getCreateCertificateLink()}
                 className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium w-full sm:w-auto"
@@ -621,18 +798,47 @@ const BrokerCertificates = () => {
                 Create {getTabLabel()} Policy
               </Link>
             </div>
+
+            {/* Batch Download Dropdown */}
+            {selectedCerts.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={handleDownloadMultipleCertificates}
+                  className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium w-full sm:w-auto"
+                >
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                    />
+                  </svg>
+                  Download ({selectedCerts.length})
+                </button>
+
+              </div>
+            )}
           </div>
 
           {/* Certificates Section - Mobile Responsive */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900">
-                Your Certificates
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Showing {filteredCertificates.length} certificate
-                {filteredCertificates.length !== 1 ? "s" : ""}
-              </p>
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">
+                  Your Certificates
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Showing {filteredCertificates.length} certificate
+                  {filteredCertificates.length !== 1 ? "s" : ""}
+                  {selectedCerts.length > 0 && ` (${selectedCerts.length} selected)`}
+                </p>
+              </div>
             </div>
 
             {/* Desktop Table */}
@@ -646,10 +852,10 @@ const BrokerCertificates = () => {
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         onChange={handleSelectAll}
                         checked={
-                          selectedCerts.length ===
-                            filteredCertificates.length &&
-                          filteredCertificates.length > 0
+                          selectedCerts.length === paginatedCertificates.length &&
+                          paginatedCertificates.length > 0
                         }
+                        disabled={paginatedCertificates.length === 0}
                       />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -700,12 +906,9 @@ const BrokerCertificates = () => {
                         />
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <Link
-                          to={getCertificateViewLink(certificate)}
-                          className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
-                        >
+                        <span className="text-blue-600 hover:text-blue-800 font-medium text-sm">
                           {certificate.certNo}
-                        </Link>
+                        </span>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                         {certificate.brokerID || "N/A"}
@@ -738,23 +941,77 @@ const BrokerCertificates = () => {
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center space-x-3">
-                          <Link
-                            to={getCertificateViewLink(certificate)}
-                            className="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1 rounded-full transition-colors font-medium"
+                          {/* View Button - Opens backend preview */}
+                          <a
+                            href={getCertificateViewLink(certificate)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1 rounded-full transition-colors font-medium inline-flex items-center"
                           >
+                            <svg
+                              className="w-4 h-4 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 16.057 2.458 12z"
+                              />
+                            </svg>
                             View
-                          </Link>
+                          </a>
+
+                          {/* Download Button */}
+                          <button
+                            onClick={() => handleDownloadCertificate(certificate.certNo)}
+                            disabled={downloadingCerts.includes(certificate.certNo)}
+                            className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-full transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                          >
+                            {downloadingCerts.includes(certificate.certNo) ? (
+                              <>
+                                <svg className="animate-spin -ml-1 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Downloading
+                              </>
+                            ) : (
+                              <>
+                                <svg
+                                  className="w-4 h-4 mr-1"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                  />
+                                </svg>
+                                
+                              </>
+                            )}
+                          </button>
+
                           <button
                             onClick={() => handleUploadNiid(certificate.certNo)}
                             disabled={uploadingNiid === certificate.certNo}
-                            className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-full transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="text-purple-600 hover:text-purple-900 bg-purple-50 px-3 py-1 rounded-full transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {uploadingNiid === certificate.certNo
                               ? "Uploading..."
                               : "Upload NIID"}
-                          </button>
-                          <button className="text-red-600 hover:text-red-800 font-medium transition-colors">
-                            Delete
                           </button>
                         </div>
                       </td>
@@ -782,12 +1039,9 @@ const BrokerCertificates = () => {
                         }
                       />
                       <div>
-                        <Link
-                          to={getCertificateViewLink(certificate)}
-                          className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline block"
-                        >
+                        <span className="text-blue-600 hover:text-blue-800 font-medium text-sm block">
                           {certificate.certNo}
-                        </Link>
+                        </span>
                         <p className="text-xs text-gray-500 mt-1">
                           Broker: {certificate.brokerID || "N/A"}
                         </p>
@@ -839,14 +1093,27 @@ const BrokerCertificates = () => {
                       </p>
                     </div>
                     <div className="flex space-x-3">
-                      <Link
-                        to={getCertificateViewLink(certificate)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      <a
+                        href={getCertificateViewLink(certificate)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center"
                       >
-                        Print
-                      </Link>
-                      <button className="text-red-600 hover:text-red-800 text-sm font-medium">
-                        Delete
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 16.057 2.458 12z" />
+                        </svg>
+                        View
+                      </a>
+                      <button
+                        onClick={() => handleDownloadCertificate(certificate.certNo)}
+                        disabled={downloadingCerts.includes(certificate.certNo)}
+                        className="text-green-600 hover:text-green-800 text-sm font-medium inline-flex items-center disabled:opacity-50"
+                      >
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download
                       </button>
                     </div>
                   </div>
@@ -1010,51 +1277,6 @@ const BrokerCertificates = () => {
                     </svg>
                     Create New Certificate
                   </Link>
-                </div>
-              </div>
-            )}
-
-            {/* Selection Actions - Mobile Responsive */}
-            {selectedCerts.length > 0 && (
-              <div className="px-4 sm:px-6 py-4 bg-blue-50 border-t border-blue-200">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center space-x-2">
-                    <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-blue-800">
-                      {selectedCerts.length} selected
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                    <button className="inline-flex items-center justify-center px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors flex-1 sm:flex-none">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                      Delete
-                    </button>
-                  </div>
                 </div>
               </div>
             )}
