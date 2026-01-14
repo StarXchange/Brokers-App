@@ -4,7 +4,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import WelcomeMessage from "../../components/WelcomeMessage";
 import React, { useState } from "react";
 import { FaCoins } from "react-icons/fa";
-
+ 
 const BrokersDashboard = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -288,7 +288,42 @@ const BrokersDashboard = () => {
                 <span>View Documents</span>
               </Link> */}
 
-              <Link
+             {/* Reports Section - Add this */}
+<Link
+  to="/brokers/reports"
+  className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+    isActivePath("reports")
+      ? "bg-white/15 text-white border-l-4 border-orange-500"
+      : "text-white hover:bg-white/10 border-l-4 border-transparent"
+  }`}
+  onClick={() => setIsMobileMenuOpen(false)}
+>
+  <div
+    className={`p-1 rounded-md ${
+      isActivePath("reports")
+        ? "bg-white/20"
+        : "group-hover:bg-white/10"
+    }`}
+  >
+    {/* Use the same report icon as in admin dashboard */}
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+      />
+    </svg>
+  </div>
+  <span>Certificate Period</span>
+</Link>
+
+               <Link
                 to="/brokers/view-profile"
                 className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActivePath("view-profile")

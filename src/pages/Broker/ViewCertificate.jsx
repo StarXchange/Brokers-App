@@ -75,7 +75,7 @@ const ViewCertificate = () => {
   }, [certNo]);
 
   const handleGoBack = () => {
-    navigate(-1);
+   navigate('/brokers/certificates');
   };
 
   const handleDownloadCertificate = async () => {
