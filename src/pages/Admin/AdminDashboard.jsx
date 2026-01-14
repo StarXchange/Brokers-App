@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import React, { useEffect, useState, useCallback } from "react";
 import WelcomeMessage from "../../components/WelcomeMessage";
 import PinAllocationSystem from "../../components/PinAllocation/PinAllocationSystem";
+import Reports from "../../components/Reports/CertificatePeriod";
 
 const AdminDashboard = () => {
   const location = useLocation();
@@ -470,6 +471,75 @@ const AdminDashboard = () => {
                         </svg>
                       </div>
                       <span>Pin Allocation System</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* Reports Section */}
+              <div className="mb-6">
+                <button
+                  onClick={() => toggleDropdown("reports")}
+                  className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-white/90 uppercase tracking-wider hover:text-white hover:bg-white/10 transition-colors duration-200 border-l-4 border-transparent"
+                >
+                  <span>Reports Management</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      activeDropdown === "reports" ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                <div
+                  className={`overflow-hidden transition-all duration-300 ${
+                    activeDropdown === "reports"
+                      ? "max-h-96 opacity-100"
+                      : "max-h-0 opacity-0"
+                  }`}
+                >
+                  <div className="pl-4 space-y-1">
+                    {/* Certificate Period Reports */}
+                    <Link
+                      to="/admin/reports"
+                      className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isActivePath("/admin/reports")
+                          ? "bg-white/15 text-white border-l-4 border-orange-500"
+                          : "text-white hover:bg-white/10 border-l-4 border-transparent"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div
+                        className={`p-1 rounded-md ${
+                          isActivePath("/admin/reports")
+                            ? "bg-white/20"
+                            : "group-hover:bg-white/10"
+                        }`}
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                          />
+                        </svg>
+                      </div>
+                      <span>Certificate Period</span>
                     </Link>
                   </div>
                 </div>
