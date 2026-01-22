@@ -343,7 +343,7 @@ const ViewBrokerDetails = () => {
           )}
 
           {/* Custom Fields */}
-          {(broker.field1 || broker.field2) && (
+          {(broker.field1 || broker.bvn) && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3 pb-2 border-b-2 border-blue-600">
                 Custom Fields
@@ -352,8 +352,8 @@ const ViewBrokerDetails = () => {
                 {broker.field1 && (
                   <DetailItem label="Field 1" value={broker.field1} />
                 )}
-                {broker.field2 && (
-                  <DetailItem label="Field 2" value={broker.field2} />
+                {broker.bvn && (
+                  <DetailItem label="Field 2" value={broker.bvn} />
                 )}
               </dl>
             </div>

@@ -168,10 +168,10 @@ export default function UnifiedLogin() {
 
       if (result.success) {
         setForgotSuccess(
-          "OTP has been sent to your email. Please check your inbox (and spam folder)."
+          "OTP has been sent to your email. Please check your inbox."
         );
         setCurrentStep(2);
-        setOtpTimer(420); // Changed to 7 minutes (420 seconds)
+        setOtpTimer(120); // Changed to 2 minutes (120 seconds)
         setCanResendOTP(false);
       } else {
         throw new Error(result.message || "Failed to send OTP");
@@ -337,7 +337,7 @@ export default function UnifiedLogin() {
 
       if (result.success) {
         setForgotSuccess("New OTP sent to your email!");
-        setOtpTimer(420); // Changed to 7 minutes (420 seconds)
+        setOtpTimer(120); // Changed to 2 minutes (120 seconds)
         setCanResendOTP(false);
       } else {
         throw new Error(result.message || "Failed to resend OTP");
@@ -390,12 +390,10 @@ export default function UnifiedLogin() {
         password: formData.password,
       });
 
-      console.log("Login result:", result); // Debug log
+      
 
       if (result.success) {
-        console.log("User authenticated:", result.user);
-        console.log("User entityType:", result.user.entityType);
-        console.log("Is admin:", result.user.isAdmin);
+       
 
         // Route ONLY by entityType (ignore role entirely)
         const entityType = String(result.user.entityType || "").toLowerCase();
@@ -475,12 +473,12 @@ export default function UnifiedLogin() {
     });
   };
 
-  // Format timer display - Updated for 7 minutes
-  const formatTimer = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+ // Format timer display - Updated for 2 minutes
+const formatTimer = (seconds) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
 
   return (
     <div className="w-full flex flex-col md:flex-row justify-center items-center min-h-screen gap-12 px-10 md:px-20 py-5 bg-gradient-to-b from-blue-50 to-white overflow-auto animate-slideDown">

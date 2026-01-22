@@ -350,10 +350,10 @@ const ViewBrokerDetails = () => {
               </h3>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {broker.field1 && (
-                  <DetailItem label="Field 1" value={broker.field1} />
+                  <DetailItem label="BVN" value={broker.field1} />
                 )}
                 {broker.field2 && (
-                  <DetailItem label="Field 2" value={broker.field2} />
+                  <DetailItem label="NIN" value={broker.field2} />
                 )}
               </dl>
             </div>

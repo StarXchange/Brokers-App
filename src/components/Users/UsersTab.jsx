@@ -289,6 +289,222 @@ const UsersTab = () => {
     setShowAddUserModal(false);
   };
 
+
+  // Handle approve user
+const handleApproveUser = async (user) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("No authentication token found.");
+
+    const requestBody = {
+      userId: String(user.userId || user.userid),
+      userType: user.userType || user.entityType || "User",
+      approvalNotes: "Approved via admin panel"
+    };
+
+    const response = await fetch(
+      'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/approve',
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to approve user: ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log("Approve successful:", result);
+    
+    // Update local state
+    setUsers(prev => prev.map(u => 
+      (u.userId || u.userid) === (user.userId || user.userid)
+        ? { 
+            ...u, 
+            status: "Active",
+            approvalStatus: "Approved",
+            approvedDate: result.approvedDate || new Date().toISOString()
+          }
+        : u
+    ));
+
+    setError("User approved successfully");
+    setTimeout(() => setError(null), 3000);
+
+  } catch (err) {
+    console.error("Error approving user:", err);
+    alert(err.message || "Failed to approve user. Please try again.");
+  }
+};
+
+// Handle reject user
+const handleRejectUser = async (user) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("No authentication token found.");
+
+    const requestBody = {
+      userId: String(user.userId || user.userid),
+      userType: user.userType || user.entityType || "User",
+      rejectionReason: "Rejected via admin panel"
+    };
+
+    const response = await fetch(
+      'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/reject',
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to reject user: ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log("Reject successful:", result);
+    
+    // Update local state
+    setUsers(prev => prev.map(u => 
+      (u.userId || u.userid) === (user.userId || user.userid)
+        ? { 
+            ...u, 
+            status: "Inactive",
+            approvalStatus: "Rejected",
+            approvedDate: result.approvedDate || new Date().toISOString()
+          }
+        : u
+    ));
+
+    setError("User rejected successfully");
+    setTimeout(() => setError(null), 3000);
+
+  } catch (err) {
+    console.error("Error rejecting user:", err);
+    alert(err.message || "Failed to reject user. Please try again.");
+  }
+};
+
+
+// Handle user status toggle (approve/reject)
+const handleStatusToggle = async (userId, currentStatus) => {
+  const isCurrentlyActive = currentStatus?.toLowerCase() === 'active';
+  const action = isCurrentlyActive ? 'reject' : 'approve';
+  
+  // Confirmation dialog for better UX
+  const confirmMessage = isCurrentlyActive 
+    ? `Are you sure you want to reject this user? This will deactivate their account.`
+    : `Are you sure you want to approve this user?`;
+    
+  if (!window.confirm(confirmMessage)) {
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found.");
+    }
+    
+    // Get the user object to determine userType
+    const userObj = users.find(user => 
+      (user.userId || user.userid) === userId
+    );
+    
+    if (!userObj) {
+      throw new Error("User not found");
+    }
+    
+    // Prepare endpoints and request bodies
+    const endpoint = action === 'approve' 
+      ? 'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/approve'
+      : 'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/reject';
+    
+    const requestBody = action === 'approve'
+      ? {
+          userId: String(userId),
+          userType: userObj.userType || userObj.entityType || "User",
+          approvalNotes: "Approved via admin panel"
+        }
+      : {
+          userId: String(userId),
+          userType: userObj.userType || userObj.entityType || "User",
+          rejectionReason: "Rejected via admin panel"
+        };
+
+    // First update UI optimistically
+    setUsers(prev => prev.map(user => 
+      (user.userId || user.userid) === userId 
+        ? { 
+            ...user, 
+            status: action === 'approve' ? 'Active' : 'Inactive',
+            approvalStatus: action === 'approve' ? 'Approved' : 'Rejected',
+            approvedDate: new Date().toISOString()
+          }
+        : user
+    ));
+
+    // Then make API call
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      // Revert if API call fails
+      setUsers(prev => prev.map(user => 
+        (user.userId || user.userid) === userId 
+          ? { 
+              ...user, 
+              status: currentStatus,
+              approvalStatus: null,
+              approvedDate: null
+            }
+          : user
+      ));
+      
+      const errorText = await response.text();
+      let errorMessage = `Failed to ${action} user`;
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch {
+        errorMessage = `${errorMessage}: ${errorText}`;
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log(`${action} successful:`, result);
+    
+    // Optionally show success message
+    setError(`${action === 'approve' ? 'Approved' : 'Rejected'} successfully`);
+    setTimeout(() => setError(null), 3000);
+    
+  } catch (err) {
+    console.error(`Error ${action}ing user:`, err);
+    alert(err.message || `Failed to ${action} user. Please try again.`);
+  }
+};
+
+
   // Fetch user permissions
   const fetchUserPermissions = async (userId) => {
     setPermissionsLoading(true);
@@ -758,17 +974,47 @@ const UsersTab = () => {
                           Manage
                         </button>
                       </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            user.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {user.status || "Active"}
-                        </span>
-                      </td>
+               {/* In your table row, replace the toggle with buttons */}
+<td className="px-4 py-3">
+  {user.status?.toLowerCase() === 'pending' ? (
+    <div className="flex gap-2">
+      <button
+        onClick={() => handleApproveUser(user)}
+        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+      >
+        Approve
+      </button>
+      <button
+        onClick={() => handleRejectUser(user)}
+        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+      >
+        Reject
+      </button>
+    </div>
+  ) : (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => handleStatusToggle(user.userId || user.userid, user.status)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          (user.status?.toLowerCase() || "active") === "active"
+            ? "bg-green-500 hover:bg-green-600"
+            : "bg-red-500 hover:bg-red-600"
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            (user.status?.toLowerCase() || "active") === "active"
+              ? "translate-x-6"
+              : "translate-x-1"
+          }`}
+        />
+      </button>
+      <span className="text-sm font-medium text-gray-700 capitalize">
+        {user.status || "Active"}
+      </span>
+    </div>
+  )}
+</td>
                     </tr>
                   ))
                 ) : (

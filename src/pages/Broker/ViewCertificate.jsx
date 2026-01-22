@@ -84,7 +84,8 @@ const ViewCertificate = () => {
     if (!certNo) {
       alert("Certificate number not found");
       return;
-    }
+    }git 
+    
 
     try {
       const token = localStorage.getItem("token");

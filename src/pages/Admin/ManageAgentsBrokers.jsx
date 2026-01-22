@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-
 import { FaLock, FaArrowLeft } from "react-icons/fa";
 
 const AccessDenied = ({ title, message }) => {
@@ -146,6 +145,154 @@ const ManageAgentsBrokers = () => {
       return new Date(dateString).toLocaleDateString("en-US", options);
     } catch {
       return "Invalid Date";
+    }
+  };
+
+  // Handle approve broker
+  const handleApproveBroker = async (broker) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No authentication token found.");
+
+      const requestBody = {
+        userId: String(broker.brokerId),
+        userType: "Broker",
+        approvalNotes: "Broker approved via admin panel"
+      };
+
+      console.log("Approving broker:", { brokerId: broker.brokerId, requestBody });
+
+      const response = await fetch(
+        'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/approve',
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Approve error:", { status: response.status, errorText });
+        throw new Error(`Failed to approve broker: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log("Approve successful:", result);
+      
+      // Update local state - use the result from API
+      const updateState = (prev) => prev.map(b => 
+        b.brokerId === broker.brokerId
+          ? { 
+              ...b, 
+              tag: "Active", // Set to Active when approved
+              approvalStatus: "Approved",
+              approvedDate: result.approvedDate || new Date().toISOString()
+            }
+          : b
+      );
+      
+      setAgentsBrokers(updateState);
+      setFilteredAgentsBrokers(updateState);
+
+      alert("Broker approved successfully");
+
+    } catch (err) {
+      console.error("Error approving broker:", err);
+      alert(err.message || "Failed to approve broker. Please try again.");
+    }
+  };
+
+  // Handle reject broker
+  const handleRejectBroker = async (broker) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No authentication token found.");
+
+      const requestBody = {
+        userId: String(broker.brokerId),
+        userType: "Broker",
+        rejectionReason: "Broker rejected via admin panel"
+      };
+
+      console.log("Rejecting broker:", { brokerId: broker.brokerId, requestBody });
+
+      const response = await fetch(
+        'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/reject',
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Reject error:", { status: response.status, errorText });
+        throw new Error(`Failed to reject broker: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log("Reject successful:", result);
+      
+      // Update local state - use the result from API
+      const updateState = (prev) => prev.map(b => 
+        b.brokerId === broker.brokerId
+          ? { 
+              ...b, 
+              tag: "Inactive", // Set to Inactive when rejected
+              approvalStatus: "Rejected",
+              approvedDate: result.approvedDate || new Date().toISOString()
+            }
+          : b
+      );
+      
+      setAgentsBrokers(updateState);
+      setFilteredAgentsBrokers(updateState);
+
+      alert("Broker rejected successfully");
+
+    } catch (err) {
+      console.error("Error rejecting broker:", err);
+      alert(err.message || "Failed to reject broker. Please try again.");
+    }
+  };
+
+  // Handle broker status toggle (approve/reject)
+  const handleStatusToggle = async (brokerId, currentStatus) => {
+    const broker = agentsBrokers.find(b => b.brokerId === brokerId);
+    if (!broker) {
+      alert("Broker not found");
+      return;
+    }
+
+    const isCurrentlyActive = currentStatus?.toLowerCase() === 'active';
+    const action = isCurrentlyActive ? 'reject' : 'approve';
+    
+    // Confirmation dialog
+    const confirmMessage = isCurrentlyActive 
+      ? `Are you sure you want to deactivate broker ${broker.brokerName || broker.brokerId}? This will mark them as rejected.`
+      : `Are you sure you want to activate broker ${broker.brokerName || broker.brokerId}? This will mark them as approved.`;
+      
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      if (action === 'approve') {
+        await handleApproveBroker(broker);
+      } else {
+        await handleRejectBroker(broker);
+      }
+    } catch (err) {
+      console.error(`Error ${action}ing broker:`, err);
+      // Error is already handled in the individual functions
     }
   };
 
@@ -638,13 +785,27 @@ const ManageAgentsBrokers = () => {
                     {formatDate(broker.submitDate)}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(
-                        broker.tag
-                      )}`}
-                    >
-                      {broker.tag || "Active"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleStatusToggle(broker.brokerId, broker.tag)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          (broker.tag?.toLowerCase() || "active") === "active"
+                            ? "bg-green-500 hover:bg-green-600"
+                            : "bg-red-500 hover:bg-red-600"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            (broker.tag?.toLowerCase() || "active") === "active"
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                      <span className="text-sm font-medium text-gray-700 capitalize">
+                        {broker.tag || "Active"}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
                     <Link
@@ -679,13 +840,27 @@ const ManageAgentsBrokers = () => {
                     {broker.brokerName || "N/A"}
                   </p>
                 </div>
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(
-                    broker.tag
-                  )}`}
-                >
-                  {broker.tag || "Active"}
-                </span>
+                <div className="flex flex-col items-end gap-2">
+                  <button
+                    onClick={() => handleStatusToggle(broker.brokerId, broker.tag)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      (broker.tag?.toLowerCase() || "active") === "active"
+                        ? "bg-green-500 hover:bg-green-600"
+                        : "bg-red-500 hover:bg-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                        (broker.tag?.toLowerCase() || "active") === "active"
+                          ? "translate-x-5"
+                          : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                  <span className={`text-xs font-medium capitalize ${(broker.tag?.toLowerCase() || "active") === "active" ? "text-green-600" : "text-red-600"}`}>
+                    {broker.tag || "Active"}
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2 text-sm">
