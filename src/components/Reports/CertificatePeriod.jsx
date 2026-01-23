@@ -445,7 +445,7 @@ const CertificatePeriodReport = () => {
               <span>Select Report Date Range</span>
             </h3>
             <div className="text-sm text-gray-500">
-              Format: YYYY-MM-DD
+              Format: MM-DD-YYYY
             </div>
           </div>
 
@@ -529,26 +529,6 @@ const CertificatePeriodReport = () => {
                 </>
               )}
             </button>
-          </div>
-        </div>
-
-        {/* Report Preview Info */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
-          
-          
-          
-          
-          <div className="mt-4 text-sm text-gray-600">
-            <p>
-              The  report will include:
-            </p>
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Formatted headers matching the NSIA report format</li>
-              <li>Properly aligned columns with appropriate widths</li>
-              <li>Two worksheets: Main Report and Detailed Data</li>
-              <li>Summary section with totals</li>
-              <li>Professional formatting and styling</li>
-            </ul>
           </div>
         </div>
       </div>
