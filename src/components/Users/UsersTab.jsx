@@ -6,7 +6,6 @@ import {
   FiRefreshCw,
   FiKey,
   FiMinus,
-  FiPlusCircle,
   FiCheck,
   FiUserPlus,
 } from "react-icons/fi";
@@ -55,6 +54,53 @@ const UsersTab = () => {
     "https://gibsbrokersapi.newgibsonline.com/api/Auth/revoke-permission";
 
   const ROLES_API = "https://gibsbrokersapi.newgibsonline.com/api/Auth/roles";
+
+  // ========== LOCAL STORAGE HELPER FUNCTIONS ==========
+  
+  // Save user status to localStorage
+  const saveUserStatusToStorage = (userId, status, approvalStatus = '') => {
+    try {
+      const storedStatuses = JSON.parse(localStorage.getItem('userStatuses') || '{}');
+      storedStatuses[userId] = {
+        status,
+        approvalStatus,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('userStatuses', JSON.stringify(storedStatuses));
+    } catch (error) {
+      console.error('Error saving user status:', error);
+    }
+  };
+
+  // Get user status from localStorage
+  const getUserStatusFromStorage = (userId) => {
+    try {
+      const storedStatuses = JSON.parse(localStorage.getItem('userStatuses') || '{}');
+      return storedStatuses[userId]?.status || null;
+    } catch (error) {
+      console.error('Error getting user status:', error);
+      return null;
+    }
+  };
+
+  // Get user approvalStatus from localStorage
+  const getUserApprovalStatusFromStorage = (userId) => {
+    try {
+      const storedStatuses = JSON.parse(localStorage.getItem('userStatuses') || '{}');
+      return storedStatuses[userId]?.approvalStatus || null;
+    } catch (error) {
+      console.error('Error getting approval status:', error);
+      return null;
+    }
+  };
+
+  // Clear stored statuses (for testing)
+  const clearStoredStatuses = () => {
+    localStorage.removeItem('userStatuses');
+    fetchUsers(); // Refresh the list
+  };
+
+  // ========== END LOCAL STORAGE FUNCTIONS ==========
 
   // Helpers for new Users API shape
   const getUserRolesText = (user) => {
@@ -122,6 +168,28 @@ const UsersTab = () => {
 
       // Transform users to ensure consistent field names
       const transformedUsers = usersArray.map((user) => {
+        const userId = user.userId || user.userid;
+        
+        // Get stored status from localStorage first
+        const storedStatus = getUserStatusFromStorage(userId);
+        const storedApprovalStatus = getUserApprovalStatusFromStorage(userId);
+        
+        // Determine the final status
+        let finalStatus = "Active"; // Default
+        
+        // Priority: localStorage > API approvalStatus > API status
+        if (storedStatus) {
+          finalStatus = storedStatus;
+        } else if (user.approvalStatus) {
+          // Map approvalStatus from API to frontend status
+          finalStatus = user.approvalStatus === "Rejected" ? "Inactive" : 
+                        user.approvalStatus === "Approved" ? "Active" : 
+                        user.approvalStatus === "Pending" ? "Pending" : 
+                        "Active";
+        } else if (user.status) {
+          finalStatus = user.status;
+        }
+
         const userObj = {
           // Standardize field names
           userId: user.userId || user.userid || "",
@@ -131,11 +199,16 @@ const UsersTab = () => {
           fullName: user.fullName || "",
           mobilePhone: user.mobilePhone || "",
           entityType: user.entityType || "",
-          userType: user.entityType || "", // Map entityType to userType for backward compatibility
+          userType: user.entityType || "",
           insuredName: user.insuredName || "",
           roles: user.roles || [],
           submitDate: user.submitDate || "",
-          status: "Active", // Default status
+          // Use the determined status
+          status: finalStatus,
+          // Store approvalStatus from localStorage or API
+          approvalStatus: storedApprovalStatus || user.approvalStatus || "",
+          approvedDate: user.approvedDate || "",
+          approvedBy: user.approvedBy || "",
         };
 
         return userObj;
@@ -289,6 +362,146 @@ const UsersTab = () => {
     setShowAddUserModal(false);
   };
 
+  // Handle approve user
+  const handleApproveUser = async (user) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No authentication token found.");
+
+
+      const requestBody = {
+        userId: String(user.userId || user.userid),
+        userType: user.userType || user.entityType || "User",
+        approvalNotes: "Approved via admin panel"
+      };
+
+      // Optimistic update
+      setUsers(prev => prev.map(u => 
+        (u.userId || u.userid) === (user.userId || user.userid)
+          ? { 
+              ...u, 
+              status: "Active",
+              approvalStatus: "Approved",
+              approvedDate: new Date().toISOString()
+            }
+          : u
+      ));
+
+      // Save to localStorage
+      saveUserStatusToStorage(
+        user.userId || user.userid, 
+        "Active", 
+        "Approved"
+      );
+
+      const response = await fetch(
+        'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/approve',
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        // Revert on error
+        setUsers(prev => prev.map(u => 
+          (u.userId || u.userid) === (user.userId || user.userid) ? user : u
+        ));
+        
+        const errorText = await response.text();
+        throw new Error(`Failed to approve user: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log("Approve successful:", result);
+      
+      setError("User approved successfully");
+      setTimeout(() => setError(null), 3000);
+
+    } catch (err) {
+      console.error("Error approving user:", err);
+      // Revert on error
+      setUsers(prev => prev.map(u => 
+        (u.userId || u.userid) === (user.userId || user.userid) ? user : u
+      ));
+      alert(err.message || "Failed to approve user. Please try again.");
+    }
+  };
+
+  // Handle reject user
+  const handleRejectUser = async (user) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No authentication token found.");
+
+
+      const requestBody = {
+        userId: String(user.userId || user.userid),
+        userType: user.userType || user.entityType || "User",
+        rejectionReason: "Rejected via admin panel"
+      };
+
+      // Optimistic update
+      setUsers(prev => prev.map(u => 
+        (u.userId || u.userid) === (user.userId || user.userid)
+          ? { 
+              ...u, 
+              status: "Inactive",
+              approvalStatus: "Rejected",
+              approvedDate: new Date().toISOString()
+            }
+          : u
+      ));
+
+      // Save to localStorage
+      saveUserStatusToStorage(
+        user.userId || user.userid, 
+        "Inactive", 
+        "Rejected"
+      );
+
+      const response = await fetch(
+        'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/reject',
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        // Revert on error
+        setUsers(prev => prev.map(u => 
+          (u.userId || u.userid) === (user.userId || user.userid) ? user : u
+        ));
+        
+        const errorText = await response.text();
+        throw new Error(`Failed to reject user: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log("Reject successful:", result);
+      
+      setError("User rejected successfully");
+      setTimeout(() => setError(null), 3000);
+
+    } catch (err) {
+      console.error("Error rejecting user:", err);
+      // Revert on error
+      setUsers(prev => prev.map(u => 
+        (u.userId || u.userid) === (user.userId || user.userid) ? user : u
+      ));
+      alert(err.message || "Failed to reject user. Please try again.");
+    }
+  };
+
   // Fetch user permissions
   const fetchUserPermissions = async (userId) => {
     setPermissionsLoading(true);
@@ -364,6 +577,38 @@ const UsersTab = () => {
       setPermissionsLoading(false);
     }
   };
+
+
+  // Add this function to your component
+const handleStatusToggle = (user) => {
+  const currentStatus = user.status?.toLowerCase();
+  
+  if (currentStatus === 'pending') {
+    // This shouldn't happen since pending users have separate buttons
+    const choice = window.confirm(
+      `User "${user.username}" is pending approval.\n\nClick OK to approve, Cancel to reject.`
+    );
+    
+    if (choice) {
+      handleApproveUser(user);
+    } else {
+      handleRejectUser(user);
+    }
+    return;
+  }
+  
+  if (currentStatus === 'inactive') {
+    // If inactive, activate (approve)
+    if (window.confirm(`Activate user "${user.username}"?`)) {
+      handleApproveUser(user);
+    }
+  } else if (currentStatus === 'active') {
+    // If active, deactivate (reject)
+    if (window.confirm(`Deactivate user "${user.username}"?`)) {
+      handleRejectUser(user);
+    }
+  }
+};
 
   // Fetch all available permissions
   const fetchAllPermissions = async () => {
@@ -758,17 +1003,54 @@ const UsersTab = () => {
                           Manage
                         </button>
                       </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            user.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {user.status || "Active"}
-                        </span>
-                      </td>
+                      
+                     {/* Status Column */}
+<td className="px-4 py-3">
+  {user.status?.toLowerCase() === 'pending' ? (
+    <div className="flex gap-2">
+      <button
+        onClick={() => handleApproveUser(user)}
+        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+      >
+        Approve
+      </button>
+      <button
+        onClick={() => handleRejectUser(user)}
+        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+      >
+        Reject
+      </button>
+    </div>
+  ) : (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => handleStatusToggle(user)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          (user.status?.toLowerCase() || "active") === "active"
+            ? "bg-green-500 hover:bg-green-600"
+            : "bg-red-500 hover:bg-red-600"
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            (user.status?.toLowerCase() || "active") === "active"
+              ? "translate-x-6"
+              : "translate-x-1"
+          }`}
+        />
+      </button>
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        user.status?.toLowerCase() === 'active' 
+          ? 'bg-green-100 text-green-800'
+          : user.status?.toLowerCase() === 'pending'
+          ? 'bg-yellow-100 text-yellow-800'
+          : 'bg-red-100 text-red-800'
+      }`}>
+        {user.status || "Active"}
+      </span>
+    </div>
+  )}
+</td>
                     </tr>
                   ))
                 ) : (

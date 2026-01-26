@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-
 import { FaLock, FaArrowLeft } from "react-icons/fa";
 
 const AccessDenied = ({ title, message }) => {
@@ -122,6 +121,47 @@ const canDeterminePermissions = () => {
   }
 };
 
+// ========== LOCAL STORAGE HELPER FUNCTIONS ==========
+const saveBrokerStatusToStorage = (brokerId, status, approvalStatus = '') => {
+  try {
+    const storedStatuses = JSON.parse(localStorage.getItem('brokerStatuses') || '{}');
+    storedStatuses[brokerId] = {
+      status,
+      approvalStatus,
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem('brokerStatuses', JSON.stringify(storedStatuses));
+  } catch (error) {
+    console.error('Error saving broker status:', error);
+  }
+};
+
+const getBrokerStatusFromStorage = (brokerId) => {
+  try {
+    const storedStatuses = JSON.parse(localStorage.getItem('brokerStatuses') || '{}');
+    return storedStatuses[brokerId]?.status || null;
+  } catch (error) {
+    console.error('Error getting broker status:', error);
+    return null;
+  }
+};
+
+const getBrokerApprovalStatusFromStorage = (brokerId) => {
+  try {
+    const storedStatuses = JSON.parse(localStorage.getItem('brokerStatuses') || '{}');
+    return storedStatuses[brokerId]?.approvalStatus || null;
+  } catch (error) {
+    console.error('Error getting broker approval status:', error);
+    return null;
+  }
+};
+
+const clearStoredBrokerStatuses = () => {
+  localStorage.removeItem('brokerStatuses');
+};
+
+// ========== END LOCAL STORAGE FUNCTIONS ==========
+
 const ManageAgentsBrokers = () => {
   const navigate = useNavigate();
   const [agentsBrokers, setAgentsBrokers] = useState([]);
@@ -137,6 +177,9 @@ const ManageAgentsBrokers = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  // Add a state for success messages
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -147,6 +190,224 @@ const ManageAgentsBrokers = () => {
     } catch {
       return "Invalid Date";
     }
+  };
+
+  // Show success message temporarily
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(""), 3000);
+  };
+
+  // Handle approve broker
+  const handleApproveBroker = async (broker) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No authentication token found.");
+
+      const requestBody = {
+        userId: String(broker.brokerId),
+        userType: "Broker",
+        approvalNotes: "Broker approved via admin panel"
+      };
+
+      console.log("Approving broker:", { brokerId: broker.brokerId, requestBody });
+
+      // Optimistic update
+      const updateState = (prev) => prev.map(b => 
+        b.brokerId === broker.brokerId
+          ? { 
+              ...b, 
+              tag: "Active",
+              status: "Active",
+              approvalStatus: "Approved",
+              approvedDate: new Date().toISOString()
+            }
+          : b
+      );
+      
+      setAgentsBrokers(updateState);
+      setFilteredAgentsBrokers(updateState);
+
+      // Save to localStorage
+      saveBrokerStatusToStorage(broker.brokerId, "Active", "Approved");
+
+      const response = await fetch(
+        'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/approve',
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        // Revert on error
+        const revertState = (prev) => prev.map(b => 
+          b.brokerId === broker.brokerId ? broker : b
+        );
+        
+        setAgentsBrokers(revertState);
+        setFilteredAgentsBrokers(revertState);
+        
+        // Clear localStorage on error
+        clearStoredBrokerStatuses();
+        
+        const errorText = await response.text();
+        console.error("Approve error:", { status: response.status, errorText });
+        throw new Error(`Failed to approve broker: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log("Approve successful:", result);
+      
+      showSuccess("Broker approved successfully");
+
+    } catch (err) {
+      console.error("Error approving broker:", err);
+      alert(err.message || "Failed to approve broker. Please try again.");
+    }
+  };
+
+  // Handle reject broker
+  const handleRejectBroker = async (broker) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No authentication token found.");
+
+      const requestBody = {
+        userId: String(broker.brokerId),
+        userType: "Broker",
+        rejectionReason: "Broker rejected via admin panel"
+      };
+
+      console.log("Rejecting broker:", { brokerId: broker.brokerId, requestBody });
+
+      // Optimistic update
+      const updateState = (prev) => prev.map(b => 
+        b.brokerId === broker.brokerId
+          ? { 
+              ...b, 
+              tag: "Inactive",
+              status: "Inactive",
+              approvalStatus: "Rejected",
+              approvedDate: new Date().toISOString()
+            }
+          : b
+      );
+      
+      setAgentsBrokers(updateState);
+      setFilteredAgentsBrokers(updateState);
+
+      // Save to localStorage
+      saveBrokerStatusToStorage(broker.brokerId, "Inactive", "Rejected");
+
+      const response = await fetch(
+        'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/reject',
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        // Revert on error
+        const revertState = (prev) => prev.map(b => 
+          b.brokerId === broker.brokerId ? broker : b
+        );
+        
+        setAgentsBrokers(revertState);
+        setFilteredAgentsBrokers(revertState);
+        
+        // Clear localStorage on error
+        clearStoredBrokerStatuses();
+        
+        const errorText = await response.text();
+        console.error("Reject error:", { status: response.status, errorText });
+        throw new Error(`Failed to reject broker: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log("Reject successful:", result);
+      
+      showSuccess("Broker rejected successfully");
+
+    } catch (err) {
+      console.error("Error rejecting broker:", err);
+      alert(err.message || "Failed to reject broker. Please try again.");
+    }
+  };
+
+  // Handle broker status toggle (approve/reject)
+  const handleStatusToggle = async (brokerId, currentStatus) => {
+    const broker = agentsBrokers.find(b => b.brokerId === brokerId);
+    if (!broker) {
+      alert("Broker not found");
+      return;
+    }
+
+    const isCurrentlyActive = currentStatus?.toLowerCase() === 'active';
+    const action = isCurrentlyActive ? 'reject' : 'approve';
+    
+    // Confirmation dialog
+    const confirmMessage = isCurrentlyActive 
+      ? `Are you sure you want to deactivate broker ${broker.brokerName || broker.brokerId}? This will mark them as rejected.`
+      : `Are you sure you want to activate broker ${broker.brokerName || broker.brokerId}? This will mark them as approved.`;
+      
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      if (action === 'approve') {
+        await handleApproveBroker(broker);
+      } else {
+        await handleRejectBroker(broker);
+      }
+    } catch (err) {
+      console.error(`Error ${action}ing broker:`, err);
+      // Error is already handled in the individual functions
+    }
+  };
+
+  // Transform broker data with localStorage status
+  const transformBrokerData = (broker) => {
+    const brokerId = broker.brokerId;
+    
+    // Get stored status from localStorage first
+    const storedStatus = getBrokerStatusFromStorage(brokerId);
+    const storedApprovalStatus = getBrokerApprovalStatusFromStorage(brokerId);
+    
+    // Determine the final status
+    let finalStatus = "Active"; // Default
+    
+    // Priority: localStorage > API approvalStatus > API tag > default
+    if (storedStatus) {
+      finalStatus = storedStatus;
+    } else if (broker.approvalStatus) {
+      // Map approvalStatus from API to frontend status
+      finalStatus = broker.approvalStatus === "Rejected" ? "Inactive" : 
+                    broker.approvalStatus === "Approved" ? "Active" : 
+                    broker.approvalStatus === "Pending" ? "Pending" : 
+                    "Active";
+    } else if (broker.tag) {
+      finalStatus = broker.tag;
+    } else if (broker.status) {
+      finalStatus = broker.status;
+    }
+
+    return {
+      ...broker,
+      tag: finalStatus,
+      status: finalStatus,
+      approvalStatus: storedApprovalStatus || broker.approvalStatus || "",
+    };
   };
 
   // Fetch agents/brokers from API
@@ -190,10 +451,12 @@ const ManageAgentsBrokers = () => {
 
         console.log("API Response:", response.data);
 
-        // Extract data from response
+        // Extract data from response and transform with localStorage status
         const brokersData = response.data.data || response.data || [];
-        setAgentsBrokers(brokersData);
-        setFilteredAgentsBrokers(brokersData);
+        const transformedBrokers = brokersData.map(transformBrokerData);
+        
+        setAgentsBrokers(transformedBrokers);
+        setFilteredAgentsBrokers(transformedBrokers);
       } catch (err) {
         console.error("Fetch error:", err);
         console.error("Error response:", err.response);
@@ -351,6 +614,7 @@ const ManageAgentsBrokers = () => {
         return "bg-green-100 text-green-800 border-green-200";
       case "inactive":
       case "suspended":
+      case "rejected":
         return "bg-red-100 text-red-800 border-red-200";
       case "pending":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
@@ -404,6 +668,31 @@ const ManageAgentsBrokers = () => {
 
   return (
     <div className="p-4 sm:p-6">
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <svg
+              className="h-6 w-6 text-green-600 mr-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <div>
+              <h3 className="text-green-800 font-medium">Success</h3>
+              <p className="text-green-700 text-sm">{successMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 flex flex-col gap-4 sm:gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
@@ -638,13 +927,33 @@ const ManageAgentsBrokers = () => {
                     {formatDate(broker.submitDate)}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(
-                        broker.tag
-                      )}`}
-                    >
-                      {broker.tag || "Active"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleStatusToggle(broker.brokerId, broker.tag)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          (broker.tag?.toLowerCase() || "active") === "active"
+                            ? "bg-green-500 hover:bg-green-600"
+                            : "bg-red-500 hover:bg-red-600"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            (broker.tag?.toLowerCase() || "active") === "active"
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        broker.tag?.toLowerCase() === 'active' 
+                          ? 'bg-green-100 text-green-800'
+                          : broker.tag?.toLowerCase() === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {broker.tag || "Active"}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
                     <Link
@@ -679,13 +988,33 @@ const ManageAgentsBrokers = () => {
                     {broker.brokerName || "N/A"}
                   </p>
                 </div>
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(
-                    broker.tag
-                  )}`}
-                >
-                  {broker.tag || "Active"}
-                </span>
+                <div className="flex flex-col items-end gap-2">
+                  <button
+                    onClick={() => handleStatusToggle(broker.brokerId, broker.tag)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      (broker.tag?.toLowerCase() || "active") === "active"
+                        ? "bg-green-500 hover:bg-green-600"
+                        : "bg-red-500 hover:bg-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                        (broker.tag?.toLowerCase() || "active") === "active"
+                          ? "translate-x-5"
+                          : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    broker.tag?.toLowerCase() === 'active' 
+                      ? 'bg-green-100 text-green-800'
+                      : broker.tag?.toLowerCase() === 'pending'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {broker.tag || "Active"}
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2 text-sm">
