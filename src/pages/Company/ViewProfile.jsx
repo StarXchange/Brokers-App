@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import CryptoJS from "crypto-js";
 import { useAuth } from "../../context/AuthContext";
+import { getApiBaseUrl } from "../../utils/config";
 
 const SECRET_KEY = "your-secret-key";
 
@@ -98,13 +99,13 @@ const ViewProfile = () => {
         }
 
         const response = await axios.get(
-          `https://gibsbrokersapi.newgibsonline.com/api/Auth/companies/${resolvedUserId}`,
+          `${getApiBaseUrl()}/Auth/companies/${resolvedUserId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         let profileData = response.data?.data ?? response.data;
@@ -138,7 +139,7 @@ const ViewProfile = () => {
         setError(
           err.response?.data?.message ||
             err.message ||
-            "Failed to load profile data."
+            "Failed to load profile data.",
         );
       } finally {
         if (isMounted) {
@@ -187,14 +188,14 @@ const ViewProfile = () => {
         resolvedUserId;
 
       await axios.put(
-        `https://gibsbrokersapi.newgibsonline.com/api/Auth/companies/${profileId}`,
+        `${getApiBaseUrl()}/Auth/companies/${profileId}`,
         formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       setProfile(formData);
@@ -205,7 +206,7 @@ const ViewProfile = () => {
       setError(
         err.response?.data?.message ||
           err.message ||
-          "Failed to update profile."
+          "Failed to update profile.",
       );
     } finally {
       setIsSaving(false);

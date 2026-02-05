@@ -1,5 +1,7 @@
 // src/services/userService.js
-const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
+import { getApiBaseUrl } from "../utils/config";
+
+const API_BASE_URL = getApiBaseUrl();
 
 class UserService {
   getToken() {

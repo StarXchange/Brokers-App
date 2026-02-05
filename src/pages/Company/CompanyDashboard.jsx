@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import WelcomeMessage from "../../components/WelcomeMessage";
+import { getApiBaseUrl } from "../../utils/config";
 
 const CompanyDashboard = () => {
   const [certificates, setCertificates] = useState([]);
@@ -24,7 +25,7 @@ const CompanyDashboard = () => {
     location.pathname.includes("/view-profile") ||
     location.pathname.includes("/client-management");
 
-  const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
+  const API_BASE_URL = getApiBaseUrl();
 
   // Add these missing API functions that are referenced in the Outlet context
   const handleApprove = async (certIds) => {
@@ -164,7 +165,7 @@ const CompanyDashboard = () => {
     setSelectedCerts((prev) =>
       prev.includes(certId)
         ? prev.filter((id) => id !== certId)
-        : [...prev, certId]
+        : [...prev, certId],
     );
   };
 

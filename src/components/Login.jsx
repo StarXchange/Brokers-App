@@ -5,6 +5,7 @@ import Button from "./UI/Button";
 import { Input, Password } from "./UI/Input";
 import { Card } from "./UI/Card";
 import dash_image from "../assets/dash_image.png";
+import { getApiBaseUrl } from "../utils/config";
 
 export default function UnifiedLogin() {
   const navigate = useNavigate();
@@ -79,15 +80,12 @@ export default function UnifiedLogin() {
   const fetchBrokers = async () => {
     setBrokersLoading(true);
     try {
-      const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Brokers",
-        {
-          method: "GET",
-          headers: {
-            accept: "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Brokers`, {
+        method: "GET",
+        headers: {
+          accept: "application/json",
+        },
+      });
 
       if (response.ok) {
         const brokersData = await response.json();
@@ -145,20 +143,17 @@ export default function UnifiedLogin() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/forgot-password",
-        {
-          method: "POST",
-          headers: {
-            accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify({
-            email: forgotData.email,
-          }),
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({
+          email: forgotData.email,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -168,7 +163,7 @@ export default function UnifiedLogin() {
 
       if (result.success) {
         setForgotSuccess(
-          "OTP has been sent to your email. Please check your inbox."
+          "OTP has been sent to your email. Please check your inbox.",
         );
         setCurrentStep(2);
         setOtpTimer(120); // Changed to 2 minutes (120 seconds)
@@ -195,21 +190,18 @@ export default function UnifiedLogin() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/verify-otp",
-        {
-          method: "POST",
-          headers: {
-            accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify({
-            email: forgotData.email,
-            otp: forgotData.otp,
-          }),
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Auth/verify-otp`, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({
+          email: forgotData.email,
+          otp: forgotData.otp,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -256,28 +248,25 @@ export default function UnifiedLogin() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/reset-password",
-        {
-          method: "POST",
-          headers: {
-            accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify({
-            email: forgotData.email,
-            otp: forgotData.otp,
-            newPassword: forgotData.newPassword,
-            confirmPassword: forgotData.confirmPassword,
-          }),
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Auth/reset-password`, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({
+          email: forgotData.email,
+          otp: forgotData.otp,
+          newPassword: forgotData.newPassword,
+          confirmPassword: forgotData.confirmPassword,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
+          errorData.message || `HTTP error! status: ${response.status}`,
         );
       }
 
@@ -285,7 +274,7 @@ export default function UnifiedLogin() {
 
       if (result.success) {
         setForgotSuccess(
-          "Password reset successfully! Redirecting to login..."
+          "Password reset successfully! Redirecting to login...",
         );
         setTimeout(() => {
           closeForgotPasswordModal();
@@ -297,7 +286,7 @@ export default function UnifiedLogin() {
       }
     } catch (err) {
       setForgotError(
-        err.message || "Failed to reset password. Please try again."
+        err.message || "Failed to reset password. Please try again.",
       );
     } finally {
       setForgotLoading(false);
@@ -314,20 +303,17 @@ export default function UnifiedLogin() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/resend-otp",
-        {
-          method: "POST",
-          headers: {
-            accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify({
-            email: forgotData.email,
-          }),
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Auth/resend-otp`, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({
+          email: forgotData.email,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -390,11 +376,7 @@ export default function UnifiedLogin() {
         password: formData.password,
       });
 
-      
-
       if (result.success) {
-       
-
         // Route ONLY by entityType (ignore role entirely)
         const entityType = String(result.user.entityType || "").toLowerCase();
 
@@ -414,13 +396,13 @@ export default function UnifiedLogin() {
           navigate("/company/dashboard");
         } else {
           console.log(
-            "Unknown entityType; default routing to client dashboard"
+            "Unknown entityType; default routing to client dashboard",
           );
           navigate("/client/dashboard");
         }
       } else {
         setError(
-          result.error || "Login failed. Please check your credentials."
+          result.error || "Login failed. Please check your credentials.",
         );
       }
     } catch (err) {
@@ -473,12 +455,12 @@ export default function UnifiedLogin() {
     });
   };
 
- // Format timer display - Updated for 2 minutes
-const formatTimer = (seconds) => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-};
+  // Format timer display - Updated for 2 minutes
+  const formatTimer = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   return (
     <div className="w-full flex flex-col md:flex-row justify-center items-center min-h-screen gap-12 px-10 md:px-20 py-5 bg-gradient-to-b from-blue-50 to-white overflow-auto animate-slideDown">
@@ -923,8 +905,8 @@ const formatTimer = (seconds) => {
                           step === currentStep
                             ? "bg-blue-600 text-white"
                             : step < currentStep
-                            ? "bg-green-500 text-white"
-                            : "bg-gray-200 text-gray-600"
+                              ? "bg-green-500 text-white"
+                              : "bg-gray-200 text-gray-600"
                         }`}
                       >
                         {step < currentStep ? "✓" : step}
@@ -1579,8 +1561,8 @@ const formatTimer = (seconds) => {
                 currentStep === 1
                   ? "bg-gradient-to-r from-blue-500 to-blue-600"
                   : currentStep === 2
-                  ? "bg-gradient-to-r from-blue-600 to-purple-600"
-                  : "bg-gradient-to-r from-green-500 to-green-600"
+                    ? "bg-gradient-to-r from-blue-600 to-purple-600"
+                    : "bg-gradient-to-r from-green-500 to-green-600"
               }`}
             ></div>
           </div>

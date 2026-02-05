@@ -1,7 +1,8 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import CryptoJS from "crypto-js";
+import { getApiBaseUrl } from "../utils/config";
 
 const CreateMotorPolicy = ({ userRole = "broker" }) => {
   const navigate = useNavigate();
@@ -98,14 +99,14 @@ const CreateMotorPolicy = ({ userRole = "broker" }) => {
       };
 
       const response = await axios.post(
-        "https://gibsbrokersapi.newgibsonline.com/api/Certificate/motor",
+        `${getApiBaseUrl()}/Certificate/motor`,
         requestBody,
         {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.status === 200 || response.status === 201) {
@@ -129,7 +130,7 @@ const CreateMotorPolicy = ({ userRole = "broker" }) => {
       console.error("Error creating policy:", error);
       setMessage(
         error.response?.data?.message ||
-          "Failed to create policy. Please try again."
+          "Failed to create policy. Please try again.",
       );
       setIsError(true);
     } finally {
@@ -150,7 +151,7 @@ const CreateMotorPolicy = ({ userRole = "broker" }) => {
             onClick={handleGoBack}
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors mb-4"
           >
-            ← Go Back
+            ? Go Back
           </button>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Create Motor Insurance Policy
@@ -244,7 +245,25 @@ const CreateMotorPolicy = ({ userRole = "broker" }) => {
                     type="date"
                     name="startDate"
                     value={formData.startDate}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      const startDate = e.target.value;
+                      setFormData((prev) => {
+                        // Calculate expiry date (1 year from start date)
+                        let expiryDate = "";
+                        if (startDate) {
+                          const start = new Date(startDate);
+                          const expiry = new Date(start);
+                          expiry.setFullYear(expiry.getFullYear() + 1);
+                          expiryDate = expiry.toISOString().split("T")[0];
+                        }
+
+                        return {
+                          ...prev,
+                          startDate: startDate,
+                          expiryDate: expiryDate,
+                        };
+                      });
+                    }}
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     required
                   />
@@ -258,10 +277,14 @@ const CreateMotorPolicy = ({ userRole = "broker" }) => {
                     type="date"
                     name="expiryDate"
                     value={formData.expiryDate}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    readOnly
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed text-sm"
+                    title="Automatically set to 1 year from start date"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Automatically set to 1 year from start date
+                  </p>
                 </div>
 
                 <div className="space-y-1.5">
@@ -483,7 +506,7 @@ const CreateMotorPolicy = ({ userRole = "broker" }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-gray-700">
-                    Insured Value (₦) <span className="text-red-500">*</span>
+                    Insured Value (?) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -499,7 +522,7 @@ const CreateMotorPolicy = ({ userRole = "broker" }) => {
 
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-gray-700">
-                    Gross Premium (₦) <span className="text-red-500">*</span>
+                    Gross Premium (?) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"

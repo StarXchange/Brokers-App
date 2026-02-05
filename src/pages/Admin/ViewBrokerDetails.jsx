@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { getApiBaseUrl } from "../../utils/config";
 
 const ViewBrokerDetails = () => {
   const { brokerId } = useParams();
@@ -35,12 +36,12 @@ const ViewBrokerDetails = () => {
 
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `https://gibsbrokersapi.newgibsonline.com/api/Auth/brokers/${brokerId}`,
+          `${getApiBaseUrl()}/Auth/brokers/${brokerId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         // Extract broker data from response
@@ -49,7 +50,7 @@ const ViewBrokerDetails = () => {
       } catch (err) {
         console.error("Fetch error:", err);
         setError(
-          err.response?.data?.message || "Failed to fetch broker details"
+          err.response?.data?.message || "Failed to fetch broker details",
         );
       } finally {
         setLoading(false);
@@ -240,7 +241,7 @@ const ViewBrokerDetails = () => {
             {broker.tag && (
               <span
                 className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(
-                  broker.tag
+                  broker.tag,
                 )}`}
               >
                 {broker.tag || "Active"}

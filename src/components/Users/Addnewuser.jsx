@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FiX, FiUserPlus, FiCheck, FiEye, FiEyeOff } from "react-icons/fi";
+import { getApiBaseUrl } from "../../utils/config";
 
 const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
   const [formData, setFormData] = useState({
@@ -38,10 +39,8 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
   const [rolesLoading, setRolesLoading] = useState(false);
   const [rolesError, setRolesError] = useState(null);
 
-  const API_URL =
-    "https://gibsbrokersapi.newgibsonline.com/api/Auth/create-system-user";
-  const ROLES_API_URL =
-    "https://gibsbrokersapi.newgibsonline.com/api/Auth/roles";
+  const API_URL = `${getApiBaseUrl()}/Auth/create-system-user`;
+  const ROLES_API_URL = `${getApiBaseUrl()}/Auth/roles`;
 
   const fetchRoles = async () => {
     setRolesLoading(true);
@@ -196,7 +195,7 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
           errorData.message ||
             errorData.error ||
             errorText ||
-            `HTTP error! status: ${response.status}`
+            `HTTP error! status: ${response.status}`,
         );
       }
 
@@ -405,6 +404,20 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="insured_name"
+                  value={formData.insured_name}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Full name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Phone Number
                 </label>
                 <input
@@ -471,15 +484,15 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                         .filter((r) => r?.isActive !== false)
                         .sort((a, b) =>
                           String(a.roleName || "").localeCompare(
-                            String(b.roleName || "")
-                          )
+                            String(b.roleName || ""),
+                          ),
                         )
                         .map((r) => {
                           const selectedIds = Array.isArray(formData.roleIds)
                             ? formData.roleIds
                             : [];
                           const normalized = selectedIds.filter(
-                            (id) => id !== 0
+                            (id) => id !== 0,
                           );
                           const checked = normalized.includes(r.roleID);
                           return (
@@ -551,27 +564,8 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                 />
               </div>
 
-              {/* Additional Fields */}
-              <div className="md:col-span-2 mt-4">
-                <h4 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">
-                  Additional Information
-                </h4>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Insured Name
-                </label>
-                <input
-                  type="text"
-                  name="insured_name"
-                  value={formData.insured_name}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Name for insurance purposes"
-                />
-              </div>
-
+              {/* HIDDEN: Occupation */}
+              {/* 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Occupation
@@ -585,7 +579,10 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   placeholder="Professional occupation"
                 />
               </div>
+              */}
 
+              {/* HIDDEN: Identification Type */}
+              {/* 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Identification Type
@@ -599,7 +596,10 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   placeholder="e.g., Passport, Driver's License"
                 />
               </div>
+              */}
 
+              {/* HIDDEN: ID Number */}
+              {/*
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ID Number
@@ -613,7 +613,10 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   placeholder="Identification number"
                 />
               </div>
+              */}
 
+              {/* HIDDEN: A1 */}
+              {/*
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   A1
@@ -632,7 +635,10 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   Numbers only (max 10 digits)
                 </p>
               </div>
+              */}
 
+              {/* HIDDEN: A2 */}
+              {/*
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   A2
@@ -651,7 +657,10 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   Numbers only (max 10 digits)
                 </p>
               </div>
+              */}
 
+              {/* HIDDEN: Location */}
+              {/*
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Location
@@ -665,14 +674,19 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   placeholder="User location"
                 />
               </div>
+              */}
 
-              {/* Optional Fields */}
+              {/* Optional Fields - Section Hidden since Tag and Remarks are hidden */}
+              {/*
               <div className="md:col-span-2 mt-4">
                 <h4 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">
                   Optional Fields
                 </h4>
               </div>
+              */}
 
+              {/* HIDDEN: Tag */}
+              {/*
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Tag
@@ -686,7 +700,10 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   placeholder="User tag"
                 />
               </div>
+              */}
 
+              {/* HIDDEN: Remarks */}
+              {/*
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Remarks
@@ -700,6 +717,7 @@ const Addnewuser = ({ isOpen, onClose, onUserAdded }) => {
                   placeholder="Additional remarks or notes"
                 />
               </div>
+              */}
             </div>
 
             {/* Form Actions */}

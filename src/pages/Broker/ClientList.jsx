@@ -3,9 +3,10 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import CryptoJS from "crypto-js";
+import { getApiBaseUrl } from "../../utils/config";
 
 // Constants
-const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
+const API_BASE_URL = getApiBaseUrl();
 const TABLE_HEADERS = [
   { key: "name", label: "Sub Agent Name", className: "w-1/6" },
   { key: "email", label: "Email Address", className: "w-1/6" },
@@ -155,7 +156,7 @@ const ClientCard = ({ client, isSelected, onSelect, basePrefix }) => (
       <div className="flex items-center space-x-3">
         <span
           className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full border ${statusVariant(
-            client.status
+            client.status,
           )}`}
         >
           {client.status}
@@ -384,7 +385,7 @@ const ClientTableRow = ({ client, isSelected, onSelect, basePrefix }) => (
     <td className="px-6 py-4 whitespace-nowrap">
       <span
         className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${statusVariant(
-          client.status
+          client.status,
         )}`}
       >
         {client.status}
@@ -459,7 +460,7 @@ const ClientList = () => {
   const basePrefix = useMemo(
     () =>
       location.pathname.startsWith("/admin") ? "/admin/brokers" : "/brokers",
-    [location.pathname]
+    [location.pathname],
   );
 
   const [clients, setClients] = useState([]);
@@ -579,7 +580,7 @@ const ClientList = () => {
       setError(
         err.response?.data?.message ||
           err.message ||
-          "Failed to fetch sub agents"
+          "Failed to fetch sub agents",
       );
     } finally {
       setLoading(false);
@@ -590,7 +591,7 @@ const ClientList = () => {
   const handleDelete = useCallback(async () => {
     if (
       !window.confirm(
-        `Are you sure you want to delete ${selectedClients.length} sub agent(s)? This action cannot be undone.`
+        `Are you sure you want to delete ${selectedClients.length} sub agent(s)? This action cannot be undone.`,
       )
     ) {
       return;
@@ -608,12 +609,12 @@ const ClientList = () => {
               "Content-Type": "application/json",
               ...(user?.token && { Authorization: `Bearer ${user.token}` }),
             },
-          }
+          },
         );
 
         if (!response.ok) {
           throw new Error(
-            `Failed to delete sub agent ${clientId}: ${response.status}`
+            `Failed to delete sub agent ${clientId}: ${response.status}`,
           );
         }
 
@@ -624,7 +625,7 @@ const ClientList = () => {
 
       // Update local state
       setClients((prev) =>
-        prev.filter((client) => !selectedClients.includes(client.id))
+        prev.filter((client) => !selectedClients.includes(client.id)),
       );
       setSelectedClients([]);
     } catch (err) {
@@ -640,7 +641,7 @@ const ClientList = () => {
     setSelectedClients((prev) =>
       prev.includes(clientId)
         ? prev.filter((id) => id !== clientId)
-        : [...prev, clientId]
+        : [...prev, clientId],
     );
   }, []);
 
@@ -696,7 +697,7 @@ const ClientList = () => {
     () =>
       paginatedClients.length > 0 &&
       selectedClients.length === paginatedClients.length,
-    [paginatedClients.length, selectedClients.length]
+    [paginatedClients.length, selectedClients.length],
   );
 
   const selectedCount = selectedClients.length;
@@ -705,10 +706,10 @@ const ClientList = () => {
   const selectAllClients = useCallback(
     (e) => {
       setSelectedClients(
-        e.target.checked ? paginatedClients.map((client) => client.id) : []
+        e.target.checked ? paginatedClients.map((client) => client.id) : [],
       );
     },
-    [paginatedClients]
+    [paginatedClients],
   );
 
   // Render states

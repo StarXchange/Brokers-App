@@ -2,6 +2,7 @@ import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import { getApiBaseUrl } from "../../utils/config";
 
 const DetailItem = ({
   label,
@@ -41,7 +42,7 @@ const CertificateDetails = () => {
   const [formData, setFormData] = useState({});
   const certRef = useRef(null);
 
-  const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
+  const API_BASE_URL = getApiBaseUrl();
 
   useEffect(() => {
     const fetchCertificate = async () => {
@@ -75,7 +76,7 @@ const CertificateDetails = () => {
           const errorText = await response.text();
           console.error("API Error Response:", errorText);
           throw new Error(
-            `HTTP error! status: ${response.status} - ${errorText}`
+            `HTTP error! status: ${response.status} - ${errorText}`,
           );
         }
 
@@ -128,7 +129,7 @@ const CertificateDetails = () => {
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(
-          `Failed to update certificate: ${response.status} - ${errorText}`
+          `Failed to update certificate: ${response.status} - ${errorText}`,
         );
       }
 
@@ -273,7 +274,7 @@ const CertificateDetails = () => {
                   "style",
                   inlineStyle
                     .replace(/oklch\([^)]+\)/g, "#3b82f6")
-                    .replace(/oklab\([^)]+\)/g, "#3b82f6")
+                    .replace(/oklab\([^)]+\)/g, "#3b82f6"),
                 );
               }
 
@@ -315,7 +316,7 @@ const CertificateDetails = () => {
         imgWidth,
         imgHeight,
         undefined,
-        "FAST"
+        "FAST",
       );
 
       const fileName = `certificate-${
@@ -843,7 +844,7 @@ const CertificateDetails = () => {
                   <span>
                     Generated on{" "}
                     {formatDate(
-                      certificate.submitDate || certificate.transDate
+                      certificate.submitDate || certificate.transDate,
                     )}
                   </span>
                 </div>
@@ -1228,8 +1229,8 @@ const CertificateDetails = () => {
                         certificate.tag === "APPROVED"
                           ? "bg-green-100 text-green-800"
                           : certificate.tag === "REJECTED"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
                       {certificate.tag || "PENDING"}

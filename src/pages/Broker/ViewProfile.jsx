@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { getApiBaseUrl } from "../../utils/config";
 
 const ViewProfile = () => {
   const { user } = useAuth();
@@ -62,16 +63,13 @@ const ViewProfile = () => {
         console.log("Fetching profile for user ID:", userId);
 
         // Call the API
-        const response = await fetch(
-          `https://gibsbrokersapi.newgibsonline.com/api/Auth/user/${userId}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await fetch(`${getApiBaseUrl()}/Auth/user/${userId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           if (response.status === 401) {
@@ -149,7 +147,7 @@ const ViewProfile = () => {
 
       // Show success message
       setError(
-        "Profile updated successfully! (Demo mode - changes not saved to server)"
+        "Profile updated successfully! (Demo mode - changes not saved to server)",
       );
       setTimeout(() => setError(""), 3000);
     } catch (err) {

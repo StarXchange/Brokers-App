@@ -1,17 +1,28 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FiEye, FiEyeOff, FiLock, FiShield, FiCheck, FiX, FiArrowLeft, FiRefreshCw, FiUser } from "react-icons/fi";
+import {
+  FiEye,
+  FiEyeOff,
+  FiLock,
+  FiShield,
+  FiCheck,
+  FiX,
+  FiArrowLeft,
+  FiRefreshCw,
+  FiUser,
+} from "react-icons/fi";
+import { getApiBaseUrl } from "../utils/config";
 
 const ChangePassword = () => {
   const navigate = useNavigate();
-  
+
   // State for user data
   const [userData, setUserData] = useState({
     userId: "",
     userType: "",
     fullName: "",
     email: "",
-    username: ""
+    username: "",
   });
 
   const [formData, setFormData] = useState({
@@ -55,16 +66,13 @@ const ChangePassword = () => {
 
       // Fetch current user from your API
       // Adjust the endpoint based on your actual API structure
-      const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/users",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Auth/users`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch user data: ${response.status}`);
@@ -80,7 +88,7 @@ const ChangePassword = () => {
           userType: user.userType || user.role || "",
           fullName: user.fullName || user.name || "",
           email: user.email || "",
-          username: user.username || ""
+          username: user.username || "",
         });
       } else if (data.userId || data.id) {
         // If API returns user object directly
@@ -89,12 +97,11 @@ const ChangePassword = () => {
           userType: data.userType || data.role || "",
           fullName: data.fullName || data.name || "",
           email: data.email || "",
-          username: data.username || ""
+          username: data.username || "",
         });
       } else {
         throw new Error("Invalid user data format received");
       }
-
     } catch (err) {
       console.error("Error fetching user:", err);
       setError("Unable to load user information. Please refresh the page.");
@@ -115,7 +122,7 @@ const ChangePassword = () => {
       };
 
       setPasswordStrength(checks);
-      
+
       // Calculate password score
       const score = Object.values(checks).filter(Boolean).length;
       setPasswordScore(score);
@@ -182,17 +189,14 @@ const ChangePassword = () => {
       };
 
       // Make API call
-      const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/change-password",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Auth/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       const data = await response.json();
 
@@ -201,13 +205,13 @@ const ChangePassword = () => {
           data.message ||
             data.Message ||
             data.error ||
-            `Failed to change password (Status: ${response.status})`
+            `Failed to change password (Status: ${response.status})`,
         );
       }
 
       // Success
       setSuccess("Password changed successfully! Redirecting...");
-      
+
       // Clear form
       setFormData({
         currentPassword: "",
@@ -219,7 +223,6 @@ const ChangePassword = () => {
       setTimeout(() => {
         navigate("/dashboard");
       }, 2000);
-
     } catch (err) {
       setError(err.message || "Failed to update password. Please try again.");
     } finally {
@@ -311,7 +314,11 @@ const ChangePassword = () => {
                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                   {userData.fullName || userData.username ? (
                     <div className="text-blue-600 text-lg font-bold">
-                      {(userData.fullName?.[0] || userData.username?.[0] || "U").toUpperCase()}
+                      {(
+                        userData.fullName?.[0] ||
+                        userData.username?.[0] ||
+                        "U"
+                      ).toUpperCase()}
                     </div>
                   ) : (
                     <FiUser className="text-2xl text-blue-600" />
@@ -324,7 +331,10 @@ const ChangePassword = () => {
                 </h3>
                 <div className="flex flex-wrap items-center gap-2 mt-1">
                   <p className="text-gray-600 text-sm">
-                    ID: <span className="font-mono font-bold">{getDisplayId()}</span>
+                    ID:{" "}
+                    <span className="font-mono font-bold">
+                      {getDisplayId()}
+                    </span>
                   </p>
                   {userData.userType && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
@@ -459,7 +469,9 @@ const ChangePassword = () => {
                       <span className="text-sm font-medium text-gray-700">
                         Password Strength
                       </span>
-                      <span className={`text-sm font-bold ${getStrengthColor().replace('bg-', 'text-')}`}>
+                      <span
+                        className={`text-sm font-bold ${getStrengthColor().replace("bg-", "text-")}`}
+                      >
                         {getStrengthText()}
                       </span>
                     </div>
@@ -485,7 +497,8 @@ const ChangePassword = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 pl-11 pr-12 border rounded-lg focus:ring-2 transition-colors text-sm ${
-                      formData.confirmPassword && formData.newPassword !== formData.confirmPassword
+                      formData.confirmPassword &&
+                      formData.newPassword !== formData.confirmPassword
                         ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                         : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                     }`}
@@ -505,11 +518,12 @@ const ChangePassword = () => {
                     )}
                   </button>
                 </div>
-                {formData.confirmPassword && formData.newPassword !== formData.confirmPassword && (
-                  <p className="text-red-600 text-sm mt-2 flex items-center">
-                    <FiX className="mr-1" /> Passwords don't match
-                  </p>
-                )}
+                {formData.confirmPassword &&
+                  formData.newPassword !== formData.confirmPassword && (
+                    <p className="text-red-600 text-sm mt-2 flex items-center">
+                      <FiX className="mr-1" /> Passwords don't match
+                    </p>
+                  )}
               </div>
 
               {/* Password Requirements */}
@@ -557,7 +571,11 @@ const ChangePassword = () => {
                 </Link>
                 <button
                   type="submit"
-                  disabled={isLoading || passwordScore < 3 || formData.newPassword !== formData.confirmPassword}
+                  disabled={
+                    isLoading ||
+                    passwordScore < 3 ||
+                    formData.newPassword !== formData.confirmPassword
+                  }
                   className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
                 >
                   {isLoading ? (

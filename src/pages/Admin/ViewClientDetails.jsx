@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { getApiBaseUrl } from "../../utils/config";
 
 const ViewClientDetails = () => {
   const { clientId } = useParams();
@@ -35,12 +36,12 @@ const ViewClientDetails = () => {
 
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `https://gibsbrokersapi.newgibsonline.com/api/Auth/clients/${clientId}`,
+          `${getApiBaseUrl()}/Auth/clients/${clientId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         console.log("API Response:", response.data);
@@ -51,7 +52,7 @@ const ViewClientDetails = () => {
       } catch (err) {
         console.error("Fetch error:", err);
         setError(
-          err.response?.data?.message || "Failed to fetch sub agent details"
+          err.response?.data?.message || "Failed to fetch sub agent details",
         );
       } finally {
         setLoading(false);

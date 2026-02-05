@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { getApiBaseUrl } from "../../utils/config";
 
 export default function EditClient() {
   const { id } = useParams();
@@ -46,14 +47,14 @@ export default function EditClient() {
         setError(null);
 
         const response = await fetch(
-          `https://gibsbrokersapi.newgibsonline.com/api/InsuredClients/${id}`,
+          `${getApiBaseUrl()}/InsuredClients/${id}`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
               ...(user?.token && { Authorization: `Bearer ${user.token}` }),
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -132,22 +133,19 @@ export default function EditClient() {
           : new Date().toISOString(),
       };
 
-      const response = await fetch(
-        `https://gibsbrokersapi.newgibsonline.com/api/InsuredClients/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            ...(user?.token && { Authorization: `Bearer ${user.token}` }),
-          },
-          body: JSON.stringify(submitData),
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/InsuredClients/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(user?.token && { Authorization: `Bearer ${user.token}` }),
+        },
+        body: JSON.stringify(submitData),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(
-          `Failed to update client: ${response.status} - ${errorText}`
+          `Failed to update client: ${response.status} - ${errorText}`,
         );
       }
 

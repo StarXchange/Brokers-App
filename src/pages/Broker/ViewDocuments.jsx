@@ -1,6 +1,7 @@
 // src/pages/ViewDocuments.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { getApiBaseUrl } from "../../utils/config";
 
 const ViewDocuments = () => {
   const [documents, setDocuments] = useState([]);
@@ -30,14 +31,14 @@ const ViewDocuments = () => {
   const refreshToken = async () => {
     try {
       const response = await axios.post(
-        "https://gibsbrokersapi.newgibsonline.com/api/auth/refresh",
+        `${getApiBaseUrl()}/auth/refresh`,
         {},
         {
           withCredentials: true,
           headers: {
             accept: "application/json",
           },
-        }
+        },
       );
 
       if (response.data.token) {
@@ -60,16 +61,13 @@ const ViewDocuments = () => {
       let token = getToken();
       if (!token) return;
 
-      const response = await axios.get(
-        "https://gibsbrokersapi.newgibsonline.com/api/AttachDocs",
-        {
-          headers: {
-            accept: "text/plain",
-            Authorization: `Bearer ${token}`,
-          },
-          timeout: 10000, // 10 second timeout
-        }
-      );
+      const response = await axios.get(`${getApiBaseUrl()}/AttachDocs`, {
+        headers: {
+          accept: "text/plain",
+          Authorization: `Bearer ${token}`,
+        },
+        timeout: 10000, // 10 second timeout
+      });
 
       // Validate response structure
       if (Array.isArray(response.data)) {
@@ -98,18 +96,18 @@ const ViewDocuments = () => {
         }
       } else if (err.response?.status === 403) {
         setError(
-          "Access forbidden. You don't have permission to view documents."
+          "Access forbidden. You don't have permission to view documents.",
         );
       } else if (err.code === "ECONNABORTED") {
         setError(
-          "Request timeout. Please check your connection and try again."
+          "Request timeout. Please check your connection and try again.",
         );
       } else if (err.response?.status >= 500) {
         setError("Server error. Please try again later.");
       } else {
         setError(
           err.response?.data?.message ||
-            "Failed to load documents. Please try again."
+            "Failed to load documents. Please try again.",
         );
       }
 
@@ -164,7 +162,7 @@ const ViewDocuments = () => {
         doc.docDetails?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doc.docTypes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doc.docFrom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.docNo?.toLowerCase().includes(searchTerm.toLowerCase())
+        doc.docNo?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
     setFilteredDocuments(filtered);
   };
@@ -474,7 +472,7 @@ const DocumentCard = ({ document }) => {
         </div>
         <span
           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${getStatusBadge(
-            document.mailStatus
+            document.mailStatus,
           )}`}
         >
           {document.mailStatus || "Unknown"}

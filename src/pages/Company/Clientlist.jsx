@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { getApiBaseUrl } from "../../utils/config";
 
 export default function Clientlist() {
   const location = useLocation();
@@ -20,20 +21,17 @@ export default function Clientlist() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(
-          `https://gibsbrokersapi.newgibsonline.com/api/InsuredClients`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              ...(user?.token && { Authorization: `Bearer ${user.token}` }),
-            },
-          }
-        );
+        const response = await fetch(`${getApiBaseUrl()}/InsuredClients`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(user?.token && { Authorization: `Bearer ${user.token}` }),
+          },
+        });
 
         if (!response.ok) {
           throw new Error(
-            `Failed to fetch clients: ${response.status} ${response.statusText}`
+            `Failed to fetch clients: ${response.status} ${response.statusText}`,
           );
         }
 
@@ -99,7 +97,7 @@ export default function Clientlist() {
   const handleDelete = async () => {
     if (
       !window.confirm(
-        `Are you sure you want to delete ${selectedClients.length} client(s)? This action cannot be undone.`
+        `Are you sure you want to delete ${selectedClients.length} client(s)? This action cannot be undone.`,
       )
     ) {
       return;
@@ -111,19 +109,19 @@ export default function Clientlist() {
 
       const deletePromises = selectedClients.map(async (clientId) => {
         const response = await fetch(
-          `https://gibsbrokersapi.newgibsonline.com/api/InsuredClients/${clientId}`,
+          `${getApiBaseUrl()}/InsuredClients/${clientId}`,
           {
             method: "DELETE",
             headers: {
               "Content-Type": "application/json",
               ...(user?.token && { Authorization: `Bearer ${user.token}` }),
             },
-          }
+          },
         );
 
         if (!response.ok) {
           throw new Error(
-            `Failed to delete client ${clientId}: ${response.status} ${response.statusText}`
+            `Failed to delete client ${clientId}: ${response.status} ${response.statusText}`,
           );
         }
 
@@ -134,7 +132,7 @@ export default function Clientlist() {
 
       // Remove deleted clients from local state
       setClients(
-        clients.filter((client) => !selectedClients.includes(client.id))
+        clients.filter((client) => !selectedClients.includes(client.id)),
       );
       setSelectedClients([]);
     } catch (err) {
@@ -149,7 +147,7 @@ export default function Clientlist() {
     setSelectedClients((prev) =>
       prev.includes(clientId)
         ? prev.filter((id) => id !== clientId)
-        : [...prev, clientId]
+        : [...prev, clientId],
     );
   };
 

@@ -10,8 +10,9 @@ import {
   FaFilter,
 } from "react-icons/fa";
 import { toast, Toaster } from "react-hot-toast";
+import { getApiBaseUrl } from "../../utils/config";
 
-const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
+const API_BASE_URL = getApiBaseUrl();
 
 const CertificatePeriodReport = () => {
   const [dateRange, setDateRange] = useState({
@@ -50,12 +51,12 @@ const CertificatePeriodReport = () => {
         const lastMonthFirst = new Date(
           today.getFullYear(),
           today.getMonth() - 1,
-          1
+          1,
         );
         const lastMonthLast = new Date(
           today.getFullYear(),
           today.getMonth(),
-          0
+          0,
         );
         newDates.period1 = lastMonthFirst.toISOString().split("T")[0];
         newDates.period2 = lastMonthLast.toISOString().split("T")[0];
@@ -127,12 +128,12 @@ const CertificatePeriodReport = () => {
           headers,
           params,
           timeout: 60000,
-        }
+        },
       );
 
       // Extract data from response
       let certificatesData = [];
-      
+
       if (Array.isArray(response.data)) {
         certificatesData = response.data;
       } else if (response.data && Array.isArray(response.data.data)) {
@@ -151,20 +152,22 @@ const CertificatePeriodReport = () => {
 
       setDataCount(certificatesData.length);
       toast.dismiss();
-      toast.success(`Found ${certificatesData.length} certificates. Generating Excel file...`);
+      toast.success(
+        `Found ${certificatesData.length} certificates. Generating Excel file...`,
+      );
 
       // Create workbook
       const wb = XLSX.utils.book_new();
-      
+
       // Prepare data for main sheet (structured like NSIA report)
       const mainSheetData = [];
-      
+
       // Report Header
       mainSheetData.push(["CERTIFICATE PERIOD REPORT"]);
       mainSheetData.push([]);
       mainSheetData.push([
         "Report Period:",
-        `${formatDate(dateRange.period1)} to ${formatDate(dateRange.period2)}`
+        `${formatDate(dateRange.period1)} to ${formatDate(dateRange.period2)}`,
       ]);
       mainSheetData.push([
         "Generated On:",
@@ -173,14 +176,14 @@ const CertificatePeriodReport = () => {
           month: "short",
           year: "numeric",
           hour: "2-digit",
-          minute: "2-digit"
-        })
+          minute: "2-digit",
+        }),
       ]);
       mainSheetData.push([]);
       mainSheetData.push([]);
 
       // Table Headers (matching NSIA format)
-      const  tableHeaders= [
+      const tableHeaders = [
         "Date",
         "Full Name",
         "Policy No",
@@ -197,30 +200,30 @@ const CertificatePeriodReport = () => {
         "Form M No",
         "Remarks",
         "Phone",
-        "Email"
+        "Email",
       ];
-      mainSheetData.push( tableHeaders);
+      mainSheetData.push(tableHeaders);
 
       // Data rows
       certificatesData.forEach((cert, index) => {
         mainSheetData.push([
-          formatDate(cert.TransDate),  // Date
-          cert.InsuredName || "",       // Full Name
-          cert.PolicyNo || "",          // Policy No
-          cert.CertNo || "",            // Certificate No
-          cert.InsuredValue || 0,       // Insured Value
-          cert.GrossPrenium || 0,       // Premium
+          formatDate(cert.TransDate), // Date
+          cert.InsuredName || "", // Full Name
+          cert.PolicyNo || "", // Policy No
+          cert.CertNo || "", // Certificate No
+          cert.InsuredValue || 0, // Insured Value
+          cert.GrossPrenium || 0, // Premium
           cert.Rate ? `${(cert.Rate * 100).toFixed(2)}%` : "0.00%", // Rate %
-          cert.FromDesc || "",          // From
-          cert.ToDesc || "",            // To
-          cert.PerDesc || "",           // Description
-          cert.Tag || "PENDING",        // Status
-          cert.BrokerID || "",          // Broker ID
-          formatDate(cert.TransDate),   // Transaction Date
-          cert.FormMNo || "",           // Form M No
-          cert.Remarks || "",           // Remarks
-          cert.Field104 || "",          // Phone
-          cert.Field105 || ""           // Email
+          cert.FromDesc || "", // From
+          cert.ToDesc || "", // To
+          cert.PerDesc || "", // Description
+          cert.Tag || "PENDING", // Status
+          cert.BrokerID || "", // Broker ID
+          formatDate(cert.TransDate), // Transaction Date
+          cert.FormMNo || "", // Form M No
+          cert.Remarks || "", // Remarks
+          cert.Field104 || "", // Phone
+          cert.Field105 || "", // Email
         ]);
       });
 
@@ -229,20 +232,23 @@ const CertificatePeriodReport = () => {
       mainSheetData.push([]);
       mainSheetData.push(["SUMMARY"]);
       mainSheetData.push([]);
-      
+
       // Calculate totals
       const totalInsuredValue = certificatesData.reduce(
-        (sum, cert) => sum + (cert.InsuredValue || 0), 0
+        (sum, cert) => sum + (cert.InsuredValue || 0),
+        0,
       );
       const totalPremium = certificatesData.reduce(
-        (sum, cert) => sum + (cert.GrossPrenium || 0), 0
+        (sum, cert) => sum + (cert.GrossPrenium || 0),
+        0,
       );
-      
+
       mainSheetData.push(["Total Certificates:", certificatesData.length]);
       mainSheetData.push(["Total Insured Value:", totalInsuredValue]);
       mainSheetData.push(["Total Premium:", totalPremium]);
-      mainSheetData.push(["Average Rate:", 
-        `${(certificatesData.reduce((sum, cert) => sum + (cert.Rate || 0), 0) / certificatesData.length * 100).toFixed(2)}%`
+      mainSheetData.push([
+        "Average Rate:",
+        `${((certificatesData.reduce((sum, cert) => sum + (cert.Rate || 0), 0) / certificatesData.length) * 100).toFixed(2)}%`,
       ]);
 
       // Create main worksheet
@@ -250,25 +256,25 @@ const CertificatePeriodReport = () => {
 
       // Set column widths
       const colWidths = [
-        { wch: 12 },  // Date
-        { wch: 35 },  // Full Name
-        { wch: 20 },  // Policy No
-        { wch: 20 },  // Certificate No
-        { wch: 15 },  // Insured Value
-        { wch: 15 },  // Premium
-        { wch: 10 },  // Rate %
-        { wch: 15 },  // From
-        { wch: 15 },  // To
-        { wch: 40 },  // Description
-        { wch: 12 },  // Status
-        { wch: 15 },  // Broker ID
-        { wch: 15 },  // Transaction Date
-        { wch: 20 },  // Form M No
-        { wch: 30 },  // Remarks
-        { wch: 15 },  // Phone
-        { wch: 30 },  // Email
+        { wch: 12 }, // Date
+        { wch: 35 }, // Full Name
+        { wch: 20 }, // Policy No
+        { wch: 20 }, // Certificate No
+        { wch: 15 }, // Insured Value
+        { wch: 15 }, // Premium
+        { wch: 10 }, // Rate %
+        { wch: 15 }, // From
+        { wch: 15 }, // To
+        { wch: 40 }, // Description
+        { wch: 12 }, // Status
+        { wch: 15 }, // Broker ID
+        { wch: 15 }, // Transaction Date
+        { wch: 20 }, // Form M No
+        { wch: 30 }, // Remarks
+        { wch: 15 }, // Phone
+        { wch: 30 }, // Email
       ];
-      ws['!cols'] = colWidths;
+      ws["!cols"] = colWidths;
 
       // Add worksheet to workbook
       XLSX.utils.book_append_sheet(wb, ws, "Certificate Report");
@@ -277,7 +283,7 @@ const CertificatePeriodReport = () => {
       const detailedSheetData = [];
       detailedSheetData.push(["DETAILED CERTIFICATE DATA"]);
       detailedSheetData.push([]);
-      
+
       // Detailed headers
       const detailedHeaders = [
         "Certificate No",
@@ -304,7 +310,7 @@ const CertificatePeriodReport = () => {
         "Vehicle Model",
         "Address",
         "Additional Info",
-        "Clause Type"
+        "Clause Type",
       ];
       detailedSheetData.push(detailedHeaders);
 
@@ -335,7 +341,7 @@ const CertificatePeriodReport = () => {
           cert.Field3 || "",
           cert.Field1 || "",
           cert.Field4 || "",
-          cert.Field106 || ""
+          cert.Field106 || "",
         ]);
       });
 
@@ -349,7 +355,6 @@ const CertificatePeriodReport = () => {
       XLSX.writeFile(wb, filename);
 
       toast.success(`Excel report "${filename}" downloaded successfully!`);
-
     } catch (error) {
       console.error("Error generating report:", error);
       toast.dismiss();
@@ -422,7 +427,7 @@ const CertificatePeriodReport = () => {
               </p>
             </div>
           </div>
-          
+
           {dataCount > 0 && (
             <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3">
               <div className="flex items-center space-x-2">
@@ -444,9 +449,7 @@ const CertificatePeriodReport = () => {
               <FaFilter className="text-blue-600" />
               <span>Select Report Date Range</span>
             </h3>
-            <div className="text-sm text-gray-500">
-              Format: MM-DD-YYYY
-            </div>
+            <div className="text-sm text-gray-500">Format: MM-DD-YYYY</div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">

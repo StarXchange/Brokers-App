@@ -13,7 +13,42 @@ import {
   FiUserCheck,
   FiUserX,
   FiUsers,
+  FiLock,
 } from "react-icons/fi";
+import CryptoJS from "crypto-js";
+import { getApiBaseUrl } from "../../utils/config";
+
+// AccessDenied Component
+const AccessDenied = ({ message }) => {
+  return (
+    <div className="min-h-[400px] bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-2xl">
+        <div className="relative overflow-hidden bg-white rounded-2xl shadow-xl border border-gray-200">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500" />
+
+          <div className="p-8 sm:p-10">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center">
+                  <FiLock className="w-7 h-7 text-red-600" />
+                </div>
+              </div>
+
+              <div className="flex-1">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
+                  Access Denied
+                </h2>
+                <p className="text-gray-600 mt-3">
+                  {message || "You don't have permission to view this content."}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const PermissionsTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,6 +78,88 @@ const PermissionsTab = () => {
   });
   const [loadingUsers, setLoadingUsers] = useState(false);
 
+  // Permission check states
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [currentUserPermissions, setCurrentUserPermissions] = useState([]);
+  const [showAssignAccessDenied, setShowAssignAccessDenied] = useState(false);
+  const [showRevokeAccessDenied, setShowRevokeAccessDenied] = useState(false);
+
+  // Helper to read permissions from storage
+  const readPermissionsFromStorage = () => {
+    try {
+      // Try reading from localStorage.user
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        // Try plain JSON first
+        if (userStr.trim().startsWith("{")) {
+          try {
+            const userData = JSON.parse(userStr);
+            const perms = userData?.permissions || [];
+            if (Array.isArray(perms)) return perms;
+          } catch {
+            // Not plain JSON
+          }
+        }
+
+        // Try decrypting
+        try {
+          const bytes = CryptoJS.AES.decrypt(userStr, "your-secret-key");
+          const decryptedStr = bytes.toString(CryptoJS.enc.Utf8);
+          if (decryptedStr) {
+            const userData = JSON.parse(decryptedStr);
+            const perms = userData?.permissions || [];
+            if (Array.isArray(perms)) return perms;
+          }
+        } catch {
+          // Decryption failed
+        }
+      }
+
+      // Fallback: try userPermissions
+      const permsStr = localStorage.getItem("userPermissions");
+      if (permsStr) {
+        try {
+          const perms = JSON.parse(permsStr);
+          if (Array.isArray(perms)) return perms;
+        } catch {
+          // ignore
+        }
+      }
+
+      // Fallback: try permissions
+      const permsStr2 = localStorage.getItem("permissions");
+      if (permsStr2) {
+        try {
+          const perms = JSON.parse(permsStr2);
+          if (Array.isArray(perms)) return perms;
+        } catch {
+          // ignore
+        }
+      }
+
+      return [];
+    } catch (e) {
+      console.error("Error reading permissions:", e);
+      return [];
+    }
+  };
+
+  // Check permissions on mount
+  useEffect(() => {
+    const perms = readPermissionsFromStorage();
+    setCurrentUserPermissions(perms);
+    setCheckingAccess(false);
+  }, []);
+
+  // Permission check helpers
+  const hasPermission = (permissionName) => {
+    return currentUserPermissions.includes(permissionName);
+  };
+
+  const canViewPermissions = hasPermission("Permission.View");
+  const canAssignPermission = hasPermission("Permission.Assign");
+  const canRevokePermission = hasPermission("Permission.Revoke");
+
   // Fetch permissions from API
   const fetchPermissions = async () => {
     setLoading(true);
@@ -54,16 +171,13 @@ const PermissionsTab = () => {
         throw new Error("No authentication token found.");
       }
 
-      const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/permissions",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Auth/permissions`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -88,16 +202,13 @@ const PermissionsTab = () => {
       }
 
       // Using the correct users endpoint
-      const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/users",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Auth/users`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -126,7 +237,7 @@ const PermissionsTab = () => {
         console.log(
           "Users loaded (fallback):",
           usersWithUserType.length,
-          "users"
+          "users",
         );
       } else {
         throw new Error("Invalid response format from users API");
@@ -148,14 +259,14 @@ const PermissionsTab = () => {
       }
 
       const response = await fetch(
-        `https://gibsbrokersapi.newgibsonline.com/api/Auth/user-permissions/${userId}`,
+        `${getApiBaseUrl()}/Auth/user-permissions/${userId}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
@@ -211,7 +322,7 @@ const PermissionsTab = () => {
 
       // Log the exact URL and headers
       console.log(
-        "Making request to: https://gibsbrokersapi.newgibsonline.com/api/Auth/assign-permission"
+        `Making request to: ${getApiBaseUrl()}/Auth/assign-permission`,
       );
       console.log("Headers:", {
         "Content-Type": "application/json",
@@ -219,7 +330,7 @@ const PermissionsTab = () => {
       });
 
       const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/assign-permission",
+        `${getApiBaseUrl()}/Auth/assign-permission`,
         {
           method: "POST",
           headers: {
@@ -227,14 +338,14 @@ const PermissionsTab = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(requestBody),
-        }
+        },
       );
 
       console.log("Response status:", response.status);
       console.log("Response ok:", response.ok);
       console.log(
         "Response headers:",
-        Object.fromEntries(response.headers.entries())
+        Object.fromEntries(response.headers.entries()),
       );
 
       // Try to read the response text first
@@ -279,10 +390,6 @@ const PermissionsTab = () => {
   };
 
   // REVOKE PERMISSION FUNCTION
-  const openRevokeForm = () => {
-    setShowRevokeForm(true);
-  };
-
   const closeRevokeForm = () => {
     setShowRevokeForm(false);
     setRevokeForm({
@@ -326,7 +433,7 @@ const PermissionsTab = () => {
       console.log("Revoking permission with data:", requestBody);
 
       const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/revoke-permission",
+        `${getApiBaseUrl()}/Auth/revoke-permission`,
         {
           method: "POST",
           headers: {
@@ -334,13 +441,13 @@ const PermissionsTab = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(requestBody),
-        }
+        },
       );
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
+          errorData.message || `HTTP error! status: ${response.status}`,
         );
       }
 
@@ -368,14 +475,14 @@ const PermissionsTab = () => {
         ?.toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
       permission.module?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      permission.action?.toLowerCase().includes(searchQuery.toLowerCase())
+      permission.action?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Pagination logic
   const totalPages = Math.ceil(filteredPermissions.length / permissionsPerPage);
   const currentPermissions = filteredPermissions.slice(
     (currentPage - 1) * permissionsPerPage,
-    currentPage * permissionsPerPage
+    currentPage * permissionsPerPage,
   );
 
   // Initial permission form state
@@ -415,8 +522,7 @@ const PermissionsTab = () => {
         throw new Error("No authentication token found");
       }
 
-      const url =
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/permissions";
+      const url = `${getApiBaseUrl()}/Auth/permissions`;
       const method = editingPermission ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -435,7 +541,7 @@ const PermissionsTab = () => {
       setSuccess(
         editingPermission
           ? "Permission updated successfully!"
-          : "Permission created successfully!"
+          : "Permission created successfully!",
       );
       fetchPermissions();
       closeForm();
@@ -457,13 +563,13 @@ const PermissionsTab = () => {
       }
 
       const response = await fetch(
-        `https://gibsbrokersapi.newgibsonline.com/api/Auth/permissions/${permissionId}`,
+        `${getApiBaseUrl()}/Auth/permissions/${permissionId}`,
         {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -488,10 +594,6 @@ const PermissionsTab = () => {
     setPermissionForm(permission);
     setEditingPermission({ ...permission, permissionID: 0 });
     setShowPermissionForm(true);
-  };
-
-  const openAssignmentForm = () => {
-    setShowAssignmentForm(true);
   };
 
   const closeForm = () => {
@@ -525,6 +627,40 @@ const PermissionsTab = () => {
       return () => clearTimeout(timer);
     }
   }, [error, success]);
+
+  // Show loading while checking access
+  if (checkingAccess) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Show Access Denied if no Permission.View permission
+  if (!canViewPermissions) {
+    return (
+      <AccessDenied message="You don't have permission to view permissions." />
+    );
+  }
+
+  // Handler for Assign Permission button
+  const handleAssignClick = () => {
+    if (!canAssignPermission) {
+      setShowAssignAccessDenied(true);
+    } else {
+      setShowAssignmentForm(true);
+    }
+  };
+
+  // Handler for Revoke Permission button
+  const handleRevokeClick = () => {
+    if (!canRevokePermission) {
+      setShowRevokeAccessDenied(true);
+    } else {
+      setShowRevokeForm(true);
+    }
+  };
 
   return (
     <div>
@@ -580,7 +716,7 @@ const PermissionsTab = () => {
           </button>
           <button
             className="flex items-center bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-2 rounded-lg"
-            onClick={openAssignmentForm}
+            onClick={handleAssignClick}
             disabled={loading}
           >
             <FiUserCheck className="mr-2" />
@@ -588,7 +724,7 @@ const PermissionsTab = () => {
           </button>
           <button
             className="flex items-center bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-2 rounded-lg"
-            onClick={openRevokeForm}
+            onClick={handleRevokeClick}
             disabled={loading}
           >
             <FiUserX className="mr-2" />
@@ -662,12 +798,12 @@ const PermissionsTab = () => {
                             permission.action === "Create"
                               ? "bg-green-100 text-green-800"
                               : permission.action === "Read"
-                              ? "bg-blue-100 text-blue-800"
-                              : permission.action === "Update"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : permission.action === "Delete"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-purple-100 text-purple-800"
+                                ? "bg-blue-100 text-blue-800"
+                                : permission.action === "Update"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : permission.action === "Delete"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-purple-100 text-purple-800"
                           }`}
                         >
                           {permission.action}
@@ -743,7 +879,7 @@ const PermissionsTab = () => {
               <span className="font-medium">
                 {Math.min(
                   currentPage * permissionsPerPage,
-                  filteredPermissions.length
+                  filteredPermissions.length,
                 )}
               </span>{" "}
               of{" "}
@@ -1272,12 +1408,12 @@ const PermissionsTab = () => {
                                       permission.action === "Create"
                                         ? "bg-green-100 text-green-800"
                                         : permission.action === "Read"
-                                        ? "bg-blue-100 text-blue-800"
-                                        : permission.action === "Update"
-                                        ? "bg-yellow-100 text-yellow-800"
-                                        : permission.action === "Delete"
-                                        ? "bg-red-100 text-red-800"
-                                        : "bg-purple-100 text-purple-800"
+                                          ? "bg-blue-100 text-blue-800"
+                                          : permission.action === "Update"
+                                            ? "bg-yellow-100 text-yellow-800"
+                                            : permission.action === "Delete"
+                                              ? "bg-red-100 text-red-800"
+                                              : "bg-purple-100 text-purple-800"
                                     }`}
                                   >
                                     {permission.action}
@@ -1328,6 +1464,78 @@ const PermissionsTab = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Access Denied Modal for Assign Permission */}
+      {showAssignAccessDenied && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500" />
+
+            <div className="p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="flex-shrink-0">
+                  <div className="w-14 h-14 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center">
+                    <FiLock className="w-6 h-6 text-red-600" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Access Denied
+                  </h3>
+                  <p className="text-gray-600">
+                    You don't have permission to assign permissions.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowAssignAccessDenied(false)}
+                  className="px-6 py-2.5 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Access Denied Modal for Revoke Permission */}
+      {showRevokeAccessDenied && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500" />
+
+            <div className="p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="flex-shrink-0">
+                  <div className="w-14 h-14 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center">
+                    <FiLock className="w-6 h-6 text-red-600" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Access Denied
+                  </h3>
+                  <p className="text-gray-600">
+                    You don't have permission to revoke permissions.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowRevokeAccessDenied(false)}
+                  className="px-6 py-2.5 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

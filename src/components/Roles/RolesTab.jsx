@@ -9,11 +9,13 @@ import {
   FiX,
   FiUsers,
   FiKey,
+  FiLock,
 } from "react-icons/fi";
+import CryptoJS from "crypto-js";
+import { getApiBaseUrl } from "../../utils/config";
 
-const ROLES_API_URL = "https://gibsbrokersapi.newgibsonline.com/api/Auth/roles";
-const PERMISSIONS_API_URL =
-  "https://gibsbrokersapi.newgibsonline.com/api/Auth/permissions";
+const ROLES_API_URL = `${getApiBaseUrl()}/Auth/roles`;
+const PERMISSIONS_API_URL = `${getApiBaseUrl()}/Auth/permissions`;
 
 const readResponseBodySafely = async (response) => {
   try {
@@ -49,7 +51,7 @@ const requestJson = async (url, options = {}) => {
         throw new Error("Access Denied");
       }
       throw new Error(
-        backendMessage?.trim() || `HTTP error! status: ${response.status}`
+        backendMessage?.trim() || `HTTP error! status: ${response.status}`,
       );
     }
 
@@ -67,11 +69,43 @@ const requestJson = async (url, options = {}) => {
       String(err.message).includes("Failed to fetch")
     ) {
       throw new Error(
-        "Network/CORS error: the browser couldn't reach the API (check API availability, HTTPS, and CORS)."
+        "Network/CORS error: the browser couldn't reach the API (check API availability, HTTPS, and CORS).",
       );
     }
     throw err;
   }
+};
+
+// AccessDenied Component
+const AccessDenied = ({ message }) => {
+  return (
+    <div className="min-h-[400px] bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-2xl">
+        <div className="relative overflow-hidden bg-white rounded-2xl shadow-xl border border-gray-200">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500" />
+
+          <div className="p-8 sm:p-10">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center">
+                  <FiLock className="w-7 h-7 text-red-600" />
+                </div>
+              </div>
+
+              <div className="flex-1">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
+                  Access Denied
+                </h2>
+                <p className="text-gray-600 mt-3">
+                  {message || "You don't have permission to view this content."}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const RolesTab = () => {
@@ -103,7 +137,87 @@ const RolesTab = () => {
     permissionIds: [],
   });
 
+  // Permission check states
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [userPermissions, setUserPermissions] = useState([]);
+
   const rolesPerPage = 10;
+
+  // Helper to read permissions from storage
+  const readPermissionsFromStorage = () => {
+    try {
+      // Try reading from localStorage.user
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        // Try plain JSON first
+        if (userStr.trim().startsWith("{")) {
+          try {
+            const userData = JSON.parse(userStr);
+            const perms = userData?.permissions || [];
+            if (Array.isArray(perms)) return perms;
+          } catch {
+            // Not plain JSON
+          }
+        }
+
+        // Try decrypting
+        try {
+          const bytes = CryptoJS.AES.decrypt(userStr, "your-secret-key");
+          const decryptedStr = bytes.toString(CryptoJS.enc.Utf8);
+          if (decryptedStr) {
+            const userData = JSON.parse(decryptedStr);
+            const perms = userData?.permissions || [];
+            if (Array.isArray(perms)) return perms;
+          }
+        } catch {
+          // Decryption failed
+        }
+      }
+
+      // Fallback: try userPermissions
+      const permsStr = localStorage.getItem("userPermissions");
+      if (permsStr) {
+        try {
+          const perms = JSON.parse(permsStr);
+          if (Array.isArray(perms)) return perms;
+        } catch {
+          // ignore
+        }
+      }
+
+      // Fallback: try permissions
+      const permsStr2 = localStorage.getItem("permissions");
+      if (permsStr2) {
+        try {
+          const perms = JSON.parse(permsStr2);
+          if (Array.isArray(perms)) return perms;
+        } catch {
+          // ignore
+        }
+      }
+
+      return [];
+    } catch (e) {
+      console.error("Error reading permissions:", e);
+      return [];
+    }
+  };
+
+  // Check permissions on mount
+  useEffect(() => {
+    const perms = readPermissionsFromStorage();
+    setUserPermissions(perms);
+    setCheckingAccess(false);
+  }, []);
+
+  // Permission check helpers
+  const hasPermission = (permissionName) => {
+    return userPermissions.includes(permissionName);
+  };
+
+  const canViewRoles = hasPermission("Role.View");
+  const canUpdateRole = hasPermission("Role.Update");
+  const canDeleteRole = hasPermission("Role.Delete");
 
   const fetchPermissions = async () => {
     setPermissionsLoading(true);
@@ -338,7 +452,7 @@ const RolesTab = () => {
   const handleDeleteRole = async (role) => {
     if (role?.isSystemRole) return;
     const ok = window.confirm(
-      `Are you sure you want to delete "${getRoleDisplayName(role.roleName)}"?`
+      `Are you sure you want to delete "${getRoleDisplayName(role.roleName)}"?`,
     );
     if (!ok) return;
 
@@ -400,14 +514,14 @@ const RolesTab = () => {
     .filter(
       (role) =>
         role.roleName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        role.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        role.description?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
   // Pagination logic
   const totalPages = Math.ceil(filteredRoles.length / rolesPerPage);
   const currentRoles = filteredRoles.slice(
     (currentPage - 1) * rolesPerPage,
-    currentPage * rolesPerPage
+    currentPage * rolesPerPage,
   );
 
   // Clear messages after 5 seconds
@@ -420,6 +534,20 @@ const RolesTab = () => {
       return () => clearTimeout(timer);
     }
   }, [error, success]);
+
+  // Show loading while checking access
+  if (checkingAccess) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Show Access Denied if no Role.View permission
+  if (!canViewRoles) {
+    return <AccessDenied message="You don't have permission to view roles." />;
+  }
 
   return (
     <div>
@@ -583,12 +711,12 @@ const RolesTab = () => {
                         .filter((p) => p?.isActive !== false)
                         .sort((a, b) =>
                           String(a.permissionName || "").localeCompare(
-                            String(b.permissionName || "")
-                          )
+                            String(b.permissionName || ""),
+                          ),
                         )
                         .map((p) => {
                           const checked = createRoleForm.permissionIds.includes(
-                            p.permissionID
+                            p.permissionID,
                           );
                           return (
                             <label
@@ -775,12 +903,12 @@ const RolesTab = () => {
                         .filter((p) => p?.isActive !== false)
                         .sort((a, b) =>
                           String(a.permissionName || "").localeCompare(
-                            String(b.permissionName || "")
-                          )
+                            String(b.permissionName || ""),
+                          ),
                         )
                         .map((p) => {
                           const checked = editRoleForm.permissionIds.includes(
-                            p.permissionID
+                            p.permissionID,
                           );
                           return (
                             <label
@@ -944,16 +1072,25 @@ const RolesTab = () => {
                       <td className="px-4 py-3">
                         <div className="flex items-center space-x-3">
                           <button
-                            className="text-blue-600 hover:text-blue-900"
+                            className={
+                              !canViewRoles
+                                ? "text-gray-300 cursor-not-allowed"
+                                : "text-blue-600 hover:text-blue-900"
+                            }
                             onClick={() => handleViewRole(role)}
-                            title="View Role Details"
+                            title={
+                              !canViewRoles
+                                ? "No permission to view role details"
+                                : "View Role Details"
+                            }
+                            disabled={!canViewRoles}
                           >
                             <FiEye size={16} />
                           </button>
 
                           <button
                             className={
-                              role.isSystemRole
+                              role.isSystemRole || !canUpdateRole
                                 ? "text-gray-300 cursor-not-allowed"
                                 : "text-green-600 hover:text-green-900"
                             }
@@ -961,16 +1098,18 @@ const RolesTab = () => {
                             title={
                               role.isSystemRole
                                 ? "System roles can't be edited"
-                                : "Edit Role"
+                                : !canUpdateRole
+                                  ? "No permission to update roles"
+                                  : "Edit Role"
                             }
-                            disabled={role.isSystemRole}
+                            disabled={role.isSystemRole || !canUpdateRole}
                           >
                             <FiEdit2 size={16} />
                           </button>
 
                           <button
                             className={
-                              role.isSystemRole
+                              role.isSystemRole || !canDeleteRole
                                 ? "text-gray-300 cursor-not-allowed"
                                 : "text-red-600 hover:text-red-900"
                             }
@@ -978,9 +1117,11 @@ const RolesTab = () => {
                             title={
                               role.isSystemRole
                                 ? "System roles can't be deleted"
-                                : "Delete Role"
+                                : !canDeleteRole
+                                  ? "No permission to delete roles"
+                                  : "Delete Role"
                             }
-                            disabled={role.isSystemRole}
+                            disabled={role.isSystemRole || !canDeleteRole}
                           >
                             <FiTrash2 size={16} />
                           </button>
@@ -1100,7 +1241,7 @@ const RolesTab = () => {
                       </span>
                       <p className="text-gray-900">
                         {new Date(
-                          selectedRole.createdDate
+                          selectedRole.createdDate,
                         ).toLocaleDateString()}
                       </p>
                     </div>
@@ -1128,7 +1269,7 @@ const RolesTab = () => {
                       <div className="flex flex-wrap gap-1 mt-1">
                         {[
                           ...new Set(
-                            selectedRole.permissions?.map((p) => p.module)
+                            selectedRole.permissions?.map((p) => p.module),
                           ),
                         ].map((module) => (
                           <span
@@ -1182,12 +1323,12 @@ const RolesTab = () => {
                                   permission.action === "Create"
                                     ? "bg-green-100 text-green-800"
                                     : permission.action === "Read"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : permission.action === "Update"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : permission.action === "Delete"
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-purple-100 text-purple-800"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : permission.action === "Update"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : permission.action === "Delete"
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-purple-100 text-purple-800"
                                 }`}
                               >
                                 {permission.action}

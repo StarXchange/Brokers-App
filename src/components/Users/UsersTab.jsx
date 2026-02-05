@@ -8,9 +8,44 @@ import {
   FiMinus,
   FiCheck,
   FiUserPlus,
+  FiLock,
 } from "react-icons/fi";
 import { FiShield } from "react-icons/fi";
 import Addnewuser from "./Addnewuser";
+import CryptoJS from "crypto-js";
+import { getApiBaseUrl } from "../../utils/config";
+
+// AccessDenied Component
+const AccessDenied = ({ message }) => {
+  return (
+    <div className="min-h-[400px] bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-2xl">
+        <div className="relative overflow-hidden bg-white rounded-2xl shadow-xl border border-gray-200">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500" />
+
+          <div className="p-8 sm:p-10">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center">
+                  <FiLock className="w-7 h-7 text-red-600" />
+                </div>
+              </div>
+
+              <div className="flex-1">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
+                  Access Denied
+                </h2>
+                <p className="text-gray-600 mt-3">
+                  {message || "You don't have permission to view this content."}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const UsersTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,42 +78,47 @@ const UsersTab = () => {
   const [replaceExistingRoles, setReplaceExistingRoles] = useState(true);
   const [assigningRoles, setAssigningRoles] = useState(false);
 
-  const USERS_API = "https://gibsbrokersapi.newgibsonline.com/api/Auth/users";
-  const PERMISSIONS_API =
-    "https://gibsbrokersapi.newgibsonline.com/api/Auth/permissions";
-  const USER_PERMISSIONS_API =
-    "https://gibsbrokersapi.newgibsonline.com/api/Auth/user-permissions";
-  const ASSIGN_PERMISSION_API =
-    "https://gibsbrokersapi.newgibsonline.com/api/Auth/assign-permission";
-  const REVOKE_PERMISSION_API =
-    "https://gibsbrokersapi.newgibsonline.com/api/Auth/revoke-permission";
+  // Permission check states
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [currentUserPermissions, setCurrentUserPermissions] = useState([]);
+  const [showCreateUserAccessDenied, setShowCreateUserAccessDenied] =
+    useState(false);
 
-  const ROLES_API = "https://gibsbrokersapi.newgibsonline.com/api/Auth/roles";
+  const USERS_API = `${getApiBaseUrl()}/Auth/users`;
+  const PERMISSIONS_API = `${getApiBaseUrl()}/Auth/permissions`;
+  const USER_PERMISSIONS_API = `${getApiBaseUrl()}/Auth/user-permissions`;
+  const ASSIGN_PERMISSION_API = `${getApiBaseUrl()}/Auth/assign-permission`;
+  const REVOKE_PERMISSION_API = `${getApiBaseUrl()}/Auth/revoke-permission`;
+  const ROLES_API = `${getApiBaseUrl()}/Auth/roles`;
 
   // ========== LOCAL STORAGE HELPER FUNCTIONS ==========
-  
+
   // Save user status to localStorage
-  const saveUserStatusToStorage = (userId, status, approvalStatus = '') => {
+  const saveUserStatusToStorage = (userId, status, approvalStatus = "") => {
     try {
-      const storedStatuses = JSON.parse(localStorage.getItem('userStatuses') || '{}');
+      const storedStatuses = JSON.parse(
+        localStorage.getItem("userStatuses") || "{}",
+      );
       storedStatuses[userId] = {
         status,
         approvalStatus,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
-      localStorage.setItem('userStatuses', JSON.stringify(storedStatuses));
+      localStorage.setItem("userStatuses", JSON.stringify(storedStatuses));
     } catch (error) {
-      console.error('Error saving user status:', error);
+      console.error("Error saving user status:", error);
     }
   };
 
   // Get user status from localStorage
   const getUserStatusFromStorage = (userId) => {
     try {
-      const storedStatuses = JSON.parse(localStorage.getItem('userStatuses') || '{}');
+      const storedStatuses = JSON.parse(
+        localStorage.getItem("userStatuses") || "{}",
+      );
       return storedStatuses[userId]?.status || null;
     } catch (error) {
-      console.error('Error getting user status:', error);
+      console.error("Error getting user status:", error);
       return null;
     }
   };
@@ -86,17 +126,19 @@ const UsersTab = () => {
   // Get user approvalStatus from localStorage
   const getUserApprovalStatusFromStorage = (userId) => {
     try {
-      const storedStatuses = JSON.parse(localStorage.getItem('userStatuses') || '{}');
+      const storedStatuses = JSON.parse(
+        localStorage.getItem("userStatuses") || "{}",
+      );
       return storedStatuses[userId]?.approvalStatus || null;
     } catch (error) {
-      console.error('Error getting approval status:', error);
+      console.error("Error getting approval status:", error);
       return null;
     }
   };
 
   // Clear stored statuses (for testing)
   const clearStoredStatuses = () => {
-    localStorage.removeItem('userStatuses');
+    localStorage.removeItem("userStatuses");
     fetchUsers(); // Refresh the list
   };
 
@@ -111,6 +153,81 @@ const UsersTab = () => {
       .filter(Boolean)
       .join(", ");
   };
+
+  // Helper to read permissions from storage
+  const readPermissionsFromStorage = () => {
+    try {
+      // Try reading from localStorage.user
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        // Try plain JSON first
+        if (userStr.trim().startsWith("{")) {
+          try {
+            const userData = JSON.parse(userStr);
+            const perms = userData?.permissions || [];
+            if (Array.isArray(perms)) return perms;
+          } catch {
+            // Not plain JSON
+          }
+        }
+
+        // Try decrypting
+        try {
+          const bytes = CryptoJS.AES.decrypt(userStr, "your-secret-key");
+          const decryptedStr = bytes.toString(CryptoJS.enc.Utf8);
+          if (decryptedStr) {
+            const userData = JSON.parse(decryptedStr);
+            const perms = userData?.permissions || [];
+            if (Array.isArray(perms)) return perms;
+          }
+        } catch {
+          // Decryption failed
+        }
+      }
+
+      // Fallback: try userPermissions
+      const permsStr = localStorage.getItem("userPermissions");
+      if (permsStr) {
+        try {
+          const perms = JSON.parse(permsStr);
+          if (Array.isArray(perms)) return perms;
+        } catch {
+          // ignore
+        }
+      }
+
+      // Fallback: try permissions
+      const permsStr2 = localStorage.getItem("permissions");
+      if (permsStr2) {
+        try {
+          const perms = JSON.parse(permsStr2);
+          if (Array.isArray(perms)) return perms;
+        } catch {
+          // ignore
+        }
+      }
+
+      return [];
+    } catch (e) {
+      console.error("Error reading permissions:", e);
+      return [];
+    }
+  };
+
+  // Check permissions on mount
+  useEffect(() => {
+    const perms = readPermissionsFromStorage();
+    setCurrentUserPermissions(perms);
+    setCheckingAccess(false);
+  }, []);
+
+  // Permission check helpers
+  const hasPermission = (permissionName) => {
+    return currentUserPermissions.includes(permissionName);
+  };
+
+  const canViewUsers = hasPermission("User.View");
+  const canCreateUser = hasPermission("SystemUser.Create");
 
   // Fetch users from API
   const fetchUsers = async () => {
@@ -143,7 +260,7 @@ const UsersTab = () => {
           errorData.message ||
             errorData.error ||
             errorText ||
-            `HTTP error! status: ${response.status}`
+            `HTTP error! status: ${response.status}`,
         );
       }
 
@@ -161,7 +278,7 @@ const UsersTab = () => {
       } else {
         console.warn(
           "Unexpected API response format, using empty array:",
-          data
+          data,
         );
         usersArray = [];
       }
@@ -169,23 +286,27 @@ const UsersTab = () => {
       // Transform users to ensure consistent field names
       const transformedUsers = usersArray.map((user) => {
         const userId = user.userId || user.userid;
-        
+
         // Get stored status from localStorage first
         const storedStatus = getUserStatusFromStorage(userId);
         const storedApprovalStatus = getUserApprovalStatusFromStorage(userId);
-        
+
         // Determine the final status
         let finalStatus = "Active"; // Default
-        
+
         // Priority: localStorage > API approvalStatus > API status
         if (storedStatus) {
           finalStatus = storedStatus;
         } else if (user.approvalStatus) {
           // Map approvalStatus from API to frontend status
-          finalStatus = user.approvalStatus === "Rejected" ? "Inactive" : 
-                        user.approvalStatus === "Approved" ? "Active" : 
-                        user.approvalStatus === "Pending" ? "Pending" : 
-                        "Active";
+          finalStatus =
+            user.approvalStatus === "Rejected"
+              ? "Inactive"
+              : user.approvalStatus === "Approved"
+                ? "Active"
+                : user.approvalStatus === "Pending"
+                  ? "Pending"
+                  : "Active";
         } else if (user.status) {
           finalStatus = user.status;
         }
@@ -301,7 +422,7 @@ const UsersTab = () => {
     setSelectedRoleIds((prev) =>
       prev.includes(roleID)
         ? prev.filter((id) => id !== roleID)
-        : [...prev, roleID]
+        : [...prev, roleID],
     );
   };
 
@@ -326,8 +447,8 @@ const UsersTab = () => {
       };
 
       const response = await fetch(
-        `https://gibsbrokersapi.newgibsonline.com/api/Auth/users/${encodeURIComponent(
-          String(userId)
+        `${getApiBaseUrl()}/Auth/users/${encodeURIComponent(
+          String(userId),
         )}/roles`,
         {
           method: "POST",
@@ -336,7 +457,7 @@ const UsersTab = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -368,34 +489,31 @@ const UsersTab = () => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No authentication token found.");
 
-
       const requestBody = {
         userId: String(user.userId || user.userid),
         userType: user.userType || user.entityType || "User",
-        approvalNotes: "Approved via admin panel"
+        approvalNotes: "Approved via admin panel",
       };
 
       // Optimistic update
-      setUsers(prev => prev.map(u => 
-        (u.userId || u.userid) === (user.userId || user.userid)
-          ? { 
-              ...u, 
-              status: "Active",
-              approvalStatus: "Approved",
-              approvedDate: new Date().toISOString()
-            }
-          : u
-      ));
-
-      // Save to localStorage
-      saveUserStatusToStorage(
-        user.userId || user.userid, 
-        "Active", 
-        "Approved"
+      setUsers((prev) =>
+        prev.map((u) =>
+          (u.userId || u.userid) === (user.userId || user.userid)
+            ? {
+                ...u,
+                status: "Active",
+                approvalStatus: "Approved",
+                approvedDate: new Date().toISOString(),
+              }
+            : u,
+        ),
       );
 
+      // Save to localStorage
+      saveUserStatusToStorage(user.userId || user.userid, "Active", "Approved");
+
       const response = await fetch(
-        'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/approve',
+        `${getApiBaseUrl()}/Auth/approvals/approve`,
         {
           method: "POST",
           headers: {
@@ -403,31 +521,34 @@ const UsersTab = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(requestBody),
-        }
+        },
       );
 
       if (!response.ok) {
         // Revert on error
-        setUsers(prev => prev.map(u => 
-          (u.userId || u.userid) === (user.userId || user.userid) ? user : u
-        ));
-        
+        setUsers((prev) =>
+          prev.map((u) =>
+            (u.userId || u.userid) === (user.userId || user.userid) ? user : u,
+          ),
+        );
+
         const errorText = await response.text();
         throw new Error(`Failed to approve user: ${errorText}`);
       }
 
       const result = await response.json();
       console.log("Approve successful:", result);
-      
+
       setError("User approved successfully");
       setTimeout(() => setError(null), 3000);
-
     } catch (err) {
       console.error("Error approving user:", err);
       // Revert on error
-      setUsers(prev => prev.map(u => 
-        (u.userId || u.userid) === (user.userId || user.userid) ? user : u
-      ));
+      setUsers((prev) =>
+        prev.map((u) =>
+          (u.userId || u.userid) === (user.userId || user.userid) ? user : u,
+        ),
+      );
       alert(err.message || "Failed to approve user. Please try again.");
     }
   };
@@ -438,66 +559,67 @@ const UsersTab = () => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No authentication token found.");
 
-
       const requestBody = {
         userId: String(user.userId || user.userid),
         userType: user.userType || user.entityType || "User",
-        rejectionReason: "Rejected via admin panel"
+        rejectionReason: "Rejected via admin panel",
       };
 
       // Optimistic update
-      setUsers(prev => prev.map(u => 
-        (u.userId || u.userid) === (user.userId || user.userid)
-          ? { 
-              ...u, 
-              status: "Inactive",
-              approvalStatus: "Rejected",
-              approvedDate: new Date().toISOString()
-            }
-          : u
-      ));
+      setUsers((prev) =>
+        prev.map((u) =>
+          (u.userId || u.userid) === (user.userId || user.userid)
+            ? {
+                ...u,
+                status: "Inactive",
+                approvalStatus: "Rejected",
+                approvedDate: new Date().toISOString(),
+              }
+            : u,
+        ),
+      );
 
       // Save to localStorage
       saveUserStatusToStorage(
-        user.userId || user.userid, 
-        "Inactive", 
-        "Rejected"
+        user.userId || user.userid,
+        "Inactive",
+        "Rejected",
       );
 
-      const response = await fetch(
-        'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/reject',
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Auth/approvals/reject`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       if (!response.ok) {
         // Revert on error
-        setUsers(prev => prev.map(u => 
-          (u.userId || u.userid) === (user.userId || user.userid) ? user : u
-        ));
-        
+        setUsers((prev) =>
+          prev.map((u) =>
+            (u.userId || u.userid) === (user.userId || user.userid) ? user : u,
+          ),
+        );
+
         const errorText = await response.text();
         throw new Error(`Failed to reject user: ${errorText}`);
       }
 
       const result = await response.json();
       console.log("Reject successful:", result);
-      
+
       setError("User rejected successfully");
       setTimeout(() => setError(null), 3000);
-
     } catch (err) {
       console.error("Error rejecting user:", err);
       // Revert on error
-      setUsers(prev => prev.map(u => 
-        (u.userId || u.userid) === (user.userId || user.userid) ? user : u
-      ));
+      setUsers((prev) =>
+        prev.map((u) =>
+          (u.userId || u.userid) === (user.userId || user.userid) ? user : u,
+        ),
+      );
       alert(err.message || "Failed to reject user. Please try again.");
     }
   };
@@ -518,7 +640,7 @@ const UsersTab = () => {
       const encodedUserId = encodeURIComponent(cleanUserId);
 
       console.log(
-        `Fetching permissions for userId: "${userId}" -> encoded: "${encodedUserId}"`
+        `Fetching permissions for userId: "${userId}" -> encoded: "${encodedUserId}"`,
       );
 
       const response = await fetch(`${USER_PERMISSIONS_API}/${encodedUserId}`, {
@@ -578,37 +700,36 @@ const UsersTab = () => {
     }
   };
 
-
   // Add this function to your component
-const handleStatusToggle = (user) => {
-  const currentStatus = user.status?.toLowerCase();
-  
-  if (currentStatus === 'pending') {
-    // This shouldn't happen since pending users have separate buttons
-    const choice = window.confirm(
-      `User "${user.username}" is pending approval.\n\nClick OK to approve, Cancel to reject.`
-    );
-    
-    if (choice) {
-      handleApproveUser(user);
-    } else {
-      handleRejectUser(user);
+  const handleStatusToggle = (user) => {
+    const currentStatus = user.status?.toLowerCase();
+
+    if (currentStatus === "pending") {
+      // This shouldn't happen since pending users have separate buttons
+      const choice = window.confirm(
+        `User "${user.username}" is pending approval.\n\nClick OK to approve, Cancel to reject.`,
+      );
+
+      if (choice) {
+        handleApproveUser(user);
+      } else {
+        handleRejectUser(user);
+      }
+      return;
     }
-    return;
-  }
-  
-  if (currentStatus === 'inactive') {
-    // If inactive, activate (approve)
-    if (window.confirm(`Activate user "${user.username}"?`)) {
-      handleApproveUser(user);
+
+    if (currentStatus === "inactive") {
+      // If inactive, activate (approve)
+      if (window.confirm(`Activate user "${user.username}"?`)) {
+        handleApproveUser(user);
+      }
+    } else if (currentStatus === "active") {
+      // If active, deactivate (reject)
+      if (window.confirm(`Deactivate user "${user.username}"?`)) {
+        handleRejectUser(user);
+      }
     }
-  } else if (currentStatus === 'active') {
-    // If active, deactivate (reject)
-    if (window.confirm(`Deactivate user "${user.username}"?`)) {
-      handleRejectUser(user);
-    }
-  }
-};
+  };
 
   // Fetch all available permissions
   const fetchAllPermissions = async () => {
@@ -666,7 +787,7 @@ const handleStatusToggle = (user) => {
       }
 
       const permission = allPermissions.find(
-        (p) => p.permissionID === permissionIdNum
+        (p) => p.permissionID === permissionIdNum,
       );
       if (!permission) {
         throw new Error("Permission not found.");
@@ -692,7 +813,7 @@ const handleStatusToggle = (user) => {
           .json()
           .catch(() => ({ message: "Unknown error" }));
         throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
+          errorData.message || `HTTP error! status: ${response.status}`,
         );
       }
 
@@ -746,7 +867,7 @@ const handleStatusToggle = (user) => {
 
     if (
       !window.confirm(
-        `Are you sure you want to revoke permission: ${permissionName}?`
+        `Are you sure you want to revoke permission: ${permissionName}?`,
       )
     ) {
       return;
@@ -779,7 +900,7 @@ const handleStatusToggle = (user) => {
           .json()
           .catch(() => ({ message: "Unknown error" }));
         throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
+          errorData.message || `HTTP error! status: ${response.status}`,
         );
       }
 
@@ -844,8 +965,31 @@ const handleStatusToggle = (user) => {
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const currentUsers = filteredUsers.slice(
     (currentPage - 1) * usersPerPage,
-    currentPage * usersPerPage
+    currentPage * usersPerPage,
   );
+
+  // Show loading while checking access
+  if (checkingAccess) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Show Access Denied if no User.View permission
+  if (!canViewUsers) {
+    return <AccessDenied message="You don't have permission to view users." />;
+  }
+
+  // Show Access Denied modal for Add User action if no SystemUser.Create permission
+  const handleAddUserClick = () => {
+    if (!canCreateUser) {
+      setShowCreateUserAccessDenied(true);
+    } else {
+      setShowAddUserModal(true);
+    }
+  };
 
   return (
     <div>
@@ -867,7 +1011,7 @@ const handleStatusToggle = (user) => {
         <div className="flex space-x-2">
           <button
             className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg"
-            onClick={() => setShowAddUserModal(true)}
+            onClick={handleAddUserClick}
           >
             <FiUserPlus className="mr-2" />
             Add User
@@ -1003,54 +1147,38 @@ const handleStatusToggle = (user) => {
                           Manage
                         </button>
                       </td>
-                      
-                     {/* Status Column */}
-<td className="px-4 py-3">
-  {user.status?.toLowerCase() === 'pending' ? (
-    <div className="flex gap-2">
-      <button
-        onClick={() => handleApproveUser(user)}
-        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
-      >
-        Approve
-      </button>
-      <button
-        onClick={() => handleRejectUser(user)}
-        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-      >
-        Reject
-      </button>
-    </div>
-  ) : (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={() => handleStatusToggle(user)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          (user.status?.toLowerCase() || "active") === "active"
-            ? "bg-green-500 hover:bg-green-600"
-            : "bg-red-500 hover:bg-red-600"
-        }`}
-      >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-            (user.status?.toLowerCase() || "active") === "active"
-              ? "translate-x-6"
-              : "translate-x-1"
-          }`}
-        />
-      </button>
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        user.status?.toLowerCase() === 'active' 
-          ? 'bg-green-100 text-green-800'
-          : user.status?.toLowerCase() === 'pending'
-          ? 'bg-yellow-100 text-yellow-800'
-          : 'bg-red-100 text-red-800'
-      }`}>
-        {user.status || "Active"}
-      </span>
-    </div>
-  )}
-</td>
+
+                      {/* Status Column */}
+                      <td className="px-4 py-3">
+                        {user.status?.toLowerCase() === "pending" ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleApproveUser(user)}
+                              className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectUser(user)}
+                              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              user.status?.toLowerCase() === "active"
+                                ? "bg-green-100 text-green-800"
+                                : user.status?.toLowerCase() === "pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {user.status || "Active"}
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   ))
                 ) : (
@@ -1112,6 +1240,42 @@ const handleStatusToggle = (user) => {
         onUserAdded={handleUserAdded}
       />
 
+      {/* Access Denied Modal for Add User */}
+      {showCreateUserAccessDenied && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500" />
+
+            <div className="p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="flex-shrink-0">
+                  <div className="w-14 h-14 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center">
+                    <FiLock className="w-6 h-6 text-red-600" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Access Denied
+                  </h3>
+                  <p className="text-gray-600">
+                    You don't have permission to create users.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowCreateUserAccessDenied(false)}
+                  className="px-6 py-2.5 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Assign Roles Modal */}
       {showRolesModal && rolesTargetUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -1167,10 +1331,11 @@ const handleStatusToggle = (user) => {
                     availableRoles
                       .filter((r) => r?.isActive !== false)
                       .filter(
-                        (r) => !["Company", "CompanyAdmin"].includes(r.roleName)
+                        (r) =>
+                          !["Company", "CompanyAdmin"].includes(r.roleName),
                       )
                       .sort((a, b) =>
-                        String(a.roleName).localeCompare(String(b.roleName))
+                        String(a.roleName).localeCompare(String(b.roleName)),
                       )
                       .map((r) => {
                         const checked = selectedRoleIds.includes(r.roleID);
@@ -1399,7 +1564,7 @@ const handleStatusToggle = (user) => {
                   <button
                     onClick={() =>
                       fetchUserPermissions(
-                        selectedUser?.userid || selectedUser?.userId
+                        selectedUser?.userid || selectedUser?.userId,
                       )
                     }
                     className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors"
@@ -1451,17 +1616,17 @@ const handleStatusToggle = (user) => {
                             <button
                               onClick={() => {
                                 const match = allPermissions.find(
-                                  (p) => p.permissionName === permissionName
+                                  (p) => p.permissionName === permissionName,
                                 );
                                 if (!match) {
                                   setError(
-                                    `Can't revoke "${permissionName}" because its Permission ID wasn't found in the permissions list.`
+                                    `Can't revoke "${permissionName}" because its Permission ID wasn't found in the permissions list.`,
                                   );
                                   return;
                                 }
                                 handleRevokePermission(
                                   match.permissionID,
-                                  match.permissionName
+                                  match.permissionName,
                                 );
                               }}
                               disabled={assigningPermission}

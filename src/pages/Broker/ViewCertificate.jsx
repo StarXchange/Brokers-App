@@ -3,6 +3,7 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import { getApiBaseUrl } from "../../utils/config";
 
 const ViewCertificate = () => {
   const { certNo } = useParams();
@@ -50,19 +51,19 @@ const ViewCertificate = () => {
 
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `https://gibsbrokersapi.newgibsonline.com/api/Certificate/motor/${certNo}`,
+          `${getApiBaseUrl()}/Certificate/motor/${certNo}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         setCertificate(response.data);
       } catch (err) {
         console.error("Fetch error:", err);
         setError(
-          err.response?.data?.message || "Failed to fetch certificate details"
+          err.response?.data?.message || "Failed to fetch certificate details",
         );
       } finally {
         setLoading(false);
@@ -75,7 +76,7 @@ const ViewCertificate = () => {
   }, [certNo]);
 
   const handleGoBack = () => {
-   navigate('/brokers/certificates');
+    navigate("/brokers/certificates");
   };
 
   const handleDownloadCertificate = async () => {
@@ -84,22 +85,22 @@ const ViewCertificate = () => {
     if (!certNo) {
       alert("Certificate number not found");
       return;
-    }git 
-    
+    }
+    git;
 
     try {
       const token = localStorage.getItem("token");
-      
+
       // Call the Word document download API
       const response = await fetch(
-        `https://gibsbrokersapi.newgibsonline.com/api/CertificateDocument/download/${certNo}`,
+        `${getApiBaseUrl()}/CertificateDocument/download/${certNo}`,
         {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': '*/*',
+            Authorization: `Bearer ${token}`,
+            Accept: "*/*",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -107,9 +108,9 @@ const ViewCertificate = () => {
       }
 
       // Get the filename from content-disposition header
-      const contentDisposition = response.headers.get('content-disposition');
+      const contentDisposition = response.headers.get("content-disposition");
       let filename = `Certificate_${certNo}.pdf`;
-      
+
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
         if (filenameMatch && filenameMatch[1]) {
@@ -119,17 +120,17 @@ const ViewCertificate = () => {
 
       // Convert response to blob
       const blob = await response.blob();
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
-      
+
       // Trigger download
       link.click();
-      
+
       // Clean up
       setTimeout(() => {
         document.body.removeChild(link);
@@ -137,7 +138,6 @@ const ViewCertificate = () => {
       }, 100);
 
       console.log("Certificate document downloaded successfully!");
-      
     } catch (err) {
       console.error("Certificate download failed", err);
       alert(`Failed to download certificate: ${err.message}`);

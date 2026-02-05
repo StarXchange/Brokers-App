@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { getApiBaseUrl } from "../../utils/config";
 
 const AddCompany = () => {
   const navigate = useNavigate();
@@ -78,23 +79,21 @@ const AddCompany = () => {
         field2: formData.field2,
       };
 
-      await axios.post(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/create-company",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      await axios.post(`${getApiBaseUrl()}/Auth/create-company`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       alert("Company created successfully!");
       navigate("/admin/users/companies", { replace: true });
     } catch (err) {
       console.error("Error creating company", err);
       setError(
-        err.response?.data?.message || err.message || "Failed to create company"
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to create company",
       );
     } finally {
       setLoading(false);

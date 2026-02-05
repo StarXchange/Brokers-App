@@ -37,6 +37,7 @@ import ViewCertificate from "./pages/Broker/ViewCertificate";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import AdminOverview from "./pages/Admin/AdminOverview";
 import Security from "./pages/Admin/Security";
+import Verification from "./pages/Admin/Verification";
 import WelcomeMessage from "./components/WelcomeMessage";
 import HomePage from "./pages/HomePage";
 import Clientlist from "./pages/Company/Clientlist";
@@ -55,7 +56,7 @@ import AdminViewClientDetails from "./pages/Admin/ViewClientDetails";
 import ManageCompanies from "./pages/Admin/ManageCompanies";
 import ViewCompanyDetails from "./pages/Admin/ViewCompanyDetails";
 import AddCompany from "./pages/Admin/AddCompany";
-import Reports from "./components/Reports/CertificatePeriod.jsx"
+import Reports from "./components/Reports/CertificatePeriod.jsx";
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -160,6 +161,7 @@ function AppRoutes() {
           <Route path="dashboard" element={<AdminOverview />} />
           <Route index element={<AdminOverview />} />
           <Route path="security" element={<Security />} />
+          <Route path="verification" element={<Verification />} />
           <Route
             path="change-password"
             element={<ChangePassword userType="admin" />}
@@ -168,9 +170,8 @@ function AppRoutes() {
           {/* Pin Allocation Route - This should be at admin level */}
           <Route path="pin-allocation" element={<PinAllocationSystem />} />
 
-           {/* REPORTS Route - Add this here */}
-  <Route path="reports" element={<Reports />} />
-
+          {/* REPORTS Route - Add this here */}
+          <Route path="reports" element={<Reports />} />
 
           {/* Users Management Routes */}
           <Route path="users">
@@ -189,7 +190,6 @@ function AppRoutes() {
               <Route index element={<ManageCompanies />} />
               <Route path="add" element={<AddCompany />} />
               <Route path=":companyId" element={<ViewCompanyDetails />} />
-             
             </Route>
           </Route>
 
@@ -245,7 +245,6 @@ function AppRoutes() {
             <Route path="view-profile" element={<ViewProfile />} />
             <Route path="credit-notes" element={<CreditNotes />} />
             <Route path="pin-dashboard" element={<BrokerPinDashboard />} />
-           
           </Route>
 
           {/* Client Management Routes */}
@@ -346,70 +345,69 @@ function AppRoutes() {
 
         {/* BROKER Routes */}
         {/* BROKER Routes */}
-<Route
-  path="/brokers/*"
-  element={
-    <ProtectedRoute requiredEntityType="broker">
-      <BrokersDashboard />
-    </ProtectedRoute>
-  }
->
-  {/* Redirect /brokers/dashboard to /brokers */}
-  <Route
-    path="dashboard"
-    element={<Navigate to="/brokers" replace />}
-  />
-
-  {/* Default route when accessing /brokers */}
-  <Route index element={<Navigate to="certificates" replace />} />
-
-  {/* Nested routes for broker dashboard */}
-  <Route path="certificates" element={<BrokerCertificate />} />
-  <Route
-    path="certificates/view/:certNo"
-    element={<ViewCertificate />}
-  />
-  <Route
-    path="certificates/create/marine"
-    element={<CreateNewCertificate userRole="broker" />}
-  />
-  <Route
-    path="certificates/create/motor"
-    element={<CreateMotorPolicy userRole="broker" />}
-  />
-  <Route
-    path="certificates/view/:certId"
-    element={<CreateNewCertificate viewMode={true} userRole="broker" />}
-  />
-  <Route
-    path="certificates/edit/:certId"
-    element={<CreateNewCertificate userRole="broker" />}
-  />
-  <Route path="view-documents" element={<ViewDocuments />} />
-  <Route
-    path="download-certificates"
-    element={
-      <DownloadCertificates userType="broker" userId="BROKER-123" />
-    }
-  />
-  <Route path="view-profile" element={<ViewProfile />} />
-  <Route path="credit-notes" element={<CreditNotes />} />
-  <Route
-    path="change-password"
-    element={<ChangePassword userType="broker" />}
-  />
-  <Route path="pin-dashboard" element={<BrokerPinDashboard />} />
-  <Route path="reports" element={<Reports />} /> {/* ✅ This is now a top-level route */}
-  <Route path="client-management">
-    <Route index element={<ClientList />} />
-    <Route path="add-client" element={<AddClient />} />
-    <Route path=":id" element={<EditClient />} />
-    <Route
-      path="details/:clientId"
-      element={<BrokerViewClientDetails />}
-    />
-  </Route>
-</Route>
+        <Route
+          path="/brokers/*"
+          element={
+            <ProtectedRoute requiredEntityType="broker">
+              <BrokersDashboard />
+            </ProtectedRoute>
+          }
+        >
+          {/* Redirect /brokers/dashboard to /brokers */}
+          <Route
+            path="dashboard"
+            element={<Navigate to="/brokers" replace />}
+          />
+          {/* Default route when accessing /brokers */}
+          <Route index element={<Navigate to="certificates" replace />} />
+          {/* Nested routes for broker dashboard */}
+          <Route path="certificates" element={<BrokerCertificate />} />
+          <Route
+            path="certificates/view/:certNo"
+            element={<ViewCertificate />}
+          />
+          <Route
+            path="certificates/create/marine"
+            element={<CreateNewCertificate userRole="broker" />}
+          />
+          <Route
+            path="certificates/create/motor"
+            element={<CreateMotorPolicy userRole="broker" />}
+          />
+          <Route
+            path="certificates/view/:certId"
+            element={<CreateNewCertificate viewMode={true} userRole="broker" />}
+          />
+          <Route
+            path="certificates/edit/:certId"
+            element={<CreateNewCertificate userRole="broker" />}
+          />
+          <Route path="view-documents" element={<ViewDocuments />} />
+          <Route
+            path="download-certificates"
+            element={
+              <DownloadCertificates userType="broker" userId="BROKER-123" />
+            }
+          />
+          <Route path="view-profile" element={<ViewProfile />} />
+          <Route path="credit-notes" element={<CreditNotes />} />
+          <Route
+            path="change-password"
+            element={<ChangePassword userType="broker" />}
+          />
+          <Route path="pin-dashboard" element={<BrokerPinDashboard />} />
+          <Route path="reports" element={<Reports />} />{" "}
+          {/* ✅ This is now a top-level route */}
+          <Route path="client-management">
+            <Route index element={<ClientList />} />
+            <Route path="add-client" element={<AddClient />} />
+            <Route path=":id" element={<EditClient />} />
+            <Route
+              path="details/:clientId"
+              element={<BrokerViewClientDetails />}
+            />
+          </Route>
+        </Route>
 
         {/* CLIENT Routes */}
         <Route

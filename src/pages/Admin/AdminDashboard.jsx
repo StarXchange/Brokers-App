@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import WelcomeMessage from "../../components/WelcomeMessage";
 import PinAllocationSystem from "../../components/PinAllocation/PinAllocationSystem";
 import Reports from "../../components/Reports/CertificatePeriod";
+import { getApiBaseUrl } from "../../utils/config";
 
 const AdminDashboard = () => {
   const location = useLocation();
@@ -19,7 +20,7 @@ const AdminDashboard = () => {
   const [selectedCerts, setSelectedCerts] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
-  const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
+  const API_BASE_URL = getApiBaseUrl();
 
   // Client proposals state for admin context
   const [proposals, setProposals] = useState([]);
@@ -59,8 +60,11 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (location.pathname.includes("/admin/users")) {
       setActiveDropdown("users");
-    } else if (location.pathname.includes("/admin/security")) {
-      setActiveDropdown("security");
+    } else if (
+      location.pathname.includes("/admin/security") ||
+      location.pathname.includes("/admin/verification")
+    ) {
+      setActiveDropdown("security-management");
     } else if (location.pathname.includes("/admin/pin-allocation")) {
       setActiveDropdown("pin-allocation");
     } else {
@@ -113,7 +117,7 @@ const AdminDashboard = () => {
     setSelectedCerts((prev) =>
       prev.includes(certId)
         ? prev.filter((id) => id !== certId)
-        : [...prev, certId]
+        : [...prev, certId],
     );
   };
 
@@ -545,40 +549,109 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Security Management Section */}
+              {/* Security Management Section - Dropdown */}
               <div className="mb-6">
-                <Link
-                  to="/admin/security"
-                  className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActivePath("/admin/security")
-                      ? "bg-white/15 text-white border-l-4 border-orange-500"
-                      : "text-white hover:bg-white/10 border-l-4 border-transparent"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
+                <button
+                  onClick={() => toggleDropdown("security-management")}
+                  className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-white/90 uppercase tracking-wider hover:text-white hover:bg-white/10 transition-colors duration-200 border-l-4 border-transparent"
                 >
-                  <div
-                    className={`p-1 rounded-md ${
-                      isActivePath("/admin/security")
-                        ? "bg-white/20"
-                        : "group-hover:bg-white/10"
-                    }`}
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                      />
-                    </svg>
-                  </div>
                   <span>Security Management</span>
-                </Link>
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      activeDropdown === "security-management"
+                        ? "rotate-180"
+                        : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                <div
+                  className={`overflow-hidden transition-all duration-300 ${
+                    activeDropdown === "security-management"
+                      ? "max-h-96 opacity-100"
+                      : "max-h-0 opacity-0"
+                  }`}
+                >
+                  <div className="pl-4 space-y-1">
+                    {/* Security (Users, Roles, Permissions) */}
+                    <Link
+                      to="/admin/security"
+                      className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isActivePath("/admin/security")
+                          ? "bg-white/15 text-white border-l-4 border-orange-500"
+                          : "text-white hover:bg-white/10 border-l-4 border-transparent"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div
+                        className={`p-1 rounded-md ${
+                          isActivePath("/admin/security")
+                            ? "bg-white/20"
+                            : "group-hover:bg-white/10"
+                        }`}
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                          />
+                        </svg>
+                      </div>
+                      <span>Security</span>
+                    </Link>
+
+                    {/* Verification - NEW PAGE */}
+                    <Link
+                      to="/admin/verification"
+                      className={`group flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isActivePath("/admin/verification")
+                          ? "bg-white/15 text-white border-l-4 border-orange-500"
+                          : "text-white hover:bg-white/10 border-l-4 border-transparent"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div
+                        className={`p-1 rounded-md ${
+                          isActivePath("/admin/verification")
+                            ? "bg-white/20"
+                            : "group-hover:bg-white/10"
+                        }`}
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <span>Verification</span>
+                    </Link>
+                  </div>
+                </div>
               </div>
 
               {/* Change Password Section */}

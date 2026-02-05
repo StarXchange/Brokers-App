@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { getApiBaseUrl } from "../../utils/config";
 
 const ManageCompanies = () => {
   const [companies, setCompanies] = useState([]);
@@ -35,14 +36,11 @@ const ManageCompanies = () => {
 
         const token = localStorage.getItem("token");
 
-        const response = await axios.get(
-          `https://gibsbrokersapi.newgibsonline.com/api/Auth/companies`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await axios.get(`${getApiBaseUrl()}/Auth/companies`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         console.log("API Response:", response.data);
 
@@ -56,7 +54,7 @@ const ManageCompanies = () => {
         setError(
           err.response?.data?.message ||
             err.message ||
-            "Failed to fetch companies"
+            "Failed to fetch companies",
         );
       } finally {
         setLoading(false);
@@ -101,7 +99,7 @@ const ManageCompanies = () => {
         return new Date(
           dateObject.getFullYear(),
           dateObject.getMonth(),
-          dateObject.getDate()
+          dateObject.getDate(),
         );
       };
 
@@ -497,7 +495,7 @@ const ManageCompanies = () => {
                   <td className="px-4 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(
-                        company.tag
+                        company.tag,
                       )}`}
                     >
                       {company.tag || "Active"}
@@ -538,7 +536,7 @@ const ManageCompanies = () => {
                 </div>
                 <span
                   className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(
-                    company.tag
+                    company.tag,
                   )}`}
                 >
                   {company.tag || "Active"}

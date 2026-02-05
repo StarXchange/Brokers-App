@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { getApiBaseUrl } from "../../utils/config";
 
 const ViewCompanyDetails = () => {
   const { companyId } = useParams();
@@ -35,12 +36,12 @@ const ViewCompanyDetails = () => {
 
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `https://gibsbrokersapi.newgibsonline.com/api/Auth/companies/${companyId}`,
+          `${getApiBaseUrl()}/Auth/companies/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         console.log("API Response:", response.data);
@@ -51,7 +52,7 @@ const ViewCompanyDetails = () => {
       } catch (err) {
         console.error("Fetch error:", err);
         setError(
-          err.response?.data?.message || "Failed to fetch company details"
+          err.response?.data?.message || "Failed to fetch company details",
         );
       } finally {
         setLoading(false);
@@ -242,7 +243,7 @@ const ViewCompanyDetails = () => {
             {company.tag && (
               <span
                 className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(
-                  company.tag
+                  company.tag,
                 )}`}
               >
                 {company.tag || "Active"}

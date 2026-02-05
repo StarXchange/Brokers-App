@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import CryptoJS from "crypto-js";
 import { FaLock, FaArrowLeft } from "react-icons/fa";
+import { getApiBaseUrl } from "../../utils/config";
 
 // Constants
-const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
+const API_BASE_URL = getApiBaseUrl();
 const TABLE_HEADERS = [
   { key: "name", label: "Sub Agent Name", className: "w-1/6" },
   { key: "email", label: "Email Address", className: "w-1/6" },
@@ -467,13 +468,13 @@ const ManageClients = () => {
       if (err.response?.status === 403) {
         setHasAccess(false);
         setError(
-          "Access Denied: You do not have permission to view this page."
+          "Access Denied: You do not have permission to view this page.",
         );
       } else {
         setError(
           err.response?.data?.message ||
             err.message ||
-            "Failed to fetch clients"
+            "Failed to fetch clients",
         );
       }
     } finally {
@@ -509,10 +510,10 @@ const ManageClients = () => {
           try {
             const decryptedBytes = CryptoJS.AES.decrypt(
               rawUser,
-              "your-secret-key"
+              "your-secret-key",
             );
             const decryptedUser = JSON.parse(
-              decryptedBytes.toString(CryptoJS.enc.Utf8)
+              decryptedBytes.toString(CryptoJS.enc.Utf8),
             );
             permissions = decryptedUser.permissions || [];
           } catch (e) {
@@ -542,7 +543,7 @@ const ManageClients = () => {
 
         // Check if user has any of the required permissions
         const hasRequiredPermission = permissions.some(
-          (perm) => perm === "Customer.View" || perm === "SubAgent.View"
+          (perm) => perm === "Customer.View" || perm === "SubAgent.View",
         );
 
         setHasAccess(hasRequiredPermission);

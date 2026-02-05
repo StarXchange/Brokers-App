@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { FaLock, FaArrowLeft } from "react-icons/fa";
+import { getApiBaseUrl } from "../../utils/config";
 
 const AccessDenied = ({ title, message }) => {
   return (
@@ -122,42 +123,48 @@ const canDeterminePermissions = () => {
 };
 
 // ========== LOCAL STORAGE HELPER FUNCTIONS ==========
-const saveBrokerStatusToStorage = (brokerId, status, approvalStatus = '') => {
+const saveBrokerStatusToStorage = (brokerId, status, approvalStatus = "") => {
   try {
-    const storedStatuses = JSON.parse(localStorage.getItem('brokerStatuses') || '{}');
+    const storedStatuses = JSON.parse(
+      localStorage.getItem("brokerStatuses") || "{}",
+    );
     storedStatuses[brokerId] = {
       status,
       approvalStatus,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
-    localStorage.setItem('brokerStatuses', JSON.stringify(storedStatuses));
+    localStorage.setItem("brokerStatuses", JSON.stringify(storedStatuses));
   } catch (error) {
-    console.error('Error saving broker status:', error);
+    console.error("Error saving broker status:", error);
   }
 };
 
 const getBrokerStatusFromStorage = (brokerId) => {
   try {
-    const storedStatuses = JSON.parse(localStorage.getItem('brokerStatuses') || '{}');
+    const storedStatuses = JSON.parse(
+      localStorage.getItem("brokerStatuses") || "{}",
+    );
     return storedStatuses[brokerId]?.status || null;
   } catch (error) {
-    console.error('Error getting broker status:', error);
+    console.error("Error getting broker status:", error);
     return null;
   }
 };
 
 const getBrokerApprovalStatusFromStorage = (brokerId) => {
   try {
-    const storedStatuses = JSON.parse(localStorage.getItem('brokerStatuses') || '{}');
+    const storedStatuses = JSON.parse(
+      localStorage.getItem("brokerStatuses") || "{}",
+    );
     return storedStatuses[brokerId]?.approvalStatus || null;
   } catch (error) {
-    console.error('Error getting broker approval status:', error);
+    console.error("Error getting broker approval status:", error);
     return null;
   }
 };
 
 const clearStoredBrokerStatuses = () => {
-  localStorage.removeItem('brokerStatuses');
+  localStorage.removeItem("brokerStatuses");
 };
 
 // ========== END LOCAL STORAGE FUNCTIONS ==========
@@ -177,7 +184,7 @@ const ManageAgentsBrokers = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   // Add a state for success messages
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -207,24 +214,28 @@ const ManageAgentsBrokers = () => {
       const requestBody = {
         userId: String(broker.brokerId),
         userType: "Broker",
-        approvalNotes: "Broker approved via admin panel"
+        approvalNotes: "Broker approved via admin panel",
       };
 
-      console.log("Approving broker:", { brokerId: broker.brokerId, requestBody });
+      console.log("Approving broker:", {
+        brokerId: broker.brokerId,
+        requestBody,
+      });
 
       // Optimistic update
-      const updateState = (prev) => prev.map(b => 
-        b.brokerId === broker.brokerId
-          ? { 
-              ...b, 
-              tag: "Active",
-              status: "Active",
-              approvalStatus: "Approved",
-              approvedDate: new Date().toISOString()
-            }
-          : b
-      );
-      
+      const updateState = (prev) =>
+        prev.map((b) =>
+          b.brokerId === broker.brokerId
+            ? {
+                ...b,
+                tag: "Active",
+                status: "Active",
+                approvalStatus: "Approved",
+                approvedDate: new Date().toISOString(),
+              }
+            : b,
+        );
+
       setAgentsBrokers(updateState);
       setFilteredAgentsBrokers(updateState);
 
@@ -232,7 +243,7 @@ const ManageAgentsBrokers = () => {
       saveBrokerStatusToStorage(broker.brokerId, "Active", "Approved");
 
       const response = await fetch(
-        'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/approve',
+        `${getApiBaseUrl()}/Auth/approvals/approve`,
         {
           method: "POST",
           headers: {
@@ -240,21 +251,20 @@ const ManageAgentsBrokers = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(requestBody),
-        }
+        },
       );
 
       if (!response.ok) {
         // Revert on error
-        const revertState = (prev) => prev.map(b => 
-          b.brokerId === broker.brokerId ? broker : b
-        );
-        
+        const revertState = (prev) =>
+          prev.map((b) => (b.brokerId === broker.brokerId ? broker : b));
+
         setAgentsBrokers(revertState);
         setFilteredAgentsBrokers(revertState);
-        
+
         // Clear localStorage on error
         clearStoredBrokerStatuses();
-        
+
         const errorText = await response.text();
         console.error("Approve error:", { status: response.status, errorText });
         throw new Error(`Failed to approve broker: ${errorText}`);
@@ -262,9 +272,8 @@ const ManageAgentsBrokers = () => {
 
       const result = await response.json();
       console.log("Approve successful:", result);
-      
-      showSuccess("Broker approved successfully");
 
+      showSuccess("Broker approved successfully");
     } catch (err) {
       console.error("Error approving broker:", err);
       alert(err.message || "Failed to approve broker. Please try again.");
@@ -280,54 +289,54 @@ const ManageAgentsBrokers = () => {
       const requestBody = {
         userId: String(broker.brokerId),
         userType: "Broker",
-        rejectionReason: "Broker rejected via admin panel"
+        rejectionReason: "Broker rejected via admin panel",
       };
 
-      console.log("Rejecting broker:", { brokerId: broker.brokerId, requestBody });
+      console.log("Rejecting broker:", {
+        brokerId: broker.brokerId,
+        requestBody,
+      });
 
       // Optimistic update
-      const updateState = (prev) => prev.map(b => 
-        b.brokerId === broker.brokerId
-          ? { 
-              ...b, 
-              tag: "Inactive",
-              status: "Inactive",
-              approvalStatus: "Rejected",
-              approvedDate: new Date().toISOString()
-            }
-          : b
-      );
-      
+      const updateState = (prev) =>
+        prev.map((b) =>
+          b.brokerId === broker.brokerId
+            ? {
+                ...b,
+                tag: "Inactive",
+                status: "Inactive",
+                approvalStatus: "Rejected",
+                approvedDate: new Date().toISOString(),
+              }
+            : b,
+        );
+
       setAgentsBrokers(updateState);
       setFilteredAgentsBrokers(updateState);
 
       // Save to localStorage
       saveBrokerStatusToStorage(broker.brokerId, "Inactive", "Rejected");
 
-      const response = await fetch(
-        'https://gibsbrokersapi.newgibsonline.com/api/Auth/approvals/reject',
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Auth/approvals/reject`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       if (!response.ok) {
         // Revert on error
-        const revertState = (prev) => prev.map(b => 
-          b.brokerId === broker.brokerId ? broker : b
-        );
-        
+        const revertState = (prev) =>
+          prev.map((b) => (b.brokerId === broker.brokerId ? broker : b));
+
         setAgentsBrokers(revertState);
         setFilteredAgentsBrokers(revertState);
-        
+
         // Clear localStorage on error
         clearStoredBrokerStatuses();
-        
+
         const errorText = await response.text();
         console.error("Reject error:", { status: response.status, errorText });
         throw new Error(`Failed to reject broker: ${errorText}`);
@@ -335,9 +344,8 @@ const ManageAgentsBrokers = () => {
 
       const result = await response.json();
       console.log("Reject successful:", result);
-      
-      showSuccess("Broker rejected successfully");
 
+      showSuccess("Broker rejected successfully");
     } catch (err) {
       console.error("Error rejecting broker:", err);
       alert(err.message || "Failed to reject broker. Please try again.");
@@ -346,26 +354,26 @@ const ManageAgentsBrokers = () => {
 
   // Handle broker status toggle (approve/reject)
   const handleStatusToggle = async (brokerId, currentStatus) => {
-    const broker = agentsBrokers.find(b => b.brokerId === brokerId);
+    const broker = agentsBrokers.find((b) => b.brokerId === brokerId);
     if (!broker) {
       alert("Broker not found");
       return;
     }
 
-    const isCurrentlyActive = currentStatus?.toLowerCase() === 'active';
-    const action = isCurrentlyActive ? 'reject' : 'approve';
-    
+    const isCurrentlyActive = currentStatus?.toLowerCase() === "active";
+    const action = isCurrentlyActive ? "reject" : "approve";
+
     // Confirmation dialog
-    const confirmMessage = isCurrentlyActive 
+    const confirmMessage = isCurrentlyActive
       ? `Are you sure you want to deactivate broker ${broker.brokerName || broker.brokerId}? This will mark them as rejected.`
       : `Are you sure you want to activate broker ${broker.brokerName || broker.brokerId}? This will mark them as approved.`;
-      
+
     if (!window.confirm(confirmMessage)) {
       return;
     }
 
     try {
-      if (action === 'approve') {
+      if (action === "approve") {
         await handleApproveBroker(broker);
       } else {
         await handleRejectBroker(broker);
@@ -379,23 +387,27 @@ const ManageAgentsBrokers = () => {
   // Transform broker data with localStorage status
   const transformBrokerData = (broker) => {
     const brokerId = broker.brokerId;
-    
+
     // Get stored status from localStorage first
     const storedStatus = getBrokerStatusFromStorage(brokerId);
     const storedApprovalStatus = getBrokerApprovalStatusFromStorage(brokerId);
-    
+
     // Determine the final status
     let finalStatus = "Active"; // Default
-    
+
     // Priority: localStorage > API approvalStatus > API tag > default
     if (storedStatus) {
       finalStatus = storedStatus;
     } else if (broker.approvalStatus) {
       // Map approvalStatus from API to frontend status
-      finalStatus = broker.approvalStatus === "Rejected" ? "Inactive" : 
-                    broker.approvalStatus === "Approved" ? "Active" : 
-                    broker.approvalStatus === "Pending" ? "Pending" : 
-                    "Active";
+      finalStatus =
+        broker.approvalStatus === "Rejected"
+          ? "Inactive"
+          : broker.approvalStatus === "Approved"
+            ? "Active"
+            : broker.approvalStatus === "Pending"
+              ? "Pending"
+              : "Active";
     } else if (broker.tag) {
       finalStatus = broker.tag;
     } else if (broker.status) {
@@ -424,12 +436,12 @@ const ManageAgentsBrokers = () => {
         if (canDeterminePermissions()) {
           const hasPermission = hasAnyPermission(
             storedPermissions,
-            requiredPermissions
+            requiredPermissions,
           );
           if (!hasPermission) {
             setHasAccess(false);
             setAccessError(
-              "You don't have permission to view Super Agents. Please request access from an administrator."
+              "You don't have permission to view Super Agents. Please request access from an administrator.",
             );
             return;
           }
@@ -440,21 +452,18 @@ const ManageAgentsBrokers = () => {
 
         const token = localStorage.getItem("token");
 
-        const response = await axios.get(
-          `https://gibsbrokersapi.newgibsonline.com/api/Auth/brokers`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await axios.get(`${getApiBaseUrl()}/Auth/brokers`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         console.log("API Response:", response.data);
 
         // Extract data from response and transform with localStorage status
         const brokersData = response.data.data || response.data || [];
         const transformedBrokers = brokersData.map(transformBrokerData);
-        
+
         setAgentsBrokers(transformedBrokers);
         setFilteredAgentsBrokers(transformedBrokers);
       } catch (err) {
@@ -464,7 +473,7 @@ const ManageAgentsBrokers = () => {
         if (err?.response?.status === 403) {
           setHasAccess(false);
           setAccessError(
-            "Access Denied. You don't have permission to view Super Agents."
+            "Access Denied. You don't have permission to view Super Agents.",
           );
           return;
         }
@@ -472,7 +481,7 @@ const ManageAgentsBrokers = () => {
         setError(
           err.response?.data?.message ||
             err.message ||
-            "Failed to fetch agents/brokers"
+            "Failed to fetch agents/brokers",
         );
       } finally {
         setLoading(false);
@@ -517,7 +526,7 @@ const ManageAgentsBrokers = () => {
         return new Date(
           dateObject.getFullYear(),
           dateObject.getMonth(),
-          dateObject.getDate()
+          dateObject.getDate(),
         );
       };
 
@@ -927,33 +936,17 @@ const ManageAgentsBrokers = () => {
                     {formatDate(broker.submitDate)}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleStatusToggle(broker.brokerId, broker.tag)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          (broker.tag?.toLowerCase() || "active") === "active"
-                            ? "bg-green-500 hover:bg-green-600"
-                            : "bg-red-500 hover:bg-red-600"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            (broker.tag?.toLowerCase() || "active") === "active"
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                          }`}
-                        />
-                      </button>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        broker.tag?.toLowerCase() === 'active' 
-                          ? 'bg-green-100 text-green-800'
-                          : broker.tag?.toLowerCase() === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {broker.tag || "Active"}
-                      </span>
-                    </div>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        broker.tag?.toLowerCase() === "active"
+                          ? "bg-green-100 text-green-800"
+                          : broker.tag?.toLowerCase() === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {broker.tag || "Active"}
+                    </span>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
                     <Link
@@ -988,33 +981,17 @@ const ManageAgentsBrokers = () => {
                     {broker.brokerName || "N/A"}
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <button
-                    onClick={() => handleStatusToggle(broker.brokerId, broker.tag)}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      (broker.tag?.toLowerCase() || "active") === "active"
-                        ? "bg-green-500 hover:bg-green-600"
-                        : "bg-red-500 hover:bg-red-600"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                        (broker.tag?.toLowerCase() || "active") === "active"
-                          ? "translate-x-5"
-                          : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    broker.tag?.toLowerCase() === 'active' 
-                      ? 'bg-green-100 text-green-800'
-                      : broker.tag?.toLowerCase() === 'pending'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {broker.tag || "Active"}
-                  </span>
-                </div>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    broker.tag?.toLowerCase() === "active"
+                      ? "bg-green-100 text-green-800"
+                      : broker.tag?.toLowerCase() === "pending"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {broker.tag || "Active"}
+                </span>
               </div>
 
               <div className="space-y-2 text-sm">

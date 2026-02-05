@@ -7,6 +7,7 @@ import {
 } from "react";
 import axios from "axios";
 import CryptoJS from "crypto-js";
+import { getApiBaseUrl } from "../utils/config";
 
 const AuthContext = createContext();
 
@@ -171,16 +172,13 @@ export function AuthProvider({ children }) {
     };
 
     try {
-      const response = await fetch(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const response = await fetch(`${getApiBaseUrl()}/Auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       if (!response.ok) {
         // Try to get the actual error message from the server
@@ -194,7 +192,7 @@ export function AuthProvider({ children }) {
         throw new Error(
           errorData.message ||
             errorText ||
-            `HTTP error! status: ${response.status}`
+            `HTTP error! status: ${response.status}`,
         );
       }
 
@@ -219,7 +217,7 @@ export function AuthProvider({ children }) {
       const userString = JSON.stringify(authenticatedUser);
       const encryptedUser = CryptoJS.AES.encrypt(
         userString,
-        "your-secret-key"
+        "your-secret-key",
       ).toString();
 
       // Store encrypted data
@@ -250,19 +248,19 @@ export function AuthProvider({ children }) {
   const updatePassword = async ({ oldPassword, newPassword }) => {
     try {
       await axios.post(
-        "https://gibsbrokersapi.newgibsonline.com/api/Users/update-password",
+        `${getApiBaseUrl()}/Users/update-password`,
         { oldPassword, newPassword },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       return { success: true };
     } catch (error) {
       console.error(
         "Password update error:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
       return {
         success: false,

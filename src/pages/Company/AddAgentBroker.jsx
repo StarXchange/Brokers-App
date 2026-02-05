@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import CryptoJS from "crypto-js";
 import { useAuth } from "../../context/AuthContext";
+import { getApiBaseUrl } from "../../utils/config";
 
 const SECRET_KEY = "your-secret-key";
 
@@ -156,16 +157,12 @@ const AddAgentBroker = () => {
         field2: formData.field2,
       };
 
-      await axios.post(
-        "https://gibsbrokersapi.newgibsonline.com/api/Auth/create-broker",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      await axios.post(`${getApiBaseUrl()}/Auth/create-broker`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       alert("Agent/Broker created successfully!");
       navigate("/company/agents-brokers");
@@ -174,7 +171,7 @@ const AddAgentBroker = () => {
       setError(
         err.response?.data?.message ||
           err.message ||
-          "Failed to create agent/broker"
+          "Failed to create agent/broker",
       );
     } finally {
       setLoading(false);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { getApiBaseUrl } from "../../utils/config";
 
 const AdminOverview = () => {
   const [totalPolicies, setTotalPolicies] = useState(0);
@@ -9,7 +10,7 @@ const AdminOverview = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = "https://gibsbrokersapi.newgibsonline.com/api";
+  const API_BASE_URL = getApiBaseUrl();
 
   // Fetch data from backend
   useEffect(() => {
@@ -63,27 +64,23 @@ const AdminOverview = () => {
         // Fetch data sequentially to better debug which endpoint fails
         for (const endpoint of endpoints) {
           try {
-         
-
             const response = await fetch(endpoint.url, {
               method: "GET",
               headers,
             });
-
 
             if (!response.ok) {
               if (response.status === 401) {
                 throw new Error(`Authentication failed for ${endpoint.name}`);
               }
               console.warn(
-                `${endpoint.name} API returned ${response.status}, using default value`
+                `${endpoint.name} API returned ${response.status}, using default value`,
               );
               // Continue with other endpoints even if one fails
               continue;
             }
 
             const data = await response.json();
-            
 
             // Handle different response formats
             if (Array.isArray(data)) {
@@ -97,7 +94,7 @@ const AdminOverview = () => {
               } else {
                 console.warn(
                   `Unexpected data format for ${endpoint.name}:`,
-                  data
+                  data,
                 );
                 // Set default value if format is unexpected
                 endpoint.setter(0);
